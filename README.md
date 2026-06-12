@@ -249,3 +249,11 @@ scripts/      browser E2E + screenshot tour + multiplayer integration tests
 Names, quests and the zones are original; formulas and mechanics follow
 vanilla. World seed is fixed in `src/main.ts` so the world is the same place
 every visit.
+
+## License
+
+The code is [MIT licensed](LICENSE) — fork it, remix it, host your own world.
+
+The bundled third-party art assets (models, textures, HDRIs) remain under
+their own licenses — all CC0 public domain except the MIT water normal maps,
+as documented per pack in [CREDITS.md](CREDITS.md).
