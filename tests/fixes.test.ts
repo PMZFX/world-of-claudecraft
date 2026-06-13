@@ -44,6 +44,20 @@ describe('quest lifecycle', () => {
     expect(zoneWelcomeText(starterZone, (questId) => sim.questState(questId))).toBeNull();
   });
 
+  it('accepting a quest directly requires standing near the giver', () => {
+    const sim = makeSim();
+    teleportTo(sim, 0, -40);
+
+    sim.acceptQuest('q_wolves');
+    expect(sim.questState('q_wolves')).toBe('available');
+    expect(sim.questLog.has('q_wolves')).toBe(false);
+
+    const redbrook = [...sim.entities.values()].find((e) => e.templateId === 'marshal_redbrook')!;
+    teleportTo(sim, redbrook.pos.x + 2, redbrook.pos.z);
+    sim.acceptQuest('q_wolves');
+    expect(sim.questState('q_wolves')).toBe('active');
+  });
+
   it('a turned-in quest cannot be accepted again', () => {
     const sim = makeSim();
     const redbrook = [...sim.entities.values()].find((e) => e.templateId === 'marshal_redbrook')!;
@@ -55,6 +69,7 @@ describe('quest lifecycle', () => {
     qp.counts[0] = 8;
     qp.state = 'ready';
 
+    teleportTo(sim, redbrook.pos.x + 2, redbrook.pos.z + 2);
     sim.turnInQuest('q_wolves');
     expect(sim.questState('q_wolves')).toBe('done');
     expect(sim.questLog.has('q_wolves')).toBe(false);

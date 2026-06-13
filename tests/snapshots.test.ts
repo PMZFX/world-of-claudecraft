@@ -157,6 +157,20 @@ describe('delta snapshots', () => {
     expect(snap.self).not.toHaveProperty('inv');
   });
 
+  it('rejected distant quest accepts resync the authoritative quest state', () => {
+    broadcast(server);
+    fc.sent.length = 0;
+    const player = server.sim.entities.get(session.pid)!;
+    player.pos.x = 0;
+    player.pos.z = -40;
+
+    server.handleMessage(session, JSON.stringify({ t: 'cmd', cmd: 'accept', quest: 'q_wolves' }));
+    broadcast(server);
+    const snap = lastSnap(fc.sent);
+    expect(snap.self.qlog).toEqual([]);
+    expect(snap.self.qdone).toEqual([]);
+  });
+
   it('each client gets full state on its own first snapshot', () => {
     broadcast(server);
     const fc2 = fakeWs();
