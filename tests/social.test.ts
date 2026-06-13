@@ -219,6 +219,40 @@ describe('parties', () => {
     expect(sim.partyOf(b)).toBe(null);
   });
 
+  it('does not replace a pending party invite', () => {
+    const sim = makeWorld();
+    const a = sim.addPlayer('warrior', 'Aleph');
+    const b = sim.addPlayer('priest', 'Bet');
+    const c = sim.addPlayer('rogue', 'Gimel');
+    sim.partyInvite(b, a);
+    sim.partyInvite(b, c);
+    sim.partyAccept(b);
+    expect(sim.partyOf(a)?.members).toEqual([a, b]);
+    expect(sim.partyOf(c)).toBe(null);
+  });
+
+  it('allows a new party invite after decline or expiry', () => {
+    const sim = makeWorld();
+    const a = sim.addPlayer('warrior', 'Aleph');
+    const b = sim.addPlayer('priest', 'Bet');
+    const c = sim.addPlayer('rogue', 'Gimel');
+    sim.partyInvite(b, a);
+    sim.partyDecline(b);
+    sim.partyInvite(b, c);
+    sim.partyAccept(b);
+    expect(sim.partyOf(c)?.members).toEqual([c, b]);
+    expect(sim.partyOf(a)).toBe(null);
+
+    const d = sim.addPlayer('mage', 'Dalet');
+    const e = sim.addPlayer('warrior', 'Heh');
+    sim.partyInvite(d, a);
+    for (let i = 0; i < 20 * 31; i++) sim.tick();
+    sim.partyInvite(d, e);
+    sim.partyAccept(d);
+    expect(sim.partyOf(e)?.members).toEqual([e, d]);
+    expect(sim.partyOf(a)).toBe(null);
+  });
+
   it('party members share kill xp with the group bonus and quest credit', () => {
     const { sim, a, b } = makeDuo();
     // both accept the wolf quest
@@ -319,6 +353,47 @@ describe('duels', () => {
     expect(eb.dead).toBe(false);
     expect(sim.duelFor(a)).toBe(null);
   });
+
+  it('does not replace a pending duel challenge', () => {
+    const sim = makeWorld();
+    const a = sim.addPlayer('warrior', 'Aleph');
+    const b = sim.addPlayer('mage', 'Bet');
+    const c = sim.addPlayer('rogue', 'Gimel');
+    teleport(sim, a, 0, -40);
+    teleport(sim, b, 3, -40);
+    teleport(sim, c, 6, -40);
+    sim.duelRequest(b, a);
+    sim.duelRequest(b, c);
+    sim.duelAccept(b);
+    expect(sim.duelFor(a)?.a).toBe(a);
+    expect(sim.duelFor(a)?.b).toBe(b);
+    expect(sim.duelFor(c)).toBe(null);
+  });
+
+  it('blocks other social invites until a pending duel is answered or expires', () => {
+    const sim = makeWorld();
+    const a = sim.addPlayer('warrior', 'Aleph');
+    const b = sim.addPlayer('mage', 'Bet');
+    const c = sim.addPlayer('rogue', 'Gimel');
+    teleport(sim, a, 0, -40);
+    teleport(sim, b, 3, -40);
+    teleport(sim, c, 6, -40);
+    sim.duelRequest(b, a);
+    sim.partyInvite(b, c);
+    sim.duelDecline(b);
+    sim.partyInvite(b, c);
+    sim.partyAccept(b);
+    expect(sim.partyOf(c)?.members).toEqual([c, b]);
+    expect(sim.duelFor(a)).toBe(null);
+
+    const d = sim.addPlayer('priest', 'Dalet');
+    teleport(sim, d, 9, -40);
+    sim.duelRequest(d, a);
+    for (let i = 0; i < 20 * 31; i++) sim.tick();
+    sim.partyInvite(d, c);
+    sim.partyAccept(d);
+    expect(sim.partyOf(c)?.members).toContain(d);
+  });
 });
 
 describe('trading', () => {
@@ -348,6 +423,21 @@ describe('trading', () => {
     expect(sim.countItem('baked_bread', b)).toBe(0);
     expect(sim.meta(a)!.copper).toBe(100 - 30 + 10);
     expect(sim.meta(b)!.copper).toBe(50 - 10 + 30);
+  });
+
+  it('does not replace a pending trade request', () => {
+    const sim = makeWorld();
+    const a = sim.addPlayer('warrior', 'Aleph');
+    const b = sim.addPlayer('mage', 'Bet');
+    const c = sim.addPlayer('rogue', 'Gimel');
+    teleport(sim, a, 0, -40);
+    teleport(sim, b, 3, -40);
+    teleport(sim, c, 6, -40);
+    sim.tradeRequest(b, a);
+    sim.tradeRequest(b, c);
+    sim.tradeAccept(b);
+    expect(sim.tradeFor(a)).toBeTruthy();
+    expect(sim.tradeFor(c)).toBe(null);
   });
 
   it('trade cancels when players walk apart', () => {

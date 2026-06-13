@@ -1,5 +1,5 @@
 import { escapeHtml, fmtCopper, fmtDate, fmtDuration, fmtRelative } from './format';
-import type { AccountDetail, AccountRow, CharacterRow, LivePlayer } from './types';
+import type { AccountDetail, AccountRow, CharacterRow, LivePlayer, ModerationAccountDetail, ModerationQueueRow } from './types';
 
 // Pure HTML-string renderers for the dashboard tables. All dynamic values go
 // through escapeHtml — usernames and character names are player-controlled.
@@ -117,4 +117,90 @@ export function renderPager(total: number, page: number, limit: number): string 
     <button data-page="${page - 1}" ${page <= 1 ? 'disabled' : ''}>‹ prev</button>
     <span>page ${page} / ${pages} — ${total} total</span>
     <button data-page="${page + 1}" ${page >= pages ? 'disabled' : ''}>next ›</button>`;
+}
+
+export function renderModerationQueue(rows: ModerationQueueRow[]): string {
+  if (rows.length === 0) return '<div class="empty">no open reports</div>';
+  const body = rows.map((r) => `
+    <tr class="clickable" data-moderation-account-id="${r.accountId}">
+      <td>${escapeHtml(r.username)}${r.online ? ' <span class="badge">online</span>' : ''}</td>
+      <td>${r.characterNames.map(escapeHtml).join(', ') || '—'}</td>
+      <td class="num">${r.openReports}</td>
+      <td>${escapeHtml(reasonLabel(r.latestReason))}</td>
+      <td>${fmtRelative(r.latestReportAt)}</td>
+      <td>${statusBadge(r.status, r.suspendedUntil)}</td>
+    </tr>`);
+  return `<table>
+    <thead><tr>
+      <th>Account</th><th>Characters</th><th class="num">Open Reports</th><th>Latest Reason</th><th>Latest</th><th>Status</th>
+    </tr></thead>
+    <tbody>${body.join('')}</tbody>
+  </table>`;
+}
+
+export function renderModerationDetail(d: ModerationAccountDetail): string {
+  const reports = d.reports.map((r) => {
+    const chat = r.chatContext.length === 0
+      ? '<div class="empty">no recent chat from this character before the report</div>'
+      : `<table><thead><tr><th>Time</th><th>Channel</th><th>Message</th></tr></thead><tbody>${
+          r.chatContext.map((c) => `
+            <tr>
+              <td>${fmtDate(c.createdAt)}</td>
+              <td>${escapeHtml(c.channel)}</td>
+              <td><b>${escapeHtml(c.characterName)}:</b> ${escapeHtml(c.message)}</td>
+            </tr>`).join('')
+        }</tbody></table>`;
+    return `<div class="mod-report panel" data-report-id="${r.id}">
+      <div class="panel-title">Report #${r.id} <span class="hint">${fmtDate(r.createdAt)}</span></div>
+      <div class="mod-report-meta">
+        <div><b>Reporter:</b> ${escapeHtml(r.reporterUsername ?? 'unknown')} / ${escapeHtml(r.reporterCharacterName || 'unknown')}</div>
+        <div><b>Reported:</b> ${escapeHtml(r.reportedUsername)} / ${escapeHtml(r.reportedCharacterName || 'unknown')}</div>
+        <div><b>Reason:</b> ${escapeHtml(reasonLabel(r.reason))}</div>
+      </div>
+      <div class="mod-details">${escapeHtml(r.details || 'No extra details provided.')}</div>
+      <div class="mod-actions">
+        <button data-ignore-report="${r.id}">Ignore</button>
+        ${r.reportedCharacterId ? `<button data-force-rename-character="${r.reportedCharacterId}" data-character-name="${escapeHtml(r.reportedCharacterName)}">Force Name Change</button>` : ''}
+      </div>
+      <h4>Recent chat before this report</h4>
+      ${chat}
+    </div>`;
+  }).join('');
+  return `<div class="mod-detail">
+    <div class="panel-title">
+      <span>${escapeHtml(d.account.username)}</span>
+      <span class="hint">account #${d.account.id}</span>
+    </div>
+    ${renderAccountDetail(d.account)}
+    <div class="mod-account-actions" data-action-account-id="${d.account.id}">
+      <input id="mod-reason" placeholder="Moderator note / reason" maxlength="500" />
+      <button data-suspend-hours="1">Suspend 1h</button>
+      <button data-suspend-hours="24">Suspend 24h</button>
+      <button data-suspend-hours="72">Suspend 3d</button>
+      <button data-suspend-hours="168">Suspend 7d</button>
+      <button data-suspend-hours="720">Suspend 30d</button>
+      <input id="mod-custom-expiry" type="datetime-local" />
+      <button data-suspend-custom="1">Suspend Custom</button>
+      <button data-ban-account="1">Ban</button>
+    </div>
+    <div id="mod-confirm" class="mod-confirm"></div>
+    <h4>Open reports</h4>
+    ${reports || '<div class="empty">no open reports for this account</div>'}
+  </div>`;
+}
+
+function reasonLabel(reason: string): string {
+  return ({
+    harassment: 'Harassment / abuse',
+    spam: 'Spam',
+    cheating: 'Cheating / exploit',
+    offensive_name_or_chat: 'Offensive name or chat',
+    other: 'Other',
+  } as Record<string, string>)[reason] ?? reason;
+}
+
+function statusBadge(status: string, suspendedUntil: string | null): string {
+  if (status === 'banned') return '<span class="badge bad">banned</span>';
+  if (status === 'suspended') return `<span class="badge warn">suspended until ${fmtDate(suspendedUntil)}</span>`;
+  return '<span class="badge">active</span>';
 }

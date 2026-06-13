@@ -7,6 +7,9 @@ import {
   overviewCounts, registrationsByDay, sessionsByDay, classDistribution, levelDistribution,
   listAccounts, listCharacters, accountDetail,
 } from './admin_db';
+import {
+  forceCharacterRename, ignoreReport, moderateAccount, moderationQueue, moderationReportsForAccount,
+} from './moderation_db';
 import type { GameServer } from './game';
 
 // Admin API: everything under /admin/api/*. Auth is a bearer token whose
@@ -78,10 +81,52 @@ export async function handleAdminApi(
       return await handleLogin(req, res);
     }
 
-    if (req.method !== 'GET') return fail(res, 405, 'method not allowed');
-
     const accountId = await adminAccountId(req);
     if (accountId === null) return fail(res, 401, 'admin authentication required');
+
+    const actionMatch = /^\/admin\/api\/moderation\/accounts\/(\d+)\/(suspend|ban)$/.exec(path);
+    if (req.method === 'POST' && actionMatch) {
+      const targetAccountId = Number(actionMatch[1]);
+      const action = actionMatch[2] as 'suspend' | 'ban';
+      const body = await readBody(req);
+      try {
+        await moderateAccount({
+          accountId: targetAccountId,
+          adminAccountId: accountId,
+          action,
+          reason: body.reason,
+          expiresAt: body.expiresAt,
+        });
+        const statusText = action === 'ban' ? 'This account has been banned.' : 'This account is suspended.';
+        game.disconnectAccount(targetAccountId, statusText);
+        return ok(res, { ok: true });
+      } catch (err) {
+        return fail(res, 400, err instanceof Error ? err.message : 'moderation action failed');
+      }
+    }
+    const ignoreMatch = /^\/admin\/api\/moderation\/reports\/(\d+)\/ignore$/.exec(path);
+    if (req.method === 'POST' && ignoreMatch) {
+      const body = await readBody(req);
+      const ignored = await ignoreReport(Number(ignoreMatch[1]), accountId, body.note);
+      return ignored ? ok(res, { ok: true }) : fail(res, 404, 'open report not found');
+    }
+    const forceRenameMatch = /^\/admin\/api\/moderation\/characters\/(\d+)\/force-rename$/.exec(path);
+    if (req.method === 'POST' && forceRenameMatch) {
+      const body = await readBody(req);
+      try {
+        const result = await forceCharacterRename({
+          characterId: Number(forceRenameMatch[1]),
+          adminAccountId: accountId,
+          reason: body.reason,
+        });
+        game.disconnectAccount(result.accountId, 'A moderator requires one of your characters to be renamed.');
+        return ok(res, { ok: true });
+      } catch (err) {
+        return fail(res, 400, err instanceof Error ? err.message : 'force rename failed');
+      }
+    }
+
+    if (req.method !== 'GET') return fail(res, 405, 'method not allowed');
 
     if (path === '/admin/api/overview') {
       const counts = await overviewCounts();
@@ -103,6 +148,19 @@ export async function handleAdminApi(
       const { page, limit } = parsePageParams(url.searchParams);
       const search = (url.searchParams.get('search') ?? '').slice(0, 64);
       return ok(res, await listAccounts(search, page, limit));
+    }
+    if (path === '/admin/api/moderation/queue') {
+      return ok(res, { rows: await moderationQueue(game.liveAccountIds()) });
+    }
+    const moderationAccountMatch = /^\/admin\/api\/moderation\/accounts\/(\d+)$/.exec(path);
+    if (moderationAccountMatch) {
+      const id = Number(moderationAccountMatch[1]);
+      const [detail, reports] = await Promise.all([
+        accountDetail(id),
+        moderationReportsForAccount(id),
+      ]);
+      if (!detail) return fail(res, 404, 'account not found');
+      return ok(res, { account: detail, reports });
     }
     const detailMatch = /^\/admin\/api\/accounts\/(\d+)$/.exec(path);
     if (detailMatch) {

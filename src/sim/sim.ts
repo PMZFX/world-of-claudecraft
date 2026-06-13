@@ -3094,6 +3094,22 @@ export class Sim {
     return partyId !== undefined ? this.parties.get(partyId) ?? null : null;
   }
 
+  private hasActiveInvite(map: Map<number, { fromPid: number; expires: number }>, targetPid: number): boolean {
+    const invite = map.get(targetPid);
+    if (!invite) return false;
+    if (invite.expires < this.time) {
+      map.delete(targetPid);
+      return false;
+    }
+    return true;
+  }
+
+  private hasPendingSocialInvite(targetPid: number): boolean {
+    return this.hasActiveInvite(this.partyInvites, targetPid)
+      || this.hasActiveInvite(this.tradeInvites, targetPid)
+      || this.hasActiveInvite(this.duelInvites, targetPid);
+  }
+
   partyInvite(targetPid: number, pid?: number): void {
     const r = this.resolve(pid);
     const target = this.players.get(targetPid);
@@ -3103,6 +3119,7 @@ export class Sim {
     if (myParty && myParty.leader !== r.meta.entityId) { this.error(r.meta.entityId, 'Only the party leader may invite.'); return; }
     if (myParty && myParty.members.length >= PARTY_MAX) { this.error(r.meta.entityId, 'Your party is full.'); return; }
     if (this.partyOf(targetPid)) { this.error(r.meta.entityId, `${target.name} is already in a party.`); return; }
+    if (this.hasPendingSocialInvite(targetPid)) { this.error(r.meta.entityId, `${target.name} already has a pending invitation.`); return; }
     this.partyInvites.set(targetPid, { fromPid: r.meta.entityId, expires: this.time + 30 });
     this.emit({ type: 'partyInvite', fromPid: r.meta.entityId, fromName: r.meta.name, pid: targetPid });
     this.emit({ type: 'log', text: `You have invited ${target.name} to your party.`, color: '#aaf', pid: r.meta.entityId });
@@ -3191,6 +3208,7 @@ export class Sim {
     if (targetPid === r.meta.entityId) return;
     if (this.duels.has(r.meta.entityId) || this.duels.has(targetPid)) { this.error(r.meta.entityId, 'A duel is already in progress.'); return; }
     if (dist2d(r.e.pos, targetE.pos) > 30) { this.error(r.meta.entityId, 'Target is too far away.'); return; }
+    if (this.hasPendingSocialInvite(targetPid)) { this.error(r.meta.entityId, `${target.name} already has a pending invitation.`); return; }
     this.duelInvites.set(targetPid, { fromPid: r.meta.entityId, expires: this.time + 30 });
     this.emit({ type: 'duelRequest', fromPid: r.meta.entityId, fromName: r.meta.name, pid: targetPid });
     this.emit({ type: 'log', text: `You have challenged ${target.name} to a duel.`, color: '#fa6', pid: r.meta.entityId });
@@ -3319,6 +3337,7 @@ export class Sim {
     if (targetPid === r.meta.entityId) return;
     if (this.trades.has(r.meta.entityId) || this.trades.has(targetPid)) { this.error(r.meta.entityId, 'A trade is already in progress.'); return; }
     if (dist2d(r.e.pos, targetE.pos) > TRADE_RANGE) { this.error(r.meta.entityId, 'Target is too far away to trade.'); return; }
+    if (this.hasPendingSocialInvite(targetPid)) { this.error(r.meta.entityId, `${target.name} already has a pending invitation.`); return; }
     this.tradeInvites.set(targetPid, { fromPid: r.meta.entityId, expires: this.time + 30 });
     this.emit({ type: 'tradeRequest', fromPid: r.meta.entityId, fromName: r.meta.name, pid: targetPid });
     this.emit({ type: 'log', text: `You have requested to trade with ${target.name}.`, color: '#8df', pid: r.meta.entityId });

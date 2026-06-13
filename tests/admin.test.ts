@@ -24,10 +24,18 @@ vi.mock('../server/admin_db', async () => {
     accountDetail: vi.fn(),
   };
 });
+vi.mock('../server/moderation_db', () => ({
+  forceCharacterRename: vi.fn(),
+  moderationQueue: vi.fn(),
+  moderationReportsForAccount: vi.fn(),
+  ignoreReport: vi.fn(),
+  moderateAccount: vi.fn(),
+}));
 
 import { handleAdminApi, parsePageParams } from '../server/admin';
 import { accountForToken, isAdminAccount, findAccount } from '../server/db';
-import { overviewCounts, listAccounts, escapeLike } from '../server/admin_db';
+import { overviewCounts, listAccounts, accountDetail, escapeLike } from '../server/admin_db';
+import { forceCharacterRename, ignoreReport, moderateAccount, moderationQueue, moderationReportsForAccount } from '../server/moderation_db';
 
 const VALID_TOKEN = 'a'.repeat(64);
 
@@ -62,6 +70,8 @@ const fakeGame: any = {
     simEntities: 40, rssBytes: 1, heapUsedBytes: 1,
   }),
   liveSessions: () => [],
+  liveAccountIds: () => new Set([9]),
+  disconnectAccount: vi.fn(),
 };
 
 beforeEach(() => {
@@ -124,8 +134,10 @@ describe('admin api auth', () => {
   });
 
   it('rejects non-GET methods on data endpoints', async () => {
+    vi.mocked(accountForToken).mockResolvedValue(7);
+    vi.mocked(isAdminAccount).mockResolvedValue(true);
     const res = fakeRes();
-    await handleAdminApi(fakeReq({ method: 'DELETE', url: '/admin/api/accounts' }), res, fakeGame);
+    await handleAdminApi(fakeReq({ method: 'DELETE', token: VALID_TOKEN, url: '/admin/api/accounts' }), res, fakeGame);
 
     expect(res.statusCode).toBe(405);
   });
@@ -154,6 +166,113 @@ describe('admin api auth', () => {
 
     expect(listAccounts).toHaveBeenCalledWith('bob', 2, 50);
     expect(res.statusCode).toBe(200);
+  });
+
+  it('serves the moderation queue to admins with online account context', async () => {
+    vi.mocked(accountForToken).mockResolvedValue(7);
+    vi.mocked(isAdminAccount).mockResolvedValue(true);
+    vi.mocked(moderationQueue).mockResolvedValue([{
+      accountId: 9,
+      username: 'badactor',
+      status: 'active',
+      suspendedUntil: null,
+      openReports: 4,
+      latestReportAt: new Date().toISOString(),
+      latestReason: 'spam',
+      characterNames: ['Badactor'],
+      online: true,
+    }]);
+    const res = fakeRes();
+
+    await handleAdminApi(fakeReq({ token: VALID_TOKEN, url: '/admin/api/moderation/queue' }), res, fakeGame);
+
+    expect(res.statusCode).toBe(200);
+    expect(moderationQueue).toHaveBeenCalledWith(new Set([9]));
+    expect(res.body.data.rows[0].openReports).toBe(4);
+  });
+
+  it('loads moderation account detail with open reports', async () => {
+    vi.mocked(accountForToken).mockResolvedValue(7);
+    vi.mocked(isAdminAccount).mockResolvedValue(true);
+    vi.mocked(accountDetail).mockResolvedValue({
+      id: 9, username: 'badactor', createdAt: '', lastLogin: null, isAdmin: false,
+      playtimeSeconds: 0, characters: [], recentSessions: [],
+    });
+    vi.mocked(moderationReportsForAccount).mockResolvedValue([]);
+    const res = fakeRes();
+
+    await handleAdminApi(fakeReq({ token: VALID_TOKEN, url: '/admin/api/moderation/accounts/9' }), res, fakeGame);
+
+    expect(res.statusCode).toBe(200);
+    expect(moderationReportsForAccount).toHaveBeenCalledWith(9);
+  });
+
+  it('ignores an open report', async () => {
+    vi.mocked(accountForToken).mockResolvedValue(7);
+    vi.mocked(isAdminAccount).mockResolvedValue(true);
+    vi.mocked(ignoreReport).mockResolvedValue(true);
+    const res = fakeRes();
+
+    await handleAdminApi(
+      fakeReq({ method: 'POST', token: VALID_TOKEN, url: '/admin/api/moderation/reports/55/ignore', body: { note: 'no issue' } }),
+      res,
+      fakeGame,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(ignoreReport).toHaveBeenCalledWith(55, 7, 'no issue');
+  });
+
+  it('suspends and disconnects an account', async () => {
+    vi.mocked(accountForToken).mockResolvedValue(7);
+    vi.mocked(isAdminAccount).mockResolvedValue(true);
+    vi.mocked(moderateAccount).mockResolvedValue();
+    const res = fakeRes();
+    const expiresAt = new Date(Date.now() + 3600_000).toISOString();
+
+    await handleAdminApi(
+      fakeReq({ method: 'POST', token: VALID_TOKEN, url: '/admin/api/moderation/accounts/9/suspend', body: { reason: 'abuse', expiresAt } }),
+      res,
+      fakeGame,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(moderateAccount).toHaveBeenCalledWith({ accountId: 9, adminAccountId: 7, action: 'suspend', reason: 'abuse', expiresAt });
+    expect(fakeGame.disconnectAccount).toHaveBeenCalledWith(9, 'This account is suspended.');
+  });
+
+  it('bans and disconnects an account', async () => {
+    vi.mocked(accountForToken).mockResolvedValue(7);
+    vi.mocked(isAdminAccount).mockResolvedValue(true);
+    vi.mocked(moderateAccount).mockResolvedValue();
+    const res = fakeRes();
+
+    await handleAdminApi(
+      fakeReq({ method: 'POST', token: VALID_TOKEN, url: '/admin/api/moderation/accounts/9/ban', body: { reason: 'severe abuse' } }),
+      res,
+      fakeGame,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(moderateAccount).toHaveBeenCalledWith({ accountId: 9, adminAccountId: 7, action: 'ban', reason: 'severe abuse', expiresAt: undefined });
+    expect(fakeGame.disconnectAccount).toHaveBeenCalledWith(9, 'This account has been banned.');
+  });
+
+  it('forces a character rename and disconnects that account', async () => {
+    vi.mocked(accountForToken).mockResolvedValue(7);
+    vi.mocked(isAdminAccount).mockResolvedValue(true);
+    vi.mocked(forceCharacterRename).mockResolvedValue({ accountId: 9 });
+    const res = fakeRes();
+
+    await handleAdminApi(
+      fakeReq({ method: 'POST', token: VALID_TOKEN, url: '/admin/api/moderation/characters/42/force-rename', body: { reason: 'bad name' } }),
+      res,
+      fakeGame,
+    );
+
+    expect(res.statusCode).toBe(200);
+    expect(forceCharacterRename).toHaveBeenCalledWith({ characterId: 42, adminAccountId: 7, reason: 'bad name' });
+    expect(fakeGame.disconnectAccount).toHaveBeenCalledWith(9, 'A moderator requires one of your characters to be renamed.');
   });
 });
 

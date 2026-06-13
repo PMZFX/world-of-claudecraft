@@ -61,11 +61,16 @@
   /* ---------- layout ---------- */
   #app { display: none; max-width: 1200px; margin: 0 auto; padding: 18px 18px 60px; }
   #app.authed { display: block; }
-  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
   header h1 { font-family: var(--title-font); color: var(--gold); font-size: 22px; text-shadow: 1px 1px 2px #000; }
   header .who { font-size: 12px; color: var(--text-dim); }
   header button { margin-left: 12px; padding: 4px 10px; background: #1a1410; color: #c9b27a; border: 1px solid #463a1c; border-radius: 3px; cursor: pointer; }
   header button:hover { color: #fff; border-color: var(--gold-dim); }
+  #admin-tabs { display: flex; gap: 6px; margin-bottom: 18px; border-bottom: 1px solid #2a2414; }
+  .admin-tab { padding: 7px 12px; background: #100d0b; color: #c9b27a; border: 1px solid #463a1c; border-bottom: none; border-radius: 4px 4px 0 0; cursor: pointer; font-family: var(--title-font); }
+  .admin-tab.active { color: var(--gold); border-color: var(--gold-dim); background: #20180d; }
+  .admin-page { display: none; }
+  .admin-page.active { display: block; }
   section { margin-bottom: 18px; }
 
   /* ---------- stat cards ---------- */
@@ -85,6 +90,8 @@
   td.num, th.num { text-align: right; }
   .empty { color: var(--text-dim); padding: 14px 8px; font-style: italic; }
   .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; border: 1px solid var(--gold-dim); color: var(--gold); }
+  .badge.warn { border-color: #c98c36; color: #ffbf66; }
+  .badge.bad { border-color: #b34a3a; color: #ff7a5e; }
   tr.detail-row > td { background: #0d0d14; padding: 12px 16px; white-space: normal; }
   .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .detail-grid h4 { font-family: var(--title-font); color: var(--gold-dim); margin-bottom: 6px; font-size: 13px; }
@@ -105,6 +112,29 @@
   .chart .bar { fill: #c8a838; }
   .chart .bar:hover { fill: #ffd100; }
   .chart .axis { fill: var(--text-dim); font-size: 9px; }
+
+  /* ---------- moderation ---------- */
+  #moderation-detail { margin-top: 12px; }
+  .mod-report { margin-top: 12px; }
+  .mod-report-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 6px 12px; font-size: 12px; color: #c9b27a; }
+  .mod-details { margin: 10px 0; padding: 10px; background: #0d0d14; border: 1px solid #2a2414; border-radius: 4px; white-space: pre-wrap; }
+  .mod-actions, .mod-account-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+  .mod-actions button, .mod-account-actions button {
+    padding: 5px 10px; background: #1a1410; color: #c9b27a; border: 1px solid #463a1c; border-radius: 3px; cursor: pointer;
+  }
+  .mod-actions button:hover, .mod-account-actions button:hover { color: #fff; border-color: var(--gold-dim); }
+  .mod-account-actions input { padding: 6px 8px; background: #11111a; border: 1px solid var(--border); border-radius: 4px; color: var(--text); }
+  #mod-reason { min-width: 300px; flex: 1 1 300px; }
+  #mod-custom-expiry { width: 190px; }
+  .mod-confirm { display: none; margin: 10px 0; padding: 10px; border: 1px solid #8a6f2d; border-radius: 4px; background: #171207; }
+  .mod-confirm.show { display: block; }
+  .mod-confirm h4 { font-family: var(--title-font); color: var(--gold); margin-bottom: 6px; }
+  .mod-confirm dl { display: grid; grid-template-columns: 90px 1fr; gap: 4px 8px; font-size: 12px; }
+  .mod-confirm dt { color: var(--text-dim); }
+  .mod-confirm dd { color: var(--text); }
+  .mod-confirm .confirm-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .mod-confirm button { padding: 5px 10px; background: #1a1410; color: #c9b27a; border: 1px solid #463a1c; border-radius: 3px; cursor: pointer; }
+  .mod-confirm .danger { border-color: #b34a3a; color: #ff7a5e; }
 </style>
 </head>
 <body>
@@ -126,29 +156,44 @@
       <div class="who">signed in as <span id="who-name"></span><button id="logout">Sign out</button></div>
     </header>
 
-    <section id="stats"></section>
+    <nav id="admin-tabs">
+      <button class="admin-tab active" data-admin-page="overview">Overview</button>
+      <button class="admin-tab" data-admin-page="moderation">Moderation</button>
+    </nav>
 
-    <section class="panel">
-      <div class="panel-title">Players online <span class="hint">refreshes every 5s</span></div>
-      <div id="online"></div>
-    </section>
+    <main id="page-overview" class="admin-page active">
+      <section id="stats"></section>
 
-    <section id="charts"></section>
+      <section class="panel">
+        <div class="panel-title">Players online <span class="hint">refreshes every 5s</span></div>
+        <div id="online"></div>
+      </section>
 
-    <section class="panel">
-      <div class="panel-title">Accounts</div>
-      <div class="controls">
-        <input id="account-search" placeholder="Search username…" />
-        <div class="pager" id="accounts-pager"></div>
-      </div>
-      <div id="accounts"></div>
-    </section>
+      <section id="charts"></section>
 
-    <section class="panel">
-      <div class="panel-title">Characters <span class="hint">click a column to sort</span></div>
-      <div class="controls"><div class="pager" id="characters-pager"></div></div>
-      <div id="characters"></div>
-    </section>
+      <section class="panel">
+        <div class="panel-title">Accounts</div>
+        <div class="controls">
+          <input id="account-search" placeholder="Search username…" />
+          <div class="pager" id="accounts-pager"></div>
+        </div>
+        <div id="accounts"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Characters <span class="hint">click a column to sort</span></div>
+        <div class="controls"><div class="pager" id="characters-pager"></div></div>
+        <div id="characters"></div>
+      </section>
+    </main>
+
+    <main id="page-moderation" class="admin-page">
+      <section class="panel">
+        <div class="panel-title">Moderation <span class="hint">highest open report counts first</span></div>
+        <div id="moderation"></div>
+        <div id="moderation-detail"></div>
+      </section>
+    </main>
   </div>
 
   <script type="module" src="/src/admin/main.ts"></script>

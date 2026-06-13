@@ -60,3 +60,14 @@ export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(path, { headers: { Authorization: `Bearer ${token}` } });
   return parseEnvelope<T>(res);
 }
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const token = getToken();
+  if (!token) throw new ApiError(401, 'not signed in');
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  return parseEnvelope<T>(res);
+}

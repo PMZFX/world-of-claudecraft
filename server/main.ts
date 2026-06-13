@@ -5,8 +5,9 @@ import { WebSocketServer, WebSocket } from 'ws';
 import {
   ensureSchema, pool, createAccount, findAccount, touchLogin, saveToken, accountForToken,
   listCharacters, getCharacter, createCharacter, deleteCharacter, closeOrphanSessions,
-  pruneChatLogs, searchCharacters, characterCountsByRealm,
+  pruneChatLogs, searchCharacters, characterCountsByRealm, moderationStatusForAccount, renameCharacter,
 } from './db';
+import { cleanReportReason, createPlayerReport } from './moderation_db';
 import { hashPassword, verifyPassword, newToken, validUsername, validPassword, validCharName } from './auth';
 import { json, readBody } from './http_util';
 import { rateLimited } from './ratelimit';
@@ -27,6 +28,20 @@ async function bearerAccount(req: http.IncomingMessage): Promise<number | null> 
   const m = /^Bearer ([a-f0-9]{64})$/.exec(auth);
   if (!m) return null;
   return accountForToken(m[1]);
+}
+
+async function bearerActiveAccount(req: http.IncomingMessage, res: http.ServerResponse): Promise<number | null> {
+  const accountId = await bearerAccount(req);
+  if (accountId === null) {
+    json(res, 401, { error: 'not authenticated' });
+    return null;
+  }
+  const status = await moderationStatusForAccount(accountId);
+  if (status.locked) {
+    json(res, 403, { error: status.message });
+    return null;
+  }
+  return accountId;
 }
 
 const MIME: Record<string, string> = {
@@ -141,14 +156,16 @@ async function handleApi(req: http.IncomingMessage, res: http.ServerResponse): P
       if (!account || !(await verifyPassword(String(body.password ?? ''), account.password_hash))) {
         return json(res, 401, { error: 'invalid username or password' });
       }
+      const status = await moderationStatusForAccount(account.id);
+      if (status.locked) return json(res, 403, { error: status.message });
       await touchLogin(account.id);
       const token = newToken();
       await saveToken(token, account.id);
       return json(res, 200, { token, username: account.username });
     }
     if (url === '/api/characters') {
-      const accountId = await bearerAccount(req);
-      if (accountId === null) return json(res, 401, { error: 'not authenticated' });
+      const accountId = await bearerActiveAccount(req, res);
+      if (accountId === null) return;
       if (req.method === 'GET') {
         const chars = await listCharacters(accountId);
         return json(res, 200, {
@@ -156,6 +173,7 @@ async function handleApi(req: http.IncomingMessage, res: http.ServerResponse): P
           characters: chars.map((c) => ({
             id: c.id, name: c.name, class: c.class, level: c.level,
             online: [...game.clients.values()].some((s) => s.characterId === c.id),
+            forceRename: c.force_rename,
           })),
         });
       }
@@ -168,7 +186,7 @@ async function handleApi(req: http.IncomingMessage, res: http.ServerResponse): P
         if (chars.length >= 10) return json(res, 400, { error: 'character limit reached' });
         try {
           const c = await createCharacter(accountId, body.name, body.class);
-          return json(res, 200, { id: c.id, name: c.name, class: c.class, level: c.level });
+          return json(res, 200, { id: c.id, name: c.name, class: c.class, level: c.level, forceRename: c.force_rename });
         } catch (err: any) {
           if (String(err?.message).includes('unique') || err?.code === '23505') {
             return json(res, 409, { error: 'that name is taken' });
@@ -178,9 +196,26 @@ async function handleApi(req: http.IncomingMessage, res: http.ServerResponse): P
       }
     }
     const delMatch = /^\/api\/characters\/(\d+)$/.exec(url);
+    const renameMatch = /^\/api\/characters\/(\d+)\/rename$/.exec(url);
+    if (req.method === 'POST' && renameMatch) {
+      const accountId = await bearerActiveAccount(req, res);
+      if (accountId === null) return;
+      const body = await readBody(req);
+      if (!validCharName(body.name)) return json(res, 400, { error: 'invalid character name (2-16 letters)' });
+      try {
+        const c = await renameCharacter(accountId, Number(renameMatch[1]), body.name);
+        if (!c) return json(res, 404, { error: 'character not found' });
+        return json(res, 200, { id: c.id, name: c.name, class: c.class, level: c.level, forceRename: c.force_rename });
+      } catch (err: any) {
+        if (String(err?.message).includes('unique') || err?.code === '23505') {
+          return json(res, 409, { error: 'that name is taken' });
+        }
+        throw err;
+      }
+    }
     if (req.method === 'DELETE' && delMatch) {
-      const accountId = await bearerAccount(req);
-      if (accountId === null) return json(res, 401, { error: 'not authenticated' });
+      const accountId = await bearerActiveAccount(req, res);
+      if (accountId === null) return;
       const ok = await deleteCharacter(accountId, Number(delMatch[1]));
       return json(res, ok ? 200 : 404, ok ? { ok: true } : { error: 'not found' });
     }
@@ -197,6 +232,35 @@ async function handleApi(req: http.IncomingMessage, res: http.ServerResponse): P
       const q = new URL(req.url ?? '/', 'http://localhost').searchParams.get('q') ?? '';
       const results = q.trim().length >= 1 ? await searchCharacters(q, 8) : [];
       return json(res, 200, { results });
+    }
+    if (req.method === 'POST' && url === '/api/reports') {
+      const accountId = await bearerActiveAccount(req, res);
+      if (accountId === null) return;
+      const body = await readBody(req);
+      const reason = cleanReportReason(body.reason);
+      if (!reason) return json(res, 400, { error: 'choose a report reason' });
+      const reporterCharacterId = Number(body.reporterCharacterId);
+      const targetPid = Number(body.targetPid);
+      if (!Number.isFinite(reporterCharacterId) || !Number.isFinite(targetPid)) {
+        return json(res, 400, { error: 'invalid report target' });
+      }
+      const reporter = await getCharacter(accountId, reporterCharacterId);
+      if (!reporter) return json(res, 404, { error: 'reporting character not found' });
+      const target = game.reportTargetForPid(targetPid);
+      if (!target) return json(res, 404, { error: 'that player is no longer online' });
+      try {
+        const report = await createPlayerReport({
+          reporterAccountId: accountId,
+          reporterCharacterId: reporter.id,
+          reporterCharacterName: reporter.name,
+          target,
+          reason,
+          details: body.details,
+        });
+        return json(res, 200, { ok: true, reportId: report.id });
+      } catch (err) {
+        return json(res, 400, { error: err instanceof Error ? err.message : 'could not submit report' });
+      }
     }
     if (req.method === 'GET' && url === '/api/status') {
       return json(res, 200, {
@@ -287,9 +351,20 @@ async function main(): Promise<void> {
       ws.close();
       return;
     }
+    const status = await moderationStatusForAccount(accountId);
+    if (status.locked) {
+      ws.send(JSON.stringify({ t: 'error', error: status.message }));
+      ws.close();
+      return;
+    }
     const character = await getCharacter(accountId, characterId);
     if (!character) {
       ws.send(JSON.stringify({ t: 'error', error: 'no such character' }));
+      ws.close();
+      return;
+    }
+    if (character.force_rename) {
+      ws.send(JSON.stringify({ t: 'error', error: 'This character must be renamed before entering the world.' }));
       ws.close();
       return;
     }

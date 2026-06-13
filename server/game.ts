@@ -519,6 +519,26 @@ export class GameServer {
     return players.sort((a, b) => b.sessionSeconds - a.sessionSeconds);
   }
 
+  liveAccountIds(): Set<number> {
+    return new Set([...this.clients.values()].map((s) => s.accountId));
+  }
+
+  reportTargetForPid(pid: number): { accountId: number; characterId: number; characterName: string } | null {
+    const session = this.clients.get(pid);
+    return session
+      ? { accountId: session.accountId, characterId: session.characterId, characterName: session.name }
+      : null;
+  }
+
+  disconnectAccount(accountId: number, reason: string): void {
+    for (const session of [...this.clients.values()]) {
+      if (session.accountId !== accountId) continue;
+      this.send(session, { t: 'error', error: reason });
+      try { session.ws.close(); } catch { /* connection already closing */ }
+      void this.leave(session, 'moderation action');
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Input & commands
   // -------------------------------------------------------------------------
