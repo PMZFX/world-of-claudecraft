@@ -149,6 +149,12 @@ function wrapAngle(d: number): number {
   return d;
 }
 
+function copyPos(dst: { x: number; y: number; z: number }, src: { x: number; y: number; z: number }): void {
+  dst.x = src.x;
+  dst.y = src.y;
+  dst.z = src.z;
+}
+
 function blankEntity(id: number): Entity {
   return {
     id, kind: 'mob', templateId: '', name: '', level: 1,
@@ -349,7 +355,7 @@ export class ClientWorld implements IWorld {
         if (!hasIdentity) return null;
         e = blankEntity(w.id);
         e.pos = { x: w.x, y: w.y, z: w.z };
-        e.prevPos = { x: w.x, y: w.y, z: w.z };
+        copyPos(e.prevPos, e.pos);
         e.facing = w.f;
         e.prevFacing = w.f;
         this.entities.set(w.id, e);
@@ -393,11 +399,9 @@ export class ClientWorld implements IWorld {
         }
       }
       e.netUpdatedAt = now;
-      e.prevPos = {
-        x: e.prevPos.x + (e.pos.x - e.prevPos.x) * entAlpha,
-        y: e.prevPos.y + (e.pos.y - e.prevPos.y) * entAlpha,
-        z: e.prevPos.z + (e.pos.z - e.prevPos.z) * entAlpha,
-      };
+      e.prevPos.x = e.prevPos.x + (e.pos.x - e.prevPos.x) * entAlpha;
+      e.prevPos.y = e.prevPos.y + (e.pos.y - e.prevPos.y) * entAlpha;
+      e.prevPos.z = e.prevPos.z + (e.pos.z - e.prevPos.z) * entAlpha;
       e.prevFacing = e.prevFacing + wrapAngle(e.facing - e.prevFacing) * entFacingAlpha;
       e.pos.x = w.x; e.pos.y = w.y; e.pos.z = w.z;
       e.facing = w.f;

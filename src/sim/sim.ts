@@ -174,6 +174,12 @@ export function computeQuestState(
   return 'available';
 }
 
+function copyPos(dst: { x: number; y: number; z: number }, src: { x: number; y: number; z: number }): void {
+  dst.x = src.x;
+  dst.y = src.y;
+  dst.z = src.z;
+}
+
 function freshCounters(): RewardCounters {
   return {
     damageDealt: 0, damageTaken: 0, kills: 0, deaths: 0, xpGained: 0,
@@ -584,7 +590,7 @@ export class Sim {
     this.tickCount++;
 
     for (const e of this.entities.values()) {
-      e.prevPos = { ...e.pos };
+      copyPos(e.prevPos, e.pos);
       e.prevFacing = e.facing;
     }
 
