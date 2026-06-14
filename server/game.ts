@@ -631,7 +631,11 @@ export class GameServer {
       case 'equip': if (typeof msg.item === 'string') sim.equipItem(msg.item, pid); break;
       case 'use': if (typeof msg.item === 'string') sim.useItem(msg.item, pid); break;
       case 'buy': if (typeof msg.npc === 'number' && typeof msg.item === 'string') sim.buyItem(msg.npc, msg.item, pid); break;
-      case 'sell': if (typeof msg.item === 'string') sim.sellItem(msg.item, pid); break;
+      case 'sell':
+        if (typeof msg.item === 'string') {
+          sim.sellItem(msg.item, typeof msg.count === 'number' ? msg.count : undefined, pid);
+        }
+        break;
       case 'release': sim.releaseSpirit(pid); break;
       case 'chat': {
         if (typeof msg.text !== 'string') break;

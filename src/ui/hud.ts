@@ -1820,7 +1820,7 @@ export class Hud {
       row.className = 'bag-item';
       const qColor = QUALITY_COLOR[item.quality ?? 'common'] ?? '#fff';
       row.innerHTML = `${this.itemIcon(item)}<span style="color:${qColor}">${item.name}</span><span class="bi-count">${s.count > 1 ? 'x' + s.count : ''}</span>`;
-      row.addEventListener('click', () => {
+      row.addEventListener('click', (ev) => {
         if (this.tradeOpen) {
           this.addItemToTrade(s.itemId);
         } else if (this.marketOpen && this.marketTab === 'sell') {
@@ -1828,11 +1828,16 @@ export class Hud {
           this.marketSellItem = s.itemId;
           this.renderMarket();
         } else if (this.vendorOpen) {
-          this.sim.sellItem(s.itemId);
+          this.sellBagItem(s, ev);
         } else {
           this.sim.useItem(s.itemId);
           this.renderBags();
         }
+      });
+      row.addEventListener('contextmenu', (ev) => {
+        if (!this.vendorOpen || !ev.ctrlKey) return;
+        ev.preventDefault();
+        this.sellBagItem(s, ev);
       });
       this.attachTooltip(row, () => {
         let extra = '';
@@ -1851,6 +1856,54 @@ export class Hud {
     money.innerHTML = this.moneyHtml(sim.copper);
     el.appendChild(money);
     el.querySelector('[data-close]')?.addEventListener('click', () => { el.style.display = 'none'; this.hideTooltip(); });
+  }
+
+  private sellBagItem(slot: InvSlot, ev: MouseEvent): void {
+    const count = Math.max(1, Math.floor(slot.count));
+    if (ev.ctrlKey || ev.metaKey) {
+      this.sim.sellItem(slot.itemId, count);
+    } else if (ev.shiftKey && count > 1) {
+      this.showSellQuantityPrompt(slot.itemId, count);
+    } else {
+      this.sim.sellItem(slot.itemId);
+    }
+  }
+
+  private showSellQuantityPrompt(itemId: string, maxCount: number): void {
+    document.querySelectorAll('.sell-quantity-prompt').forEach((el) => el.remove());
+    const item = ITEMS[itemId];
+    const stack = $('#prompt-stack');
+    const prompt = document.createElement('div');
+    prompt.className = 'prompt panel sell-quantity-prompt';
+    prompt.innerHTML = `<div class="prompt-text">Sell ${esc(item?.name ?? itemId)}</div>`;
+    const input = document.createElement('input');
+    input.className = 'prompt-number';
+    input.type = 'number';
+    input.min = '1';
+    input.max = String(maxCount);
+    input.step = '1';
+    input.value = '1';
+    const confirm = document.createElement('button');
+    confirm.className = 'btn';
+    confirm.textContent = 'Sell';
+    const cancel = document.createElement('button');
+    cancel.className = 'btn';
+    cancel.textContent = 'Cancel';
+    const close = () => prompt.remove();
+    const submit = () => {
+      const count = Math.max(1, Math.min(maxCount, Math.floor(Number(input.value) || 0)));
+      this.sim.sellItem(itemId, count);
+      close();
+    };
+    confirm.addEventListener('click', submit);
+    cancel.addEventListener('click', close);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submit();
+      else if (e.key === 'Escape') close();
+    });
+    prompt.append(input, confirm, cancel);
+    stack.appendChild(prompt);
+    window.setTimeout(() => { input.focus(); input.select(); }, 0);
   }
 
   // -------------------------------------------------------------------------

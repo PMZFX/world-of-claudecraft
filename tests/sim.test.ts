@@ -480,6 +480,36 @@ describe('food, drink, vendor', () => {
     expect(sim.countItem('baked_bread')).toBe(0);
     expect(sim.events).toContainEqual({ type: 'error', text: 'Too far away.', pid: sim.player.id });
   });
+
+  it('vendor sells stack quantities without exceeding what the player has', () => {
+    const sim = makeSim('warrior');
+    const wilkes = [...sim.entities.values()].find((e) => e.templateId === 'trader_wilkes')!;
+    teleportTo(sim, wilkes.pos.x + 2, wilkes.pos.z);
+    sim.addItem('wolf_fang', 5);
+
+    sim.sellItem('wolf_fang', 3);
+
+    expect(sim.copper).toBe(12);
+    expect(sim.countItem('wolf_fang')).toBe(2);
+
+    sim.sellItem('wolf_fang', 99);
+
+    expect(sim.copper).toBe(20);
+    expect(sim.countItem('wolf_fang')).toBe(0);
+  });
+
+  it('vendor ignores invalid sell quantities', () => {
+    const sim = makeSim('warrior');
+    const wilkes = [...sim.entities.values()].find((e) => e.templateId === 'trader_wilkes')!;
+    teleportTo(sim, wilkes.pos.x + 2, wilkes.pos.z);
+    sim.addItem('wolf_fang', 2);
+
+    sim.sellItem('wolf_fang', 0);
+    sim.sellItem('wolf_fang', -1);
+
+    expect(sim.copper).toBe(0);
+    expect(sim.countItem('wolf_fang')).toBe(2);
+  });
 });
 
 describe('leveling', () => {

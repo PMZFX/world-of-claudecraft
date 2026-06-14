@@ -131,6 +131,24 @@ describe('delta snapshots', () => {
     }
   });
 
+  it('sell command forwards bounded stack quantities', () => {
+    const player = server.sim.entities.get(session.pid)!;
+    const vendor = [...server.sim.entities.values()].find((e) => e.templateId === 'trader_wilkes')!;
+    player.pos = { ...vendor.pos, x: vendor.pos.x + 2 };
+    player.prevPos = { ...player.pos };
+    server.sim.addItem('wolf_fang', 5, session.pid);
+
+    server.handleMessage(session, JSON.stringify({ t: 'cmd', cmd: 'sell', item: 'wolf_fang', count: 3 }));
+
+    expect(server.sim.meta(session.pid)?.copper).toBe(12);
+    expect(server.sim.countItem('wolf_fang', session.pid)).toBe(2);
+
+    server.handleMessage(session, JSON.stringify({ t: 'cmd', cmd: 'sell', item: 'wolf_fang', count: 99 }));
+
+    expect(server.sim.meta(session.pid)?.copper).toBe(20);
+    expect(server.sim.countItem('wolf_fang', session.pid)).toBe(0);
+  });
+
   it('resends a heavy field once it changes', () => {
     broadcast(server);
     fc.sent.length = 0;

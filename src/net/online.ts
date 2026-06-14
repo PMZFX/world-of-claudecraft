@@ -598,8 +598,8 @@ export class ClientWorld implements IWorld {
   buyItem(npcId: number, itemId: string): void {
     this.cmd({ cmd: 'buy', npc: npcId, item: itemId });
   }
-  sellItem(itemId: string): void {
-    this.cmd({ cmd: 'sell', item: itemId });
+  sellItem(itemId: string, count?: number): void {
+    this.cmd({ cmd: 'sell', item: itemId, count });
   }
   releaseSpirit(): void {
     this.cmd({ cmd: 'release' });

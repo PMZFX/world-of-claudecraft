@@ -165,7 +165,7 @@ export interface IWorld {
   equipItem(itemId: string): void;
   useItem(itemId: string): void;
   buyItem(npcId: number, itemId: string): void;
-  sellItem(itemId: string): void;
+  sellItem(itemId: string, count?: number): void;
   releaseSpirit(): void;
   chat(text: string): void;
   // social systems
