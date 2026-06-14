@@ -1635,7 +1635,7 @@ export class Hud {
     if (match) return t('hud.errors.pendingInvite', { name: match[1] });
     match = /^You may keep at most (\d+) goods on the market at once\.$/.exec(text);
     if (match) return t('itemUi.errors.tooManyListings', { count: formatNumber(Number(match[1]), { maximumFractionDigits: 0 }) });
-    match = /^That is your own listing . cancel it to reclaim it\.$/.exec(text);
+    match = /^That is your own listing (?:\u2014|-) cancel it to reclaim it\.$/.exec(text);
     if (match) return t('itemUi.errors.ownListing');
     return text;
   }
@@ -1715,7 +1715,7 @@ export class Hud {
       item: this.itemStackLogName(match[1], match[2]),
       money: this.localizeSimMoney(match[3]),
     });
-    match = /^(.+) bought your (.+) for (.+?) . collect (.+) from the Merchant\.$/.exec(text);
+    match = /^(.+) bought your (.+) for (.+?) (?:\u2014|-) collect (.+) from the Merchant\.$/.exec(text);
     if (match) return t('itemUi.logs.sellerSold', {
       buyer: match[1],
       item: match[2],
