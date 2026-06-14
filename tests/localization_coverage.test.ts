@@ -448,6 +448,9 @@ describe("i18n Localization Key Coverage", () => {
         expect(rendered, `${lang}.${entry.key}`).not.toBe(entry.key);
         expect(rendered, `${lang}.${entry.key}`).not.toContain("$d");
         expect(rendered, `${lang}.${entry.key}`).not.toMatch(/\{damage\}/);
+        if (lang !== "en" && lang !== "en_CA" && entry.kind === "ability" && entry.field === "description") {
+          expect(rendered, `${lang}.${entry.key} should not use English yard abbreviation`).not.toMatch(/\byd\b/i);
+        }
         if (entry.kind === "ability" && entry.field === "description" && entry.source.includes("$d")) {
           expect(rendered, `${lang}.${entry.key}`).toContain("11-14");
         }
@@ -455,6 +458,20 @@ describe("i18n Localization Key Coverage", () => {
       expect(entityTranslationFallbackLog(), `${lang} Phase 7 fallback log`).toHaveLength(0);
     }
 
+    setLanguage("en");
+  });
+
+  it("should route Phase 7 class-detail damage ranges through localized templates", () => {
+    const source = fs.readFileSync(path.resolve(process.cwd(), "src/main.ts"), "utf8");
+    expect(source).toContain("abilityUi.tooltip.damageRange");
+    expect(source).toContain("abilityUi.tooltip.finisherDamage");
+    expect(source).not.toContain(" to ${primaryEffect.max}");
+    expect(source).not.toContain(" plus ${primaryEffect.perCombo} per combo point");
+
+    setLanguage("de_DE");
+    expect(t("abilityUi.tooltip.damageRange", { min: "16", max: "25" })).toBe("16 bis 25");
+    setLanguage("zh_CN");
+    expect(t("abilityUi.tooltip.damageRange", { min: "16", max: "25" })).toBe("16 到 25");
     setLanguage("en");
   });
 
