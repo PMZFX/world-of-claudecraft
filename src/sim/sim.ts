@@ -4063,6 +4063,13 @@ export class Sim {
       this.emit({ type: 'log', text: 'You are no longer marked as away.', color: '#ffd100', pid: r.meta.entityId });
     }
 
+    // "/party" (no message) is a self-only roster readout; "/party <msg>"
+    // and "/p <msg>" stay party chat (the trailing \s in that branch below).
+    if (/^\/(party|group|grp)\s*$/i.test(raw)) {
+      this.error(r.meta.entityId, this.partyReadout(r.meta.entityId));
+      return null;
+    }
+
     if (/^\/who(?:\s|$)/i.test(raw)) {
       this.error(r.meta.entityId, 'The /who roster is available in online play.');
       return null;
@@ -5681,6 +5688,21 @@ export class Sim {
       return s.count > 1 ? `${name} x${s.count}` : name;
     });
     return `Bags (${parts.length}): ${parts.join(', ')}. ${purse}`;
+  // Self-only readout of the player's party: each member in join order with
+  // level, class, and HP% (or (dead)/(offline)), the leader tagged [leader].
+  private partyReadout(pid: number): string {
+    const party = this.partyOf(pid);
+    if (!party) return 'You are not in a party.';
+    const parts = party.members.map((mPid) => {
+      const meta = this.players.get(mPid);
+      const e = this.entities.get(mPid);
+      if (!meta || !e) return meta ? `${meta.name} (offline)` : `Player ${mPid} (offline)`;
+      const cls = CLASSES[meta.cls].name;
+      const state = e.hp <= 0 ? '(dead)' : `${Math.round((e.hp / e.maxHp) * 100)}%`;
+      const tag = mPid === party.leader ? ' [leader]' : '';
+      return `${meta.name} (Lvl ${e.level} ${cls}, ${state})${tag}`;
+    });
+    return `Party (${party.members.length}/${PARTY_MAX}): ${parts.join(', ')}.`;
   }
 
   private error(pid: number, text: string): void {
