@@ -3924,6 +3924,14 @@ export class Sim {
       return null;
     }
 
+    // "/cooldowns" (aliases "/cd", "/cds") — self-only readout of the abilities
+    // currently on cooldown, soonest-ready first. The shared GCD lives in a
+    // separate field and is intentionally not listed here.
+    if (/^\/(?:cooldowns?|cds?)(?:\s|$)/i.test(raw)) {
+      this.error(r.meta.entityId, this.cooldownsReadout(r.e));
+      return null;
+    }
+
     // "/w name message" — private whisper to an online player
     const wm = /^\/(?:w|whisper|t|tell)\s+(\S+)\s+([\s\S]+)$/i.exec(line);
     if (wm) {
@@ -5400,6 +5408,24 @@ export class Sim {
   // float, so Math.ceil keeps a still-active 0.3s remainder showing as "(1s)".
   private auraLabel(a: Aura): string {
     return `${a.name} (${Math.ceil(a.remaining)}s)`;
+  }
+
+  // Self-only readout for "/cooldowns": summarise the abilities currently on
+  // cooldown for this entity, soonest-ready first.
+  //
+  // `e.cooldowns` is a Map<abilityId, remainingSeconds> — entries exist ONLY
+  // while an ability is cooling down (updateTimers deletes them at <= 0), so an
+  // empty map means everything is ready. Resolve the display name via
+  // ABILITIES[id]?.name (fall back to the raw id if an ability is ever missing
+  // from the table). `remaining` is a float, so Math.ceil keeps a 0.3s
+  // remainder showing as "(1s)", matching how /buffs renders aura timers.
+  //
+  private cooldownsReadout(e: Entity): string {
+    if (e.cooldowns.size === 0) return 'No abilities are on cooldown.';
+    const parts = [...e.cooldowns]
+      .sort((a, b) => a[1] - b[1])
+      .map(([id, remaining]) => `${ABILITIES[id]?.name ?? id} (${Math.ceil(remaining)}s)`);
+    return `Abilities on cooldown (${parts.length}): ${parts.join(', ')}.`;
   }
 }
 
