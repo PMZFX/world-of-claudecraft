@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import { localizeServerText, tServer, DICT as serverDICT } from "../src/ui/server_i18n";
-import { DICT as adminDICT } from "../src/admin/i18n";
+import { localizeSimText, localizeSimAuraName, DICT as simDICT } from "../src/ui/sim_i18n";
+import { DICT as adminDICT, classLabel, setAdminLanguage } from "../src/admin/i18n";
+import { resolveReportTarget } from "../server/report_target";
 import {
   setLanguage, supportedLanguages,
   en, es, es_ES, fr_FR, fr_CA, en_CA, it_IT, de_DE, zh_CN, zh_TW, ko_KR, ja_JP, pt_BR, ru_RU,
@@ -200,6 +202,8 @@ describe("H3: DICT key parity, non-empty values, placeholder integrity", () => {
     "admin::de_DE::detail.lengthHours",
     "admin::pt_BR::app.title", "admin::pt_BR::detail.status", "admin::pt_BR::moderation.colStatus",
     "admin::pt_BR::moderation.badgeOnline", "admin::pt_BR::detail.lengthHours",
+    // Class names: "Paladin" is the canonical German/French WoW class name (cognate).
+    "admin::de_DE::class.paladin", "admin::fr_FR::class.paladin", "admin::fr_CA::class.paladin",
   ]);
   function checkNoCopiedEnglish(dict: Record<string, Record<string, string>>, label: string) {
     const en = dict.en;
@@ -316,5 +320,145 @@ describe("H4b: talent-name resolution is complete (no silent English fallthrough
       }
     }
     setLanguage("en");
+  });
+});
+
+// --- S1: sim-emitted log/error/loot text localizes (HIGH-3). These strings originate
+// in src/sim/sim.ts as SimEvent text and are re-localized client-side by sim_i18n via
+// the hud matchers. Each MUST be recognized (non-null) and not stay English. ---
+describe("S1: sim event-text pipeline is localized in every locale", () => {
+  // Concrete samples of the previously-leaking sim emissions (byte-identical templates
+  // with realistic substitutions). If sim.ts wording drifts from sim_i18n, these fail.
+  const samples = [
+    "Talents updated.",
+    "Talents reset.",
+    "You cannot equip that.",
+    "Equipped Worn Shortsword.",
+    "You quaff Minor Healing Potion.",
+    "No fish are biting.",
+    "You sit down to eat.",
+    "You sit down to drink.",
+    "That potion is not ready yet.",
+    "You are already at full health.",
+    "Nothing to restore.",
+    "There is no merchant nearby.",
+    "You cannot sell quest items.",
+    "It is nailed shut.",
+    "You are already in a party.",
+    "You are not the party leader.",
+    "You must be in a party to use raid markers.",
+    "The /who roster is available in online play.",
+    "The bout is decided. Returning to the world…",
+    'Saved build "PvP".',
+    'Loadout "PvP" applied.',
+    'Deleted build "PvP".',
+    "You may choose a specialization at level 10.",
+    "You can save at most 5 loadouts.",
+    "You have prestiged! Prestige Rank 2.",
+    "You dismiss Forest Wolf.",
+    "Forest Wolf is now your loyal companion.",
+    "Forest Wolf dies.",
+    "Forest Wolf becomes enraged!",
+    "Forest Wolf calls for aid!",
+    "Discarded Linen Scrap.",
+    "Discarded Linen Scrap x3.",
+    "Aki wins Worn Shortsword (87)",
+    "Aki leaves the party.",
+    "Aki has left the party.",
+    "Aki has been removed from the party.",
+  ];
+  it("recognizes and localizes every sim emission in every locale", () => {
+    for (const lang of supportedLanguages) {
+      setLanguage(lang);
+      for (const s of samples) {
+        const out = localizeSimText(s);
+        expect(out, `${lang}: sim text "${s}" not recognized (would leak raw English)`).not.toBeNull();
+        if (lang !== "en" && lang !== "en_CA") {
+          expect(out, `${lang}: sim text "${s}" stayed English`).not.toBe(s);
+        }
+      }
+    }
+    setLanguage("en");
+  });
+
+  it("localizes embedded item and mob names inside sim text", () => {
+    setLanguage("de_DE");
+    expect(localizeSimText("Equipped Worn Shortsword.")).not.toContain("Worn Shortsword");
+    expect(localizeSimText("Forest Wolf dies.")).not.toContain("Forest Wolf");
+    setLanguage("en");
+  });
+
+  it("localizes the flavor aura name Tamed and reuses talent/ability titles", () => {
+    setLanguage("de_DE");
+    expect(localizeSimAuraName("Tamed")).not.toBeNull();
+    expect(localizeSimAuraName("Tamed")).not.toBe("Tamed");
+    expect(localizeSimAuraName("not-an-aura")).toBeNull();
+    setLanguage("en");
+  });
+});
+
+// --- S2: sim_i18n DICT parity (typed, but assert at runtime too) ---
+describe("S2: sim_i18n DICT is complete across all locales", () => {
+  it("every supported locale present with full key + placeholder parity", () => {
+    const enKeys = Object.keys(simDICT.en);
+    for (const lang of supportedLanguages) {
+      expect(Object.prototype.hasOwnProperty.call(simDICT, lang), `sim DICT missing locale ${lang}`).toBe(true);
+      expect(Object.keys((simDICT as any)[lang]).length, `sim ${lang} key count`).toBe(enKeys.length);
+      for (const k of enKeys) {
+        const v = (simDICT as any)[lang][k];
+        expect(typeof v === "string" && v.trim().length > 0, `sim ${lang}.${k} empty/missing`).toBe(true);
+        expect(ph(v), `sim ${lang}.${k} placeholders`).toBe(ph((simDICT as any).en[k]));
+      }
+    }
+  });
+});
+
+// --- R1: report-error matcher keys MUST byte-match the server's actual emissions
+// (HIGH-2). The server emits lowercase / no trailing period; the hud keyByMessage must
+// contain those exact bytes or every report failure shows the generic fallback. ---
+describe("R1: report-target errors map to the server's exact emitted bytes", () => {
+  it("server report-target error strings appear verbatim as hud localizeReportError keys", async () => {
+    const offline = await resolveReportTarget({ targetPid: 1 }, {
+      reportTargetForPid: () => null,
+      findCharacterReportTargetByName: async () => null,
+    });
+    const notFound = await resolveReportTarget({ targetCharacterName: "Ghost" }, {
+      reportTargetForPid: () => null,
+      findCharacterReportTargetByName: async () => null,
+    });
+    const invalid = await resolveReportTarget({}, {
+      reportTargetForPid: () => null,
+      findCharacterReportTargetByName: async () => null,
+    });
+    const serverErrors = [offline, notFound, invalid].map((r) => (r.ok ? "" : r.error));
+
+    const hudSrc = fs.readFileSync(path.resolve(process.cwd(), "src/ui/hud.ts"), "utf8");
+    const start = hudSrc.indexOf("keyByMessage: Record<string, TranslationKey> = {");
+    const body = hudSrc.slice(start, hudSrc.indexOf("};", start));
+    const keys = new Set([...body.matchAll(/(^|\n)\s*('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")\s*:/g)].map((m) => m[2].slice(1, -1)));
+
+    for (const err of serverErrors) {
+      expect(keys.has(err), `report error "${err}" is not a localizeReportError key (would fall to generic hud.report.failed)`).toBe(true);
+    }
+  });
+});
+
+// --- A1: admin class column is localized (MED-5) ---
+describe("A1: admin classLabel localizes the raw class id", () => {
+  const classIds = ["warrior", "paladin", "hunter", "rogue", "priest", "shaman", "mage", "warlock", "druid"];
+  it("returns a non-id localized label for every class in every locale", () => {
+    for (const lang of supportedLanguages) {
+      setAdminLanguage(lang);
+      for (const id of classIds) {
+        const label = classLabel(id);
+        expect(label.trim().length, `${lang}.${id}`).toBeGreaterThan(0);
+        if (lang !== "en" && lang !== "en_CA") {
+          expect(label, `${lang}: class "${id}" not localized`).not.toBe(id);
+        }
+      }
+      // unknown id falls back to the raw id
+      expect(classLabel("not-a-class")).toBe("not-a-class");
+    }
+    setAdminLanguage("en");
   });
 });
