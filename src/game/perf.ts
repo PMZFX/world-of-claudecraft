@@ -1,5 +1,6 @@
 import type { Renderer } from '../render/renderer';
 import { assetTimingSnapshot, type AssetTimingSnapshot } from '../render/assets/stats';
+import { analyzePerfSuggestions, type PerfSuggestion } from './perf_doctor';
 
 export interface PerfSnapshot {
   seconds: number;
@@ -87,6 +88,11 @@ function pushSample(values: number[], sample: number): void {
 export class PerfMonitor {
   readonly enabled: boolean;
   private overlay: HTMLDivElement | null = null;
+  private doctor: HTMLDivElement | null = null;
+  private doctorList: HTMLDivElement | null = null;
+  private doctorDismissed = false;
+  private lastDoctorAt = 0;
+  private lastDoctorIds = '';
   private startedAt = performance.now();
   private lastOverlayAt = 0;
   private frames = 0;
@@ -115,8 +121,8 @@ export class PerfMonitor {
     this.enabled = params.has('perf') || localStorage.getItem('woc_perf') === '1';
     if (this.enabled) {
       this.mountOverlay();
-      this.observeLongTasks();
     }
+    this.observeLongTasks();
   }
 
   setRenderer(renderer: Renderer): void {
@@ -128,7 +134,6 @@ export class PerfMonitor {
   }
 
   frame(dt: number, now = performance.now()): void {
-    if (!this.enabled) return;
     this.frames++;
     const ms = Math.min(250, Math.max(0, dt * 1000));
     pushSample(this.frameMs, ms);
@@ -220,11 +225,11 @@ export class PerfMonitor {
   }
 
   tick(now = performance.now()): void {
-    if (!this.enabled) return;
     if (now - this.lastOverlayAt < 1000) return;
     this.lastOverlayAt = now;
     this.lastSnapshot = this.snapshot(now);
-    this.renderOverlay(this.lastSnapshot);
+    if (this.enabled) this.renderOverlay(this.lastSnapshot);
+    this.renderDoctor(this.lastSnapshot, now);
   }
 
   snapshot(now = performance.now()): PerfSnapshot {
@@ -344,6 +349,93 @@ export class PerfMonitor {
     this.overlay.textContent = 'perf: collecting...';
     this.overlay.addEventListener('click', () => this.copyReport());
     document.body.appendChild(this.overlay);
+  }
+
+  private mountDoctor(): void {
+    this.doctor = document.createElement('div');
+    this.doctor.style.cssText = [
+      'position:fixed',
+      'right:14px',
+      'bottom:14px',
+      'z-index:2147483600',
+      'width:min(360px,calc(100vw - 28px))',
+      'font:13px/1.35 system-ui,-apple-system,Segoe UI,sans-serif',
+      'color:#e5edf8',
+      'background:rgba(8,13,22,0.94)',
+      'border:1px solid rgba(250,204,21,0.42)',
+      'border-radius:8px',
+      'box-shadow:0 12px 36px rgba(0,0,0,0.45)',
+      'padding:11px',
+      'pointer-events:auto',
+    ].join(';');
+    const head = document.createElement('div');
+    head.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px';
+    const title = document.createElement('div');
+    title.textContent = 'Performance suggestions';
+    title.style.cssText = 'font-weight:700;color:#fde68a;letter-spacing:0';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = 'x';
+    close.setAttribute('aria-label', 'Dismiss performance suggestions');
+    close.style.cssText = [
+      'width:28px',
+      'height:28px',
+      'border:1px solid rgba(255,255,255,0.18)',
+      'border-radius:6px',
+      'background:rgba(255,255,255,0.08)',
+      'color:#e5edf8',
+      'font:20px/1 system-ui,sans-serif',
+      'cursor:pointer',
+    ].join(';');
+    close.addEventListener('click', () => {
+      this.doctorDismissed = true;
+      this.doctor?.remove();
+      this.doctor = null;
+      this.doctorList = null;
+    });
+    head.append(title, close);
+    this.doctorList = document.createElement('div');
+    this.doctor.append(head, this.doctorList);
+    document.body.appendChild(this.doctor);
+  }
+
+  private renderDoctor(s: PerfSnapshot, now: number): void {
+    if (this.doctorDismissed || now - this.startedAt < 12_000 || now - this.lastDoctorAt < 5_000) return;
+    this.lastDoctorAt = now;
+    const suggestions = analyzePerfSuggestions(s, location.search);
+    if (!suggestions.length) {
+      this.doctor?.remove();
+      this.doctor = null;
+      this.doctorList = null;
+      this.lastDoctorIds = '';
+      return;
+    }
+    const ids = suggestions.map((x) => x.id).join('|');
+    if (ids === this.lastDoctorIds && this.doctor) return;
+    this.lastDoctorIds = ids;
+    if (!this.doctor) this.mountDoctor();
+    if (!this.doctorList) return;
+    this.doctorList.replaceChildren(...suggestions.map((suggestion) => this.doctorItem(suggestion)));
+  }
+
+  private doctorItem(suggestion: PerfSuggestion): HTMLElement {
+    const item = document.createElement('div');
+    item.style.cssText = 'padding:8px 0;border-top:1px solid rgba(255,255,255,0.08)';
+    const title = document.createElement('div');
+    title.textContent = suggestion.title;
+    title.style.cssText = `font-weight:700;color:${suggestion.severity === 'critical' ? '#fecaca' : '#dbeafe'};margin-bottom:3px`;
+    const body = document.createElement('div');
+    body.textContent = suggestion.body;
+    body.style.cssText = 'color:#b8c4d6';
+    item.append(title, body);
+    if (suggestion.action) {
+      const action = document.createElement('a');
+      action.textContent = suggestion.action.label;
+      action.href = suggestion.action.href;
+      action.style.cssText = 'display:inline-block;margin-top:7px;color:#93c5fd;text-decoration:underline;font-weight:700';
+      item.append(action);
+    }
+    return item;
   }
 
   private renderOverlay(s: PerfSnapshot): void {
