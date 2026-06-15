@@ -16,6 +16,8 @@ const TOUCH_LOOK_PITCH_RATE = 2.2;
 
 export interface InputCallbacks {
   onTab(): void;
+  onTargetFriendly(): void;
+  onCycleFriendly(): void;
   onAbility(slot: number): void;
   onUiKey(key: 'interact' | 'bags' | 'char' | 'spellbook' | 'talents' | 'questlog' | 'map' | 'nameplates' | 'escape' | 'chat' | 'meters' | 'social' | 'arena' | 'leaderboard'): void;
   onEmoteWheel(open: boolean): void;
@@ -279,6 +281,8 @@ export class Input {
     switch (action) {
       case 'autorun': this.autorun = !this.autorun; this.noteIntent('move'); return;
       case 'target': this.cb.onTab(); return;
+      case 'targetFriendly': this.cb.onTargetFriendly(); return;
+      case 'targetFriendlyNext': this.cb.onCycleFriendly(); return;
       case 'interact': this.cb.onUiKey('interact'); return;
       case 'bags': this.cb.onUiKey('bags'); return;
       case 'char': this.cb.onUiKey('char'); return;
