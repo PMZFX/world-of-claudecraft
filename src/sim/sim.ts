@@ -4101,6 +4101,25 @@ export class Sim {
         school: (ms.school as Aura['school']) ?? 'physical',
       });
     }
+    // Dread: a landed hit can terrify the victim into fleeing. Reuses the exact
+    // `fear_incap` incapacitate aura the player-cast Fear applies, so
+    // `updateFearMovement` drives the panicked run — no new aura kind or hook.
+    // Guarded on `hostile` (a friendly pet never fears the party) and on a player
+    // target (mobs can't flee via this path). `diminishedCrowdControlDuration`
+    // returns the full duration for a mob source (DR is PvP-only), so the victim
+    // gets the authored fear length.
+    const dread = MOBS[mob.templateId]?.dread;
+    if (dread && mob.hostile && target.kind === 'player' && !target.dead && this.rng.chance(dread.chance)) {
+      const remaining = this.diminishedCrowdControlDuration(mob, target, 'fear', dread.duration);
+      if (remaining !== null) {
+        this.applyAura(target, {
+          id: 'fear_incap', name: dread.name, kind: 'incapacitate',
+          remaining, duration: remaining,
+          value: this.rng.range(-Math.PI, Math.PI),
+          sourceId: mob.id, school: dread.school ?? 'shadow', breaksOnDamage: true,
+        });
+      }
+    }
   }
 
   // Apply (or refresh + stack) a corrosive armor-shred debuff on the victim.

@@ -199,6 +199,11 @@ export interface MobTemplate {
   // more physical damage from everyone until it expires. Rides the existing
   // sunder aura; no new aura kind.
   corrode?: { chance: number; armor: number; maxStacks: number; duration: number; name: string; school?: Aura['school'] };
+  // Combat mechanic: a landed melee hit has `chance` to terrify the victim — a
+  // fear that sends the struck player fleeing for `duration`s. Rides the existing
+  // `fear_incap` incapacitate aura the player-cast Fear uses, so `updateFearMovement`
+  // drives the panicked run with no new aura kind or movement hook.
+  dread?: { chance: number; duration: number; name: string; school?: Aura['school'] };
   // Pet mechanic: this creature is a ranged caster (warlock Imp) — instead of
   // closing to melee, it stays at `range` and hurls bolts of `school` damage.
   // updatePet reads this; the bolt damage comes from the mob's weapon range.
