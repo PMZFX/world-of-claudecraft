@@ -81,6 +81,7 @@ const PVP_CC_DR_MULTIPLIERS = [1, 0.5, 0.25] as const;
 const SAY_RANGE = 25; // /say carries a short distance; /yell across a camp
 const YELL_RANGE = 100;
 const OVERHEAD_EMOTE_DURATION = 3.2;
+const CAST_COMPLETE_EPS = 1e-9;
 
 // Predefined social emotes. Each entry maps a command (and its aliases) to the
 // third-person action text shown to everyone in /say range. `solo` is used with
@@ -1640,7 +1641,7 @@ export class Sim {
         const res = this.resolvedAbility(p.castingAbility, p.id);
         if (res) this.applyChannelTick(p, res);
       }
-      if (p.castRemaining <= 0) {
+      if (p.castRemaining <= CAST_COMPLETE_EPS) {
         p.castingAbility = null;
         p.channeling = false;
         this.emit({ type: 'castStop', entityId: p.id, success: true });
@@ -1648,7 +1649,7 @@ export class Sim {
       return;
     }
 
-    if (p.castRemaining <= 0) {
+    if (p.castRemaining <= CAST_COMPLETE_EPS) {
       const castId = p.castingAbility;
       p.castingAbility = null;
       p.castRemaining = 0;
