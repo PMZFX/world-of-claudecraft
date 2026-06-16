@@ -2742,7 +2742,7 @@ export class Hud {
     const key = exact[text];
     if (key) return t(key);
 
-    let match = /^You must be in (Bear|Cat) Form\.$/.exec(text);
+    let match = /^You must be in (Bear|Wolf) Form\.$/.exec(text);
     if (match) return t('hud.errors.requiresForm', { form: t(match[1] === 'Bear' ? 'hud.errors.bear' : 'hud.errors.cat') });
     match = /^That ability requires the target below (\d+)% health\.$/.exec(text);
     if (match) return t('hud.errors.targetHealthBelow', { percent: match[1] });
