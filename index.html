@@ -470,6 +470,27 @@
   .mana .bar-fill { background-color: var(--color-mana); }
   .rage .bar-fill { background-color: var(--color-rage); }
   .energy .bar-fill { background-color: var(--color-energy); }
+  /* Low-mana/energy warning: the resource fill pulses brighter and a short
+     caption appears at the end of the bar. Driven by --lr-opacity / --lr-pulse
+     set from the HUD (intensity scales as the bar nears empty). */
+  .bar.low { --lr-opacity: 0.7; --lr-pulse: 1s; }
+  .bar.low .bar-fill {
+    box-shadow: 0 0 5px 1px rgba(150, 205, 255, var(--lr-opacity)), inset 0 0 4px rgba(220, 240, 255, 0.9);
+    animation: low-resource-pulse var(--lr-pulse) ease-in-out infinite;
+  }
+  .bar.energy.low .bar-fill { box-shadow: 0 0 5px 1px rgba(255, 225, 110, var(--lr-opacity)), inset 0 0 4px rgba(255, 245, 200, 0.9); }
+  .low-resource-label {
+    display: none; position: absolute; top: 0; right: 5px; line-height: 15px;
+    font-size: 9px; font-weight: bold; letter-spacing: 0.5px;
+    color: #eaf4ff; text-shadow: 0 0 3px #000, 1px 1px 1px #000; text-transform: uppercase; pointer-events: none;
+    animation: low-resource-pulse var(--lr-pulse, 1s) ease-in-out infinite;
+  }
+  .bar.energy.low .low-resource-label { color: #fff3c2; }
+  @keyframes low-resource-pulse { 0%, 100% { filter: brightness(1); opacity: 0.6; } 50% { filter: brightness(1.7); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .bar.low .bar-fill, .low-resource-label { animation: none; }
+    .low-resource-label { opacity: 1; }
+  }
   .combo-row { display: flex; gap: 4px; margin-top: 4px; height: 10px; }
   .combo-pip { width: 12px; height: 10px; border-radius: 50%; border: 1px solid #5c2020; background: #2a0d0d; }
   .combo-pip.on { background: radial-gradient(circle at 35% 30%, #ff7a5e, #c0392b); box-shadow: 0 0 5px #ff5533aa; border-color: #ffad99; }
@@ -4373,7 +4394,7 @@
             <div class="uf-bars">
               <div class="uf-name" id="pf-name"></div>
               <div class="bar hp"><div class="bar-fill" id="pf-hp"></div><div class="bar-text" id="pf-hp-text"></div></div>
-              <div class="bar mana" id="pf-resource"><div class="bar-fill" id="pf-res"></div><div class="bar-text" id="pf-res-text"></div></div>
+              <div class="bar mana" id="pf-resource"><div class="bar-fill" id="pf-res"></div><div class="bar-text" id="pf-res-text"></div><div class="low-resource-label" id="pf-low-resource"></div></div>
             </div>
           </div>
           <div id="petbar" class="panel"></div>

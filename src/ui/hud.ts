@@ -16,6 +16,7 @@ import {
   dist2d, xpForLevel, MAX_LEVEL, MELEE_RANGE, MILESTONES, virtualLevel, canPrestige, xpUntilNextPrestige,
 } from '../sim/types';
 import { xpBarView, formatXp } from './xp_bar';
+import { lowResourceView } from './low_resource';
 import { terrainHeight, WATER_LEVEL, roadDistance, generateDecorations } from '../sim/world';
 import type { Decoration } from '../sim/world';
 import { Meters } from './meters';
@@ -279,6 +280,7 @@ export class Hud {
   private questDialogReturnFocus: HTMLElement | null = null;
   private questLogReturnFocus: HTMLElement | null = null;
   private lastPortraitTarget = -999;
+  private lastLowResourceSig = '';
   // trading: locally staged offer, pushed to the server on change
   private stagedTrade: { items: InvSlot[]; copper: number } = { items: [], copper: 0 };
   private tradeWasOpen = false;
@@ -1524,6 +1526,7 @@ export class Hud {
     this.setText(this.pfResTextEl, `${Math.round(p.resource)} / ${p.maxResource}`);
     const resClass = 'bar ' + (p.resourceType === 'rage' ? 'rage' : p.resourceType === 'energy' ? 'energy' : 'mana');
     if (this.pfResourceEl.className !== resClass) this.pfResourceEl.className = resClass;
+    this.updateLowResource(p);
 
     // buff bar (player buffs + debuffs)
     this.renderAuras(this.buffBarEl, p, 'all');
@@ -1764,6 +1767,30 @@ export class Hud {
     if (slowHud && this.marketOpen) {
       if (!this.nearbyMarketNpc()) this.closeMarket();
       else this.refreshMarket();
+    }
+  }
+
+  // Classic "low mana/energy" warning: pulse the player resource bar when power
+  // runs low. Pure read of replicated state (resource/maxResource/type) so it
+  // works offline and online alike. Touches the DOM only on state change.
+  private updateLowResource(p: Entity): void {
+    const v = lowResourceView({ resource: p.resource, maxResource: p.maxResource, resourceType: p.resourceType });
+    const bar = $('#pf-resource') as HTMLElement;
+    // The resource className is rebuilt every frame just above this call, so the
+    // `.low` flag must be re-applied every frame too. Only the expensive style /
+    // label writes are diffed against the cached signature.
+    bar.classList.toggle('low', v.active);
+    const sig = v.active ? `${v.opacity.toFixed(2)}|${v.pulseSeconds.toFixed(2)}|${v.label}` : '';
+    if (sig === this.lastLowResourceSig) return;
+    this.lastLowResourceSig = sig;
+    const label = $('#pf-low-resource') as HTMLElement;
+    if (v.active) {
+      bar.style.setProperty('--lr-opacity', String(v.opacity));
+      bar.style.setProperty('--lr-pulse', `${v.pulseSeconds}s`);
+      label.textContent = v.label;
+      label.style.display = 'block';
+    } else {
+      label.style.display = 'none';
     }
   }
 
