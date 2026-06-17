@@ -43,6 +43,8 @@ services:
       CHAT_CENSOR_FILE: ${CHAT_CENSOR_FILE:-}
       # Runtime: server-side Turnstile verification (see .env.example). Empty → gate off.
       TURNSTILE_SECRET: ${TURNSTILE_SECRET:-}
+      # Runtime: protects the loopback-only deploy countdown endpoint.
+      RESTART_COUNTDOWN_SECRET: ${RESTART_COUNTDOWN_SECRET:-}
     # loopback-only: the TLS reverse proxy (Caddy) is the public entrance
     ports:
       - "127.0.0.1:8787:8787"

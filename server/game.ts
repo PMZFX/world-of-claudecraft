@@ -50,6 +50,16 @@ const CHAT_RATE_ERROR_COOLDOWN_SECONDS = 4;
 const CHAT_COOLDOWN_SECONDS = 20;
 const CHAT_RATE_VIOLATIONS_FOR_COOLDOWN = 3;
 const WHO_RESULT_LIMIT = 50;
+const RESTART_COUNTDOWN_TOTAL_SECONDS = 600;
+const RESTART_COUNTDOWN_STEPS = [
+  { atSeconds: 0, text: 'Server restart in 10 minutes.' },
+  { atSeconds: 300, text: 'Server restart in 5 minutes.' },
+  { atSeconds: 480, text: 'Server restart in 2 minutes.' },
+  { atSeconds: 540, text: 'Server restart in 1 minute.' },
+  { atSeconds: 570, text: 'Server restart in 30 seconds.' },
+  { atSeconds: 590, text: 'Server restart in 10 seconds.' },
+  { atSeconds: 600, text: 'Server restarting now.' },
+] as const;
 const MAX_WS_PER_IP_SOFT = Number(process.env.MAX_WS_PER_IP_SOFT ?? '5');
 // Clients stream movement intent every 50ms. If that stream goes silent while
 // the last packet held a key down, stop applying it instead of turning/running
@@ -143,6 +153,13 @@ export interface AdminLivePlayer {
   zone: string;
   sessionSeconds: number;
   lastSaveSecondsAgo: number;
+}
+
+export interface RestartCountdownStatus {
+  started: boolean;
+  active: boolean;
+  totalSeconds: number;
+  remainingSeconds: number;
 }
 
 interface WireAura {
@@ -309,6 +326,8 @@ export class GameServer {
   private saveTimer = 0;
   private socialPosTimer = 0;
   private saveAllInFlight: Promise<void> | null = null;
+  private restartCountdownStartedAt: number | null = null;
+  private readonly restartCountdownTimers: NodeJS.Timeout[] = [];
   private readonly startedAt = Date.now();
   private peakOnline = 0;
   private tickMsAvg = 0;
@@ -745,6 +764,47 @@ export class GameServer {
       try { session.ws.close(); } catch { /* connection already closing */ }
       void this.leave(session, 'moderation action');
     }
+  }
+
+  startRestartCountdown(): RestartCountdownStatus {
+    if (this.restartCountdownStartedAt !== null) {
+      return {
+        started: false,
+        active: true,
+        totalSeconds: RESTART_COUNTDOWN_TOTAL_SECONDS,
+        remainingSeconds: this.restartCountdownRemainingSeconds(),
+      };
+    }
+    this.restartCountdownStartedAt = Date.now();
+    for (const step of RESTART_COUNTDOWN_STEPS) {
+      if (step.atSeconds === 0) {
+        this.broadcastSystem(step.text);
+        continue;
+      }
+      const timer = setTimeout(() => {
+        this.broadcastSystem(step.text);
+        if (step.atSeconds === RESTART_COUNTDOWN_TOTAL_SECONDS) this.clearRestartCountdown();
+      }, step.atSeconds * 1000);
+      timer.unref?.();
+      this.restartCountdownTimers.push(timer);
+    }
+    return {
+      started: true,
+      active: true,
+      totalSeconds: RESTART_COUNTDOWN_TOTAL_SECONDS,
+      remainingSeconds: RESTART_COUNTDOWN_TOTAL_SECONDS,
+    };
+  }
+
+  private restartCountdownRemainingSeconds(): number {
+    if (this.restartCountdownStartedAt === null) return 0;
+    const elapsedSeconds = Math.floor((Date.now() - this.restartCountdownStartedAt) / 1000);
+    return Math.max(0, RESTART_COUNTDOWN_TOTAL_SECONDS - elapsedSeconds);
+  }
+
+  private clearRestartCountdown(): void {
+    this.restartCountdownStartedAt = null;
+    this.restartCountdownTimers.length = 0;
   }
 
   muteAccountChat(accountId: number, mutedUntil: string, reason: string): void {
@@ -1587,6 +1647,12 @@ export class GameServer {
     if (viewer.blockedIds.has(candidate.characterId)) return false;
     if (candidate.characterId !== viewer.characterId && candidate.blockedIds.has(viewer.characterId)) return false;
     return true;
+  }
+
+  private broadcastSystem(text: string): void {
+    for (const session of this.clients.values()) {
+      this.send(session, { t: 'events', list: [{ type: 'log', text, color: '#ffd100' }] });
+    }
   }
 
   // force the next snapshot to carry quest state even when a quest command

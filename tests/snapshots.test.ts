@@ -300,6 +300,78 @@ describe('delta snapshots', () => {
   });
 });
 
+describe('restart countdown', () => {
+  const restartMessages = [
+    'Server restart in 10 minutes.',
+    'Server restart in 5 minutes.',
+    'Server restart in 2 minutes.',
+    'Server restart in 1 minute.',
+    'Server restart in 30 seconds.',
+    'Server restart in 10 seconds.',
+    'Server restarting now.',
+  ];
+
+  it('broadcasts the restart countdown to every connected player', () => {
+    vi.useFakeTimers();
+    try {
+      const server = new GameServer();
+      const alice = fakeWs();
+      const bob = fakeWs();
+      joinServer(server, alice, 1, 'Alice');
+      joinServer(server, bob, 2, 'Bob', 'mage');
+      alice.sent.length = 0;
+      bob.sent.length = 0;
+
+      const result = server.startRestartCountdown();
+
+      expect(result.started).toBe(true);
+      expect(eventTexts(alice.sent)).toEqual(['Server restart in 10 minutes.']);
+      expect(eventTexts(bob.sent)).toEqual(['Server restart in 10 minutes.']);
+
+      vi.advanceTimersByTime(5 * 60_000);
+      expect(eventTexts(alice.sent)).toEqual(restartMessages.slice(0, 2));
+
+      vi.advanceTimersByTime(3 * 60_000);
+      expect(eventTexts(alice.sent)).toEqual(restartMessages.slice(0, 3));
+
+      vi.advanceTimersByTime(60_000);
+      expect(eventTexts(alice.sent)).toEqual(restartMessages.slice(0, 4));
+
+      vi.advanceTimersByTime(30_000);
+      expect(eventTexts(alice.sent)).toEqual(restartMessages.slice(0, 5));
+
+      vi.advanceTimersByTime(20_000);
+      expect(eventTexts(alice.sent)).toEqual(restartMessages.slice(0, 6));
+
+      vi.advanceTimersByTime(10_000);
+      expect(eventTexts(alice.sent)).toEqual(restartMessages);
+      expect(eventTexts(bob.sent)).toEqual(restartMessages);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rejects a duplicate countdown until the active one completes', () => {
+    vi.useFakeTimers();
+    try {
+      const server = new GameServer();
+      const fc = fakeWs();
+      joinServer(server, fc, 1, 'Alice');
+      fc.sent.length = 0;
+
+      expect(server.startRestartCountdown().started).toBe(true);
+      const duplicate = server.startRestartCountdown();
+      expect(duplicate.started).toBe(false);
+      expect(duplicate.active).toBe(true);
+
+      vi.advanceTimersByTime(10 * 60_000);
+      expect(server.startRestartCountdown().started).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('online movement input lifetime', () => {
   it('clears stale held movement when the websocket input stream goes quiet', () => {
     const server = new GameServer();

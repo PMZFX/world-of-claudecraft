@@ -22,6 +22,7 @@ import { json, readBody, isUniqueViolation } from './http_util';
 import { requestIp, rateLimited, authThrottled, recordAuthFailure, clearAuthFailures } from './ratelimit';
 import { verifyTurnstile } from './turnstile';
 import { handleAdminApi } from './admin';
+import { handleInternalApi } from './internal';
 import { GameServer } from './game';
 import { REALM, REALM_DIRECTORY, REALM_ORIGINS } from './realm';
 import { webLoginEnforced, isWebClientRequest } from './web_login_guard';
@@ -569,7 +570,8 @@ async function main(): Promise<void> {
     const isApi = url.startsWith('/api/') || url.startsWith('/admin/api/');
     if (isApi) maybeCors(req, res);
     if (req.method === 'OPTIONS' && isApi) { res.writeHead(204); res.end(); return; }
-    if (url.startsWith('/admin/api/')) void handleAdminApi(req, res, game);
+    if (url.startsWith('/internal/')) void handleInternalApi(req, res, game);
+    else if (url.startsWith('/admin/api/')) void handleAdminApi(req, res, game);
     else if (url.startsWith('/api/')) void handleApi(req, res);
     else serveStatic(req, res);
   });
