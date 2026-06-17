@@ -95,10 +95,27 @@ describe('client HTML shell', () => {
     expect(html).toContain('body.mobile-touch #mobile-extra-controls .mobile-btn .ui-icon');
   });
 
-  it('lays out the mobile mode cards side-by-side in landscape', () => {
-    expect(html).toContain('@media (orientation: landscape) {\n    body.mobile-touch .mode-row {\n      flex-direction: row;');
-    expect(html).toContain('width: min(620px, calc(100vw - 96px));');
-    expect(html).toContain('body.mobile-touch .mode-card {\n      flex: 1 1 0;\n      width: auto;');
+  it('replaces the dual mode cards with one Play CTA and a realm selector', () => {
+    expect(html).toContain('id="btn-play"');
+    expect(html).toContain('id="server-select"');
+    expect(html).toContain('id="server-select-menu"');
+    expect(html).toContain('role="listbox"');
+    // Legacy online/offline triggers persist as hidden automation hooks.
+    expect(html).toContain('id="btn-online"');
+    expect(html).toContain('id="btn-offline"');
+    expect(html).not.toContain('class="mode-card');
+    expect(html).not.toContain('.mode-row {');
+    // Landscape compacts the single play console instead of splitting two cards.
+    expect(html).toContain('@media (orientation: landscape) {\n    body.mobile-touch .play-console {');
+  });
+
+  it('ships a looping cinematic backdrop with a poster fallback', () => {
+    expect(html).toContain('id="bg-trailer"');
+    expect(html).toContain('poster="/video/trailer-poster.jpg"');
+    expect(html).toContain('<source src="/video/trailer.mp4" type="video/mp4"');
+    // Playback is started from main.ts so it can honour reduced-motion / save-data.
+    expect(mainTs).toContain('initHomepageTrailer');
+    expect(mainTs).toContain("prefers-reduced-motion: reduce");
   });
 
   it('omits Meters from the mobile More tray while keeping the desktop window', () => {

@@ -32,6 +32,8 @@ const CLICK_MOVE_TURN_RATE = 4.2; // rad/sec; responsive turning while the camer
 
 const $ = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector(sel) as T;
 let pendingDeleteCharacter: CharacterSummary | null = null;
+let homepageTrailer: HTMLVideoElement | null = null;
+let homepageMusic: HTMLAudioElement | null = null;
 
 const SITE_URL = 'https://worldofclaudecraft.com/';
 
@@ -442,6 +444,8 @@ function enterLoadingState(statusText: string): void {
   hideMobilePreflightPrompt();
   showLoadingScreen(statusText);
   $('#start-screen').style.display = 'none';
+  // The homepage is hidden once we enter the world — stop decoding the trailer.
+  if (homepageTrailer) homepageTrailer.pause();
 }
 
 async function prepareWorldEntry(): Promise<boolean> {
@@ -942,6 +946,8 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
   requestAnimationFrame(frame);
   // cut to the game only once the first frame is actually on screen
   requestAnimationFrame(() => requestAnimationFrame(() => hideLoadingScreen()));
+  // Now in-game: fade the home-page theme out (it kept playing through loading).
+  fadeOutHomepageMusic();
 
   const controller = {
     move(moveInput: unknown, facing?: unknown) {
@@ -1112,6 +1118,20 @@ function switchMainView(targetId: string): void {
       }
     });
 
+    // The cinematic trailer is for the Play page only; other views hide + pause it.
+    const onPlayPage = targetId === '#hero-view';
+    const backdrop = document.getElementById('start-screen-backdrop');
+    if (backdrop) backdrop.classList.toggle('trailer-off', !onPlayPage);
+    if (homepageTrailer) {
+      if (onPlayPage) {
+        if (!document.hidden && !document.body.classList.contains('game-active')) {
+          void homepageTrailer.play().catch(() => {});
+        }
+      } else {
+        homepageTrailer.pause();
+      }
+    }
+
     if (targetId === '#hero-view') {
       const activePlayPanel = ['#charselect-panel', '#offline-select'].find(id => {
         const el = $(id);
@@ -1153,12 +1173,6 @@ function show(el: string): void {
 
   // Mount the Turnstile widget the first time the login/register form appears.
   if (el === '#login-panel') ensureTurnstile();
-
-  const statsPanel = $('#project-stats-panel');
-  if (statsPanel) {
-    const shouldHideStats = el === '#charselect-panel' || el === '#offline-select';
-    statsPanel.toggleAttribute('hidden', shouldHideStats);
-  }
 
   const logoImg = $('#title-logo');
   if (logoImg) {
@@ -1978,11 +1992,14 @@ function refreshLocalizedDynamicShell(): void {
 }
 
 async function loadProjectStats(): Promise<void> {
-  const realmEl = $('#stat-realm-name');
-  const accountsEl = $('#stat-accounts-count');
-  const playersEl = $('#stat-players-online');
-
-  if (!realmEl || !accountsEl || !playersEl) return;
+  // Realm status now lives in the realm dropdown — both in the trigger sub-line
+  // and inside the Online option — so update every instance by class.
+  const playerEls = document.querySelectorAll<HTMLElement>('.js-stat-players');
+  const accountEls = document.querySelectorAll<HTMLElement>('.js-stat-accounts');
+  if (!playerEls.length || !accountEls.length) return;
+  const setAll = (els: NodeListOf<HTMLElement>, text: string): void => {
+    els.forEach((el) => { el.textContent = text; });
+  };
 
   // 1. Try to read from localStorage first
   let cached: { realm: string; accounts_created: number; players_online: number; timestamp: number } | null = null;
@@ -1997,9 +2014,8 @@ async function loadProjectStats(): Promise<void> {
 
   // If cache exists and is fresh (within TTL), use it and skip API request
   if (cached && (Date.now() - cached.timestamp < STATS_CACHE_TTL_MS)) {
-    realmEl.textContent = cached.realm;
-    accountsEl.textContent = String(cached.accounts_created);
-    playersEl.textContent = String(cached.players_online);
+    setAll(playerEls, String(cached.players_online));
+    setAll(accountEls, String(cached.accounts_created));
     return;
   }
 
@@ -2007,9 +2023,8 @@ async function loadProjectStats(): Promise<void> {
   try {
     const data = await api.projectStats();
 
-    realmEl.textContent = data.realm;
-    accountsEl.textContent = String(data.accounts_created);
-    playersEl.textContent = String(data.players_online);
+    setAll(playerEls, String(data.players_online));
+    setAll(accountEls, String(data.accounts_created));
 
     // Save to cache with timestamp
     if (typeof localStorage !== 'undefined') {
@@ -2022,13 +2037,11 @@ async function loadProjectStats(): Promise<void> {
     console.error('Failed to fetch project stats:', err);
     // If API fails, fall back to cached data (even if expired)
     if (cached) {
-      realmEl.textContent = t('realm.statsRealmOffline', { realm: cached.realm });
-      accountsEl.textContent = String(cached.accounts_created);
-      playersEl.textContent = String(cached.players_online);
+      setAll(playerEls, String(cached.players_online));
+      setAll(accountEls, String(cached.accounts_created));
     } else {
-      realmEl.textContent = t('realm.statsOffline');
-      accountsEl.textContent = '-';
-      playersEl.textContent = '-';
+      setAll(playerEls, '–');
+      setAll(accountEls, '–');
     }
   }
 }
@@ -2265,6 +2278,128 @@ function wireStartScreens(): void {
   
   offlineBtn.addEventListener('click', handleOfflineSelect);
   offlineBtn.addEventListener('keydown', (e) => handleKeyboardActivation(e as KeyboardEvent, handleOfflineSelect));
+
+  // --- Play console: realm dropdown + single Play CTA -----------------------
+  // The dropdown only chooses the destination (defaults to Online); the Play
+  // button commits, routing to the same online/offline flows as the legacy cards.
+  const serverSelect = $('#server-select');
+  const serverTrigger = $('#server-select-trigger') as HTMLButtonElement;
+  const serverMenu = $('#server-select-menu');
+  const serverValue = $('#server-select-value');
+  const serverSub = $('#server-select-sub');
+  const serverTriggerDot = serverTrigger.querySelector('.server-dot') as HTMLElement | null;
+  const btnPlay = $('#btn-play') as HTMLButtonElement;
+
+  if (serverSelect && serverTrigger && serverMenu && btnPlay) {
+    type ServerMode = 'online' | 'offline';
+    const serverOptions = Array.from(serverMenu.querySelectorAll<HTMLElement>('.server-select-option'));
+    const VALUE_KEY: Record<ServerMode, TranslationKey> = {
+      online: 'mode.serverOnline',
+      offline: 'mode.serverOffline',
+    };
+    // The trigger sub-line shows live realm stats for Online and a short blurb
+    // for Offline; toggle the matching child by its data-mode.
+    const subParts = Array.from(serverSub.querySelectorAll<HTMLElement>('[data-mode]'));
+    let serverMode: ServerMode = 'online';
+
+    const setActiveOption = (opt: HTMLElement | null): void => {
+      serverOptions.forEach((o) => o.classList.toggle('is-active', o === opt));
+    };
+    const isMenuOpen = (): boolean => !serverMenu.hasAttribute('hidden');
+
+    const applyServerMode = (mode: ServerMode): void => {
+      serverMode = mode;
+      serverSelect.dataset.mode = mode;
+      // Update both the i18n key and the rendered text, so a later language
+      // switch (translatePage) re-renders the *selected* mode correctly.
+      serverValue.setAttribute('data-i18n', VALUE_KEY[mode]);
+      serverValue.textContent = t(VALUE_KEY[mode]);
+      subParts.forEach((part) => part.toggleAttribute('hidden', part.dataset.mode !== mode));
+      if (serverTriggerDot) serverTriggerDot.dataset.mode = mode;
+      serverOptions.forEach((opt) => {
+        const selected = opt.dataset.mode === mode;
+        opt.classList.toggle('is-selected', selected);
+        opt.setAttribute('aria-selected', selected ? 'true' : 'false');
+      });
+    };
+
+    const openServerMenu = (): void => {
+      serverMenu.toggleAttribute('hidden', false);
+      serverTrigger.setAttribute('aria-expanded', 'true');
+      const selected = serverOptions.find((o) => o.dataset.mode === serverMode) ?? serverOptions[0];
+      setActiveOption(selected ?? null);
+      selected?.focus();
+    };
+    const closeServerMenu = (refocusTrigger = false): void => {
+      if (!isMenuOpen()) return;
+      serverMenu.toggleAttribute('hidden', true);
+      serverTrigger.setAttribute('aria-expanded', 'false');
+      serverOptions.forEach((o) => o.classList.remove('is-active'));
+      if (refocusTrigger) serverTrigger.focus();
+    };
+
+    serverTrigger.addEventListener('click', () => {
+      if (isMenuOpen()) closeServerMenu(true);
+      else openServerMenu();
+    });
+    serverTrigger.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!isMenuOpen()) openServerMenu();
+      } else if (e.key === 'Escape') {
+        closeServerMenu();
+      }
+    });
+
+    serverOptions.forEach((opt) => {
+      opt.addEventListener('click', () => {
+        applyServerMode(opt.dataset.mode as ServerMode);
+        closeServerMenu(true);
+      });
+      opt.addEventListener('mousemove', () => setActiveOption(opt));
+    });
+
+    serverMenu.addEventListener('keydown', (e) => {
+      const idx = serverOptions.findIndex((o) => o.classList.contains('is-active'));
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = serverOptions[Math.min(idx + 1, serverOptions.length - 1)] ?? serverOptions[0];
+        setActiveOption(next); next?.focus();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prev = serverOptions[Math.max(idx - 1, 0)] ?? serverOptions[0];
+        setActiveOption(prev); prev?.focus();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        setActiveOption(serverOptions[0]); serverOptions[0]?.focus();
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        const last = serverOptions[serverOptions.length - 1];
+        setActiveOption(last); last?.focus();
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const active = serverOptions[idx] ?? serverOptions[0];
+        if (active) { applyServerMode(active.dataset.mode as ServerMode); closeServerMenu(true); }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeServerMenu(true);
+      } else if (e.key === 'Tab') {
+        closeServerMenu();
+      }
+    });
+
+    // Dismiss on outside pointer/focus.
+    document.addEventListener('pointerdown', (e) => {
+      if (isMenuOpen() && !serverSelect.contains(e.target as Node)) closeServerMenu();
+    });
+
+    btnPlay.addEventListener('click', () => {
+      if (serverMode === 'offline') handleOfflineSelect();
+      else handleOnlineSelect();
+    });
+
+    applyServerMode('online');
+  }
 
   btnStartOffline.addEventListener('click', () => {
     const selCard = document.querySelector('#offline-select .mini-class.sel') as HTMLElement | null;
@@ -2862,4 +2997,150 @@ function wireStartScreens(): void {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Homepage cinematic backdrop
+// ---------------------------------------------------------------------------
+function initHomepageTrailer(): void {
+  const video = document.getElementById('bg-trailer') as HTMLVideoElement | null;
+  const backdrop = document.getElementById('start-screen-backdrop');
+  if (!video || !backdrop) return;
+  homepageTrailer = video;
+
+  const fade = backdrop.querySelector<HTMLElement>('.bg-trailer-fade');
+  // Fade FROM black (first play + just after each loop wrap).
+  const runFadeIn = (): void => {
+    if (!fade) return;
+    fade.classList.remove('is-fading', 'is-fading-out');
+    void fade.offsetWidth; // force reflow so the animation replays
+    fade.classList.add('is-fading');
+  };
+  // Dip TO black just before the clip ends, so the loop seam is hidden.
+  const runFadeOut = (): void => {
+    if (!fade) return;
+    fade.classList.remove('is-fading');
+    void fade.offsetWidth;
+    fade.classList.add('is-fading-out');
+  };
+
+  // Reveal the backdrop layer so the (cheap) poster always provides atmosphere,
+  // even when we choose not to play the clip.
+  const reveal = (): void => backdrop.classList.add('trailer-ready');
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducedData = window.matchMedia('(prefers-reduced-data: reduce)').matches;
+  const conn = (navigator as unknown as { connection?: { saveData?: boolean } }).connection;
+  const saveData = Boolean(conn && conn.saveData);
+
+  if (reducedMotion || reducedData || saveData) {
+    // Honour the user's preference: keep the static poster, don't fetch/play video.
+    video.preload = 'none';
+    if (fade) fade.classList.add('revealed'); // lift the black wipe without animating
+    reveal();
+    return;
+  }
+
+  video.addEventListener('playing', () => {
+    backdrop.classList.add('trailer-ready', 'trailer-playing');
+    runFadeIn();
+  }, { once: true });
+
+  // Hide the loop seam: dip to black ~0.35s before the end, then fade back in
+  // right after the wrap. The `loop` attribute restarts playback seamlessly
+  // (no 'ended' event), so watch the playhead instead.
+  const FADE_LEAD = 0.35;
+  let dipping = false;
+  let lastTime = 0;
+  const onPlayhead = (currentTime: number): void => {
+    const duration = video.duration;
+    if (duration > 0) {
+      if (currentTime + 0.2 < lastTime) {
+        // Wrapped back to the start — reveal from black.
+        dipping = false;
+        runFadeIn();
+      } else if (!dipping && currentTime >= duration - FADE_LEAD) {
+        dipping = true;
+        runFadeOut();
+      }
+    }
+    lastTime = currentTime;
+  };
+
+  const rvfc = (video as unknown as {
+    requestVideoFrameCallback?: (cb: (now: number, meta: { mediaTime: number }) => void) => void;
+  }).requestVideoFrameCallback;
+  if (typeof rvfc === 'function') {
+    const onFrame = (_now: number, meta: { mediaTime: number }): void => {
+      onPlayhead(meta.mediaTime);
+      rvfc.call(video, onFrame);
+    };
+    rvfc.call(video, onFrame);
+  } else {
+    video.addEventListener('timeupdate', () => onPlayhead(video.currentTime));
+  }
+
+  const tryPlay = (): void => {
+    const p = video.play();
+    if (p && typeof p.then === 'function') {
+      // Muted inline autoplay is broadly allowed; if it's still blocked, the
+      // poster stays as a graceful fallback.
+      p.catch(() => reveal());
+    }
+  };
+  if (video.readyState >= 2) tryPlay();
+  else video.addEventListener('loadeddata', tryPlay, { once: true });
+
+  // Don't burn cycles decoding while the tab is backgrounded or in-game.
+  document.addEventListener('visibilitychange', () => {
+    if (document.body.classList.contains('game-active')) return;
+    if (document.hidden) video.pause();
+    else void video.play().catch(() => {});
+  });
+}
+
+// Looping home-page theme. Browsers block audio autoplay until a user gesture,
+// so we try immediately and otherwise start on the first interaction. It keeps
+// playing through the loading screen and fades out once the game is on screen.
+function initHomepageMusic(): void {
+  if (homepageMusic) return;
+  const el = new Audio('/audio/main-theme.mp3');
+  el.loop = true;
+  el.preload = 'auto';
+  el.volume = 0.45;
+  homepageMusic = el;
+
+  const gestureEvents: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'touchstart'];
+  let started = false;
+  const removeGestureListeners = (): void => {
+    gestureEvents.forEach((ev) => window.removeEventListener(ev, onGesture));
+  };
+  const start = (): void => {
+    if (started || !homepageMusic) return;
+    void el.play().then(() => { started = true; removeGestureListeners(); }).catch(() => {
+      // Autoplay still blocked — a later gesture will retry.
+    });
+  };
+  const onGesture = (): void => start();
+  gestureEvents.forEach((ev) => window.addEventListener(ev, onGesture, { passive: true }));
+  start();
+}
+
+function fadeOutHomepageMusic(durationMs = 1600): void {
+  const el = homepageMusic;
+  if (!el) return;
+  homepageMusic = null; // stop further control + block restarts
+  const startVol = el.volume;
+  const steps = 32;
+  let i = 0;
+  const id = window.setInterval(() => {
+    i += 1;
+    el.volume = Math.max(0, startVol * (1 - i / steps));
+    if (i >= steps) {
+      window.clearInterval(id);
+      el.pause();
+    }
+  }, durationMs / steps);
+}
+
 wireStartScreens();
+initHomepageTrailer();
+initHomepageMusic();

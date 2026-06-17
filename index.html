@@ -320,7 +320,8 @@
     cursor: var(--cursor-hand);
   }
   #start-screen :is(
-    .btn, .mode-card, .social-link, .realm-row, .char-row, .class-card,
+    .btn, .btn-play, .server-select-trigger, .server-select-option,
+    .social-link, .realm-row, .char-row, .class-card,
     .password-toggle, #btn-toggle-controls, .btn-close-drawer
   ) {
     cursor: var(--cursor-sword);
@@ -1296,7 +1297,7 @@
   }
 
   #title-logo {
-    width: min(280px, 80vw);
+    width: min(360px, 84vw);
     height: auto;
     filter: drop-shadow(0 0 20px rgba(199, 148, 26, 0.25)) drop-shadow(2px 2px 4px #000);
     animation: logo-pulse 2.5s ease-in-out infinite alternate;
@@ -1515,6 +1516,14 @@
     min-height: min-content;
   }
 
+  /* Larger screens: pull the whole hero (logo + console) toward the top. */
+  @media (min-width: 1024px) {
+    #hero-view {
+      justify-content: flex-start;
+      padding-top: clamp(16px, 4vh, 64px);
+    }
+  }
+
   /* Keep positioning for subpanels inside hero-view play flow */
   #hero-view #mode-select,
   #hero-view #login-panel,
@@ -1549,9 +1558,84 @@
 
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: var(--spacing-md);
   }
+
+  /* Realm Status now lives under the Play CTA — match the console width and
+     give it breathing room beneath the button. */
+  /* Frosted-glass console card around the play landing — gives the central UI
+     its own surface so the cinematic backdrop can stay vivid behind it. */
+  #mode-select {
+    width: 100%;
+    max-width: 472px;
+    margin-inline: auto;
+    padding: 26px 26px 22px;
+    background: linear-gradient(180deg, rgba(15, 15, 23, 0.56) 0%, rgba(8, 8, 14, 0.66) 100%);
+    border: 1px solid rgba(255, 209, 0, 0.16);
+    border-radius: 18px;
+    box-shadow: 0 26px 64px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px) saturate(1.1);
+    -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  }
+
+  /* Realm stats — live counts shown in the realm dropdown (trigger sub-line +
+     the opened Online option). */
+  .realm-status-sep {
+    display: inline-block;
+    width: 1px;
+    height: 11px;
+    margin: 0 4px;
+    vertical-align: middle;
+    background: rgba(255, 209, 0, 0.3);
+  }
+  .server-realm-line .stats-value,
+  .server-opt-stats .stats-value {
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-light);
+    margin-right: 2px;
+  }
+  .server-opt-stats {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+  .server-realm-line[hidden],
+  .server-sub-offline[hidden] { display: none; }
+
+  /* Tip — its own slim overlay card under the console. */
+  #play-aside {
+    width: 100%;
+    max-width: 472px;
+    margin-inline: auto;
+    padding: 12px 20px;
+    background: linear-gradient(180deg, rgba(15, 15, 23, 0.5) 0%, rgba(8, 8, 14, 0.6) 100%);
+    border: 1px solid rgba(255, 209, 0, 0.12);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(14px) saturate(1.1);
+    -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  }
+  #play-aside #performance-tip {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    background: none;
+    border: none;
+    font-size: 12.5px;
+    text-align: center;
+  }
+  /* Hide the tip card whenever the play landing isn't the active panel. */
+  body[data-start-panel="login-panel"] #play-aside,
+  body[data-start-panel="realm-panel"] #play-aside,
+  body[data-start-panel="charselect-panel"] #play-aside,
+  body[data-start-panel="offline-select"] #play-aside {
+    display: none;
+  }
+
 
   .stats-item {
     display: flex;
@@ -1877,6 +1961,7 @@
 
   /* Global Footer Styling */
   .homepage-footer {
+    position: relative;
     width: 100%;
     background: rgba(11, 11, 18, 0.95);
     border-top: 2px solid var(--color-border-default);
@@ -1890,10 +1975,28 @@
     margin-top: auto;
   }
 
+  .footer-bar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .footer-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
   .footer-social-row {
     display: flex;
     gap: var(--spacing-sm);
     justify-content: center;
+  }
+  @media (max-width: 640px) {
+    .footer-bar,
+    .footer-left { justify-content: center; }
   }
 
   .footer-text-row {
@@ -1991,35 +2094,240 @@
   #ls-fill { height: 100%; width: 0%; background: linear-gradient(180deg, var(--color-primary), var(--color-primary-dim)); transition: width .2s ease; }
   #ls-status { color: var(--color-text-light); font-family: var(--font-heading); font-size: 13px; text-shadow: 1px 1px 2px #000; }
 
-  /* ---------- online auth / character select ---------- */
-  .mode-row { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; }
-  .mode-card {
+  /* ---------- play console (realm selector + Play CTA) ---------- */
+  .play-console {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
     width: 100%;
-    max-width: 280px;
-    padding: 26px 22px;
-    text-align: center;
-    cursor: pointer;
-    background: rgba(21, 21, 31, 0.94);
-    border: 2px solid var(--color-border-default);
-    border-radius: var(--radius-md);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
-    transition: box-shadow var(--transition-speed) var(--transition-ease),
-                border-color var(--transition-speed) var(--transition-ease);
+    max-width: 420px;
+    margin-inline: auto;
   }
-  .mode-card:hover,
-  .mode-card:focus-visible {
+
+  /* Realm selector — themed dropdown, defaults to Online */
+  .server-select { position: relative; width: 100%; }
+  .server-select-caption {
+    display: block;
+    text-align: center;
+    margin-bottom: 8px;
+    font-family: var(--font-heading);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    text-shadow: 1px 1px 2px #000;
+  }
+  .server-select-trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 58px;
+    padding: 10px 16px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--color-text-light);
+    background: linear-gradient(180deg, rgba(24, 24, 34, 0.92) 0%, rgba(12, 12, 19, 0.94) 100%);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: border-color var(--transition-speed) var(--transition-ease),
+                box-shadow var(--transition-speed) var(--transition-ease);
+  }
+  .server-select-trigger:hover,
+  .server-select-trigger:focus-visible,
+  .server-select-trigger[aria-expanded="true"] {
     border-color: var(--color-border-focus);
-    box-shadow: 0 0 22px var(--color-primary-glow), 0 4px 15px #000c;
+    box-shadow: 0 0 18px var(--color-primary-glow), 0 6px 18px rgba(0, 0, 0, 0.6);
     outline: none;
   }
-  .mode-card h2 {
-    font-family: var(--font-heading);
-    color: var(--color-primary);
-    font-size: 22px;
-    margin-bottom: 10px;
-    text-shadow: 0 0 8px rgba(255,209,0,0.2), 1px 1px 2px #000;
+  .server-dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-text-muted);
+    box-shadow: 0 0 8px currentColor;
   }
-  .mode-card p { font-size: 12px; color: #a0aabf; line-height: 1.55; }
+  .server-dot[data-mode="online"] { background: var(--color-hp); color: var(--color-hp); }
+  .server-dot[data-mode="offline"] { background: var(--color-primary-dim); color: var(--color-primary-dim); }
+  .server-select-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .server-select-value {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--color-text-light);
+    line-height: 1.2;
+  }
+  .server-select-sub {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .server-select-chevron {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    color: var(--color-primary-dim);
+    transition: transform var(--transition-speed) var(--transition-ease), color var(--transition-speed) var(--transition-ease);
+  }
+  .server-select-trigger[aria-expanded="true"] .server-select-chevron { transform: rotate(180deg); color: var(--color-primary); }
+
+  .server-select-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: linear-gradient(180deg, rgba(24, 24, 34, 0.98) 0%, rgba(11, 11, 18, 0.99) 100%);
+    border: 1px solid var(--color-border-focus);
+    border-radius: var(--radius-md);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(0, 0, 0, 0.5);
+  }
+  .server-select-menu:not([hidden]) {
+    animation: server-menu-in 140ms var(--transition-ease) both;
+    transform-origin: top center;
+  }
+  @keyframes server-menu-in {
+    from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .server-select-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 11px 12px;
+    min-height: 44px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--transition-speed) var(--transition-ease);
+  }
+  .server-select-option .server-dot { margin-top: 5px; }
+  .server-select-option:hover,
+  .server-select-option:focus-visible,
+  .server-select-option.is-active {
+    background: rgba(255, 209, 0, 0.08);
+    outline: none;
+  }
+  .server-select-option.is-selected { background: rgba(255, 209, 0, 0.06); }
+  .server-opt-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .server-opt-name {
+    font-family: var(--font-ui);
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--color-text-light);
+  }
+  .server-opt-desc {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--color-text-muted);
+  }
+  .server-opt-check {
+    flex: none;
+    width: 17px;
+    height: 17px;
+    margin-top: 4px;
+    color: var(--color-primary);
+    opacity: 0;
+    transition: opacity var(--transition-speed) var(--transition-ease);
+  }
+  .server-select-option.is-selected .server-opt-check { opacity: 1; }
+
+  /* Primary CTA — forged-gold Play button */
+  .btn-play {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 66px;
+    padding: 16px 48px;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #2a1c05;
+    background: linear-gradient(180deg, #f8da78 0%, #e2b03a 44%, #b7820f 100%);
+    border: 1px solid #ffe6a0;
+    border-radius: var(--radius-md);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.45),
+      0 14px 30px rgba(0, 0, 0, 0.55),
+      0 0 26px rgba(255, 209, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 -3px 8px rgba(120, 74, 6, 0.55);
+    transition: transform 0.12s var(--transition-ease),
+                box-shadow var(--transition-speed) var(--transition-ease),
+                filter var(--transition-speed) var(--transition-ease);
+  }
+  .btn-play:hover,
+  .btn-play:focus-visible {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.45),
+      0 18px 38px rgba(0, 0, 0, 0.6),
+      0 0 40px rgba(255, 209, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -3px 8px rgba(120, 74, 6, 0.55);
+    outline: none;
+  }
+  .btn-play:active { transform: translateY(1px) scale(0.99); }
+  .btn-play-glyph { flex: none; width: 22px; height: 22px; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.35)); }
+  .btn-play-label { line-height: 1; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3); }
+  /* Diagonal sheen sweep on hover */
+  .btn-play-sheen {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.55) 50%, transparent 62%);
+    transform: translateX(-130%);
+    pointer-events: none;
+  }
+  .btn-play:hover .btn-play-sheen,
+  .btn-play:focus-visible .btn-play-sheen { animation: btn-play-sheen 0.9s var(--transition-ease); }
+  @keyframes btn-play-sheen {
+    from { transform: translateX(-130%); }
+    to   { transform: translateX(130%); }
+  }
+
+  .play-hint {
+    margin: 0;
+    min-height: 1.4em;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+    text-shadow: 1px 1px 2px #000;
+  }
+
+  /* Hidden automation hooks — present in the DOM, never seen or tabbed to. */
+  .play-compat-trigger {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
   #performance-tip {
     margin-top: var(--spacing-lg);
     font-size: 14px;
@@ -2045,7 +2353,10 @@
   }
   /* $WOC contract address — click-to-copy pill, sits under the performance tip. */
   #token-ca {
-    margin: var(--spacing-md) auto 0;
+    margin: var(--spacing-lg) auto 0;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid rgba(255, 209, 0, 0.14);
+    width: 100%;
     max-width: 600px;
     display: flex;
     flex-direction: column;
@@ -2642,7 +2953,7 @@
     );
     filter: blur(80px);
     animation: rotate-portal 45s linear infinite;
-    opacity: 0.85;
+    opacity: 0.5;
   }
 
   .portal-ring-reverse {
@@ -2662,15 +2973,82 @@
     );
     filter: blur(100px);
     animation: rotate-portal-reverse 60s linear infinite;
-    opacity: 0.75;
+    opacity: 0.38;
   }
 
   .nebula-overlay {
     position: absolute;
     inset: 0;
     background: radial-gradient(circle at 50% 30%, rgba(42, 58, 85, 0.4) 0%, rgba(10, 13, 20, 0.95) 70%);
-    mix-blend-mode: color-dodge;
+    /* soft-light (not color-dodge) so the radial vignette darkens edges for legibility
+       without blowing the trailer's highlights into a glare. */
+    mix-blend-mode: soft-light;
     animation: breathe-nebula 12s ease-in-out infinite alternate;
+  }
+
+  /* ---------- looping cinematic backdrop ---------- */
+  .bg-trailer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 42%;
+    /* held dark + slightly desaturated so the gold UI and white type stay dominant;
+       JS fades opacity in once the first frame is actually playing. */
+    opacity: 0;
+    filter: saturate(1.08) contrast(1.02) brightness(1);
+    transform: scale(1.04); /* hide cover-fit edge crawl + give a faint Ken-Burns drift */
+    transition: opacity 1.1s ease;
+    will-change: opacity;
+    pointer-events: none;
+  }
+  /* The trailer only shows on the Play page; switchMainView toggles this when
+     navigating to High Scores / Wiki / News / Download. */
+  #start-screen-backdrop.trailer-off .bg-trailer,
+  #start-screen-backdrop.trailer-off .bg-trailer-fade { display: none; }
+
+  /* trailer-ready: reveal the layer (also used for the static poster on
+     reduced-motion / save-data). trailer-playing: add drift only when truly playing. */
+  #start-screen-backdrop.trailer-ready .bg-trailer { opacity: 0.85; }
+  #start-screen-backdrop.trailer-playing .bg-trailer {
+    animation: trailer-drift 38s ease-in-out infinite alternate;
+  }
+  .bg-trailer-scrim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    /* three stacked layers: top + bottom darkening for header/CTA legibility,
+       an edge vignette, and a brand-tinted wash to keep the palette cohesive. */
+    background:
+      linear-gradient(180deg, rgba(4, 4, 8, 0.46) 0%, rgba(4, 4, 8, 0.06) 30%, rgba(4, 4, 8, 0.08) 60%, rgba(4, 4, 8, 0.58) 100%),
+      radial-gradient(130% 100% at 50% 42%, transparent 52%, rgba(4, 4, 8, 0.34) 100%),
+      linear-gradient(180deg, rgba(20, 17, 8, 0.08), rgba(8, 10, 18, 0.12));
+  }
+  @keyframes trailer-drift {
+    0%   { transform: scale(1.04) translate3d(0, 0, 0); }
+    100% { transform: scale(1.12) translate3d(-1.4%, -1.4%, 0); }
+  }
+
+  /* Black wipe that fades the backdrop in on first play and on every loop. */
+  .bg-trailer-fade {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    background: #040408;
+    opacity: 1;
+    pointer-events: none;
+  }
+  .bg-trailer-fade.revealed { opacity: 0; }
+  .bg-trailer-fade.is-fading { animation: trailer-fade-in 1.1s ease-out forwards; }
+  .bg-trailer-fade.is-fading-out { animation: trailer-fade-out 0.35s ease-in forwards; }
+  @keyframes trailer-fade-in {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes trailer-fade-out {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
   }
 
   .embers-container {
@@ -2705,7 +3083,10 @@
     .ember,
     #title-logo,
     .class-card,
-    .mode-card {
+    .bg-trailer,
+    .btn-play-sheen,
+    .server-select-menu:not([hidden]),
+    .btn-play {
       animation: none !important;
       transition: none !important;
       transform: none !important;
@@ -2720,6 +3101,11 @@
     }
     #title-logo {
       filter: drop-shadow(0 0 20px rgba(255, 209, 0, 0.35)) drop-shadow(2px 2px 5px #000) !important;
+    }
+    /* No black wipe with reduced motion — reveal the static poster immediately. */
+    .bg-trailer-fade {
+      opacity: 0 !important;
+      animation: none !important;
     }
   }
 
@@ -3956,17 +4342,19 @@
   body.mobile-touch #controls-hint {
     max-width: min(360px, 92vw); margin-top: 18px; line-height: 1.45; font-size: 10px;
   }
-  body.mobile-touch .mode-row {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
+  body.mobile-touch #mode-select {
+    max-width: min(440px, calc(100vw - 24px));
+    padding: 20px 18px 18px;
   }
-  body.mobile-touch .mode-card {
-    width: min(280px, calc(100vw - 96px));
-    margin-inline: auto;
-    padding: 18px 16px;
+  body.mobile-touch .play-console {
+    width: 100%;
+    gap: 16px;
+  }
+  body.mobile-touch .btn-play {
+    font-size: 21px;
+    letter-spacing: 2px;
+    min-height: 60px;
+    padding: 14px 32px;
   }
   body.mobile-touch[data-start-panel="realm-panel"] #homepage-views-container,
   body.mobile-touch[data-start-panel="charselect-panel"] #homepage-views-container,
@@ -4041,7 +4429,7 @@
   }
   body.mobile-touch .class-row { grid-template-columns: repeat(2, minmax(138px, 1fr)); gap: 8px; width: min(340px, 92vw); }
   body.mobile-touch .class-card { padding: 9px 8px 8px; }
-  body.mobile-touch #title-logo { width: min(360px, 82vw); margin-bottom: 18px; }
+  body.mobile-touch #title-logo { width: min(420px, 86vw); margin-bottom: 18px; }
   body.mobile-preflight-open #mobile-preflight.visible {
     position: fixed; inset: 0; z-index: 250; display: flex; align-items: center; justify-content: center;
     padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
@@ -4086,17 +4474,14 @@
   }
 
   @media (orientation: landscape) {
-    body.mobile-touch .mode-row {
-      flex-direction: row;
-      align-items: stretch;
-      width: min(620px, calc(100vw - 96px));
-      gap: 14px;
+    body.mobile-touch .play-console {
+      width: min(460px, calc(100vw - 80px));
+      gap: 12px;
     }
-    body.mobile-touch .mode-card {
-      flex: 1 1 0;
-      width: auto;
-      max-width: none;
-      padding: 16px 14px;
+    body.mobile-touch .server-select-caption { margin-bottom: 5px; }
+    body.mobile-touch .btn-play {
+      min-height: 54px;
+      font-size: 20px;
     }
     body.mobile-touch .mobile-joystick {
       width: 100px; height: 100px; bottom: calc(15px + env(safe-area-inset-bottom));
@@ -4383,9 +4768,9 @@
       gap: var(--spacing-md);
     }
 
-    /* Keep the logo size completely stable on desktop */
+    /* Logo scales up with the viewport on desktop — bigger screen, bigger wordmark. */
     #title-logo {
-      width: 320px !important;
+      width: clamp(340px, 20vw, 440px) !important;
     }
   }
 
@@ -4590,7 +4975,7 @@
     width: 100%;
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 860px) {
     #community-hud { top: auto; }
     #quest-tracker { top: 260px; right: 12px; width: 190px; }
 
@@ -4844,9 +5229,28 @@
   <main id="start-screen">
     <!-- Keep the backdrop here at the top level so it spans the entire screen behind content -->
     <div id="start-screen-backdrop" aria-hidden="true">
+      <!-- Looping in-game cinematic. Muted + playsinline so it auto-plays on mobile;
+           playback is started from main.ts so it can respect reduced-motion / save-data.
+           The poster paints instantly while the MP4 streams (faststart). -->
+      <video
+        id="bg-trailer"
+        class="bg-trailer"
+        muted
+        loop
+        playsinline
+        preload="auto"
+        poster="/video/trailer-poster.jpg"
+        tabindex="-1"
+        disablepictureinpicture
+      >
+        <source src="/video/trailer.mp4" type="video/mp4" />
+      </video>
+      <div class="bg-trailer-scrim"></div>
       <div class="portal-ring"></div>
       <div class="portal-ring-reverse"></div>
       <div class="nebula-overlay"></div>
+      <!-- Fades the backdrop in from black on first play and on every loop. -->
+      <div class="bg-trailer-fade"></div>
     </div>
 
     <header class="homepage-header">
@@ -4902,37 +5306,64 @@
         <!-- Main Logo -->
         <img class="main-logo" id="title-logo" src="/worldofclaudecraft-logo.png" data-i18n-alt="serverUnavailable.logoAlt" alt="World of ClaudeCraft" />
 
-        <!-- Project Stats Panel (Realm Status, accounts, players, realm name) -->
-        <div id="project-stats-panel" class="panel stats-panel-premium">
-          <h2 class="stats-panel-title" data-i18n="stats.title">Realm Status</h2>
-          <div class="stats-grid">
-            <div class="stats-item">
-              <span class="stats-label" data-i18n="stats.realmName">Realm Name</span>
-              <span id="stat-realm-name" class="stats-value">...</span>
-            </div>
-            <div class="stats-item">
-              <span class="stats-label" data-i18n="stats.accountsCreated">Accounts Created</span>
-              <span id="stat-accounts-count" class="stats-value">...</span>
-            </div>
-            <div class="stats-item">
-              <span class="stats-label" data-i18n="stats.playersOnline">Players Online</span>
-              <span id="stat-players-online" class="stats-value">...</span>
-            </div>
-          </div>
-        </div>
-
         <div id="mode-select">
-          <div class="mode-row">
-            <div class="mode-card panel" id="btn-online" role="button" tabindex="0" data-i18n-aria="mode.onlineAria" aria-label="Play Online: log in to the persistent shared realm">
-              <h2 data-i18n="mode.onlineTitle">Play Online</h2>
-              <p data-i18n="mode.onlineDesc">Log in to the realm. Your characters live on the server and you share the world with everyone else who's on.</p>
+          <div class="play-console">
+            <!-- Realm selector: a themed dropdown that defaults to Online and can switch to Offline.
+                 It only chooses the destination; the Play button below commits. -->
+            <div class="server-select" id="server-select" data-mode="online">
+              <span class="server-select-caption" id="server-select-caption" data-i18n="mode.serverLabel">Choose your realm</span>
+              <button type="button" class="server-select-trigger" id="server-select-trigger"
+                aria-haspopup="listbox" aria-expanded="false" aria-controls="server-select-menu"
+                data-i18n-aria="mode.serverAria" aria-label="Select realm: Online or Offline">
+                <span class="server-dot" data-mode="online" aria-hidden="true"></span>
+                <span class="server-select-text">
+                  <span class="server-select-value" id="server-select-value" data-i18n="mode.serverOnline">Online</span>
+                  <span class="server-select-sub" id="server-select-sub">
+                    <span class="server-realm-line" data-mode="online">
+                      <b class="stats-value js-stat-players">…</b> <span data-i18n="stats.playersOnline">Players Online</span>
+                      <span class="realm-status-sep" aria-hidden="true"></span>
+                      <b class="stats-value js-stat-accounts">…</b> <span data-i18n="stats.accountsCreated">Accounts Created</span>
+                    </span>
+                    <span class="server-sub-offline" data-mode="offline" data-i18n="mode.serverOfflineSub" hidden>Instant local world</span>
+                  </span>
+                </span>
+                <svg class="server-select-chevron" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <ul class="server-select-menu" id="server-select-menu" role="listbox" data-i18n-aria="mode.serverAria" aria-label="Select realm: Online or Offline" hidden>
+                <li class="server-select-option is-selected" id="server-opt-online" role="option" data-mode="online" tabindex="-1" aria-selected="true">
+                  <span class="server-dot" data-mode="online" aria-hidden="true"></span>
+                  <span class="server-opt-text">
+                    <span class="server-opt-name" data-i18n="mode.serverOnline">Online</span>
+                    <span class="server-opt-desc" data-i18n="mode.onlineDesc">Log in to the realm. Your characters live on the server and you share the world with everyone else who's on.</span>
+                    <span class="server-opt-stats">
+                      <b class="stats-value js-stat-players">…</b> <span data-i18n="stats.playersOnline">Players Online</span>
+                      <span class="realm-status-sep" aria-hidden="true"></span>
+                      <b class="stats-value js-stat-accounts">…</b> <span data-i18n="stats.accountsCreated">Accounts Created</span>
+                    </span>
+                  </span>
+                  <svg class="server-opt-check" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </li>
+                <li class="server-select-option" id="server-opt-offline" role="option" data-mode="offline" tabindex="-1" aria-selected="false">
+                  <span class="server-dot" data-mode="offline" aria-hidden="true"></span>
+                  <span class="server-opt-text">
+                    <span class="server-opt-name" data-i18n="mode.serverOffline">Offline</span>
+                    <span class="server-opt-desc" data-i18n="mode.offlineDesc">Instant single-player world in your browser. Nothing is saved: perfect for a quick brawl or testing.</span>
+                  </span>
+                  <svg class="server-opt-check" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </li>
+              </ul>
             </div>
-            <div class="mode-card panel" id="btn-offline" role="button" tabindex="0" data-i18n-aria="mode.offlineAria" aria-label="Play Offline: start an instant local single-player session">
-              <h2 data-i18n="mode.offlineTitle">Play Offline</h2>
-              <p data-i18n="mode.offlineDesc">Instant single-player world in your browser. Nothing is saved: perfect for a quick brawl or testing.</p>
-            </div>
+
+            <button type="button" class="btn-play" id="btn-play" data-i18n-aria="mode.playAria" aria-label="Play World of ClaudeCraft">
+              <span class="btn-play-sheen" aria-hidden="true"></span>
+              <span class="btn-play-label" data-i18n="mode.play">Play</span>
+            </button>
           </div>
-          <div id="performance-tip"><b data-i18n="mode.tipTitle">TIP:</b> <span data-i18n="mode.tipText">For the smoothest experience, turn off ad blocker extensions on this site. Community reports found some blockers can cause lag.</span></div>
+
+          <!-- Hidden, non-focusable compatibility triggers. Stable hooks the automated
+               tours / E2E scripts use to drive the online & offline flows directly. -->
+          <button type="button" id="btn-online" class="play-compat-trigger" tabindex="-1" aria-hidden="true"></button>
+          <button type="button" id="btn-offline" class="play-compat-trigger" tabindex="-1" aria-hidden="true"></button>
 
           <div id="token-ca">
             <span class="token-ca-label" data-i18n="mode.caLabel">$WOC Contract Address</span>
@@ -4944,8 +5375,12 @@
               </span>
             </button>
             <p class="token-ca-note" data-i18n="mode.caNote">WOC is our community token. It is not needed to play. Join Discord to discuss the WOC utility and flywheel.</p>
-            <span class="token-ca-feedback" role="status" aria-live="polite" data-i18n="mode.caCopied">Copied!</span>
           </div>
+        </div>
+
+        <!-- Tip — a separate overlay card directly below the main console. -->
+        <div id="play-aside">
+          <p id="performance-tip"><b data-i18n="mode.tipTitle">TIP:</b> <span data-i18n="mode.tipText">For the smoothest experience, turn off ad blocker extensions on this site. Community reports found some blockers can cause lag.</span></p>
         </div>
 
         <form id="login-panel" class="panel auth-panel auth-panel-premium" hidden novalidate>
@@ -5209,6 +5644,8 @@
     </div>
 
     <footer class="homepage-footer">
+      <div class="footer-bar">
+      <div class="footer-left">
       <div class="footer-social-row">
         <a class="social-link" href="https://github.com/levy-street/world-of-claudecraft" target="_blank" rel="noopener noreferrer" data-i18n-aria="a11y.githubProject" aria-label="Open the World of ClaudeCraft GitHub project">
           <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -5222,6 +5659,8 @@
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
           <span data-i18n="nav.donate">Donate</span>
         </a>
+      </div>
+      <div id="game-version">v0.6.0</div>
       </div>
       <div class="footer-lang-row">
         <div class="language-selector">
@@ -5244,10 +5683,7 @@
           </select>
         </div>
       </div>
-      <div class="footer-text-row">
-        <span data-i18n="footer.copyright">2026 World of ClaudeCraft</span>
       </div>
-      <div id="game-version">v0.6.0</div>
     </footer>
   </main>
 
