@@ -229,6 +229,8 @@ export const ZONE2_MOBS: Record<string, MobTemplate> = {
     hpBase: 200, hpPerLevel: 30, dmgBase: 11, dmgPerLevel: 2.5, attackSpeed: 2.4,
     armorPerLevel: 26, moveSpeed: 7, aggroRadius: 14, boss: true,
     aoePulse: { min: 10, max: 14, radius: 10, every: 12, name: 'Drowning Hymn' },
+    // The deacon brands the faithless with a searing arcane rune that festers.
+    arcaneRot: { chance: 0.3, perTick: 7, interval: 3, duration: 12, name: 'Profane Rune', school: 'arcane' },
     loot: [
       { copper: 600, chance: 1 },
       { itemId: 'tallow_candle', chance: 1 },

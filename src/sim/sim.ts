@@ -4152,6 +4152,20 @@ export class Sim {
         sourceId: mob.id, school: (venom.school as Aura['school']) ?? 'nature',
       });
     }
+    // arcane rot: a landed swing may brand the victim with a searing arcane rune
+    // that festers as a refreshing DoT. The arcane-school twin of venom; reuses
+    // the `dot` aura. Guarded on hostile + alive so a friendly pet (the other
+    // mobSwing caller) never debuffs an ally.
+    const arcaneRot = MOBS[mob.templateId]?.arcaneRot;
+    if (arcaneRot && mob.hostile && !target.dead && this.rng.chance(arcaneRot.chance)) {
+      this.applyAura(target, {
+        id: 'arcaneRot_' + mob.templateId, name: arcaneRot.name, kind: 'dot',
+        remaining: arcaneRot.duration, duration: arcaneRot.duration,
+        value: Math.max(1, Math.round(arcaneRot.perTick)),
+        tickInterval: arcaneRot.interval, tickTimer: arcaneRot.interval,
+        sourceId: mob.id, school: (arcaneRot.school as Aura['school']) ?? 'arcane',
+      });
+    }
     // corrosive bite: a landed hit may shred the victim's armor (stacking sunder).
     // Guarded on hostile so a friendly pet (the other mobSwing caller) never debuffs an ally.
     const corrode = MOBS[mob.templateId]?.corrode;
