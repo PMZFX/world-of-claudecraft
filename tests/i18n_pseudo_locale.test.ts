@@ -8,6 +8,8 @@
 // locale enumeration (supportedLanguages, the picker, hreflang, the release gate),
 // while still being selectable via ?lang=en_XA on a NON-release build only.
 
+import fs from "node:fs";
+import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { en, en_XA } from "../src/ui/i18n.resolved.generated";
 import { en as adminEn, en_XA as adminXA } from "../src/admin/i18n.resolved.generated";
@@ -122,6 +124,17 @@ describe("en_XA is excluded from every user-facing locale enumeration", () => {
 
   it("is NOT a key of the admin DICT (so never in the operator language list)", () => {
     expect(Object.keys(ADMIN_DICT)).not.toContain("en_XA");
+  });
+
+  it("is NOT referenced anywhere in index.html (no hreflang / picker SEO leak)", () => {
+    // The static index.html carries both the hreflang <link> block and the player
+    // language <select>; the pseudo-locale must appear in NEITHER. A whole-file,
+    // case-insensitive check guards both at once and also catches the en-XA / EN_XA
+    // spellings a future hand-edit might use. (The existing localization_coverage
+    // hreflang test is presence-only and would not catch a leak.)
+    const html = fs.readFileSync(path.resolve(process.cwd(), "index.html"), "utf8").toLowerCase();
+    expect(html).not.toContain("en_xa");
+    expect(html).not.toContain("en-xa");
   });
 });
 
