@@ -191,6 +191,12 @@ export interface MobTemplate {
   // opens. Resets on evade/respawn. Routes through the normal heal path, so it
   // shows green floating text and grants no threat to the menders themselves.
   mendAlly?: { healMin: number; healMax: number; radius: number; every: number; name: string; school?: Aura['school'] };
+  // Support "War Cadence": periodically quicken the swing speed of every nearby
+  // friendly mob (including the caster) by `hasteMult` for `duration`s. Rides the
+  // existing buff_haste primitive (the same aura packFrenzy uses, already folded
+  // into swingIntervalMult), so it needs no new combat math. Telegraphed and
+  // reset on evade/respawn exactly like mendAlly.
+  warcry?: { radius: number; every: number; hasteMult: number; duration: number; name: string; school?: Aura['school'] };
   // Boss mechanic ("War Stomp"): periodic ground slam that stuns nearby players
   // for `duration`s (and optionally deals min..max damage). Telegraphed: the
   // first slam only lands one full `every` interval after combat starts.
@@ -582,6 +588,7 @@ export interface Entity {
   stompTimer: number; // boss War Stomp stun-pulse countdown
   detonateTimer: number; // Death Throes fuse on a volatile corpse; Infinity = no pending detonation
   mendTimer: number; // mendAlly support-heal cast countdown
+  warcryTimer: number; // warcry ally-haste pulse countdown
   firedSummons: number; // summonAdds thresholds already triggered
   summonedIds: number[]; // live adds this boss summoned; despawned on reset
   enraged: boolean; // enrage mechanic active

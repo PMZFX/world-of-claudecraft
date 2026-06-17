@@ -79,6 +79,9 @@ export const ZONE2_MOBS: Record<string, MobTemplate> = {
     scale: 0.85, color: 0x45b39d,
     // Acid Spit: a snapper's bite corrodes armor, stacking so a swarm shreds you fast.
     corrode: { chance: 0.35, armor: 20, maxStacks: 5, duration: 15, name: 'Acid Spit', school: 'nature' },
+    // Tide Cadence: a snapper drums up the school, quickening the whole pack's
+    // bites — the swarm's signature pressure when you pull more than one.
+    warcry: { radius: 12, every: 10, hasteMult: 1.25, duration: 6, name: 'Tide Cadence', school: 'frost' },
   },
   mirejaw_the_ravenous: {
     id: 'mirejaw_the_ravenous', name: 'Mirejaw the Ravenous', minLevel: 10, maxLevel: 10, family: 'murloc', rare: true,

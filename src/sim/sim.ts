@@ -4052,6 +4052,7 @@ export class Sim {
     mob.healedThisPull = false;
     mob.stompTimer = MOBS[mob.templateId]?.stomp?.every ?? 0;
     mob.mendTimer = MOBS[mob.templateId]?.mendAlly?.every ?? 0;
+    mob.warcryTimer = MOBS[mob.templateId]?.warcry?.every ?? 0;
     mob.wanderTimer = this.rng.range(2, 8);
   }
 
@@ -4519,6 +4520,7 @@ export class Sim {
     mob.healedThisPull = false;
     mob.stompTimer = MOBS[mob.templateId]?.stomp?.every ?? 0;
     mob.mendTimer = MOBS[mob.templateId]?.mendAlly?.every ?? 0;
+    mob.warcryTimer = MOBS[mob.templateId]?.warcry?.every ?? 0;
     mob.wanderTimer = this.rng.range(2, 8);
     for (const meta of this.players.values()) {
       const e = this.entities.get(meta.entityId);
@@ -4612,7 +4614,7 @@ export class Sim {
   // and reset on evade/respawn.
   private updateBossMechanics(mob: Entity): void {
     const tmpl = MOBS[mob.templateId];
-    if (!tmpl || (!tmpl.summonAdds && !tmpl.enrage && !tmpl.desperateHeal && !tmpl.mendAlly)) return;
+    if (!tmpl || (!tmpl.summonAdds && !tmpl.enrage && !tmpl.desperateHeal && !tmpl.mendAlly && !tmpl.warcry)) return;
     const hpFrac = mob.hp / Math.max(1, mob.maxHp);
     if (tmpl.summonAdds) {
       const thresholds = tmpl.summonAdds.atHpPct;
@@ -4658,6 +4660,46 @@ export class Sim {
           for (const ally of wounded) {
             const amount = Math.round(this.rng.range(tmpl.mendAlly.healMin, tmpl.mendAlly.healMax));
             this.applyHeal(mob, ally, amount, tmpl.mendAlly.name);
+          }
+        }
+      }
+    }
+    // Support "War Cadence": periodically quicken every nearby friendly mob's
+    // swings (including the caster) by re-applying a refreshing buff_haste aura.
+    // Same telegraph as Mend; rides swingIntervalMult's existing buff_haste fold.
+    if (tmpl.warcry) {
+      mob.warcryTimer -= DT;
+      if (mob.warcryTimer <= 0) {
+        mob.warcryTimer = tmpl.warcry.every;
+        const allies: Entity[] = [];
+        for (const ally of this.entities.values()) {
+          if (ally.kind !== 'mob' || ally.dead || ally.ownerId !== null) continue; // skip players, pets, corpses
+          if (ally.hostile !== mob.hostile) continue; // same-faction only
+          if (dist2d(ally.pos, mob.pos) > tmpl.warcry.radius) continue;
+          allies.push(ally);
+        }
+        if (allies.length > 0) {
+          const school = tmpl.warcry.school ?? 'physical';
+          const auraId = `warcry_${mob.templateId}`;
+          this.emit({ type: 'spellfx', sourceId: mob.id, targetId: mob.id, school, fx: 'nova' });
+          this.emit({ type: 'log', text: `${mob.name} channels ${tmpl.warcry.name}.`, color: '#ffd27f', entityId: mob.id });
+          for (const ally of allies) {
+            const existing = ally.auras.find((a) => a.id === auraId);
+            if (existing) {
+              existing.remaining = tmpl.warcry.duration; // refresh on each pulse; never stack
+              continue;
+            }
+            ally.auras.push({
+              id: auraId,
+              name: tmpl.warcry.name,
+              kind: 'buff_haste',
+              remaining: tmpl.warcry.duration,
+              duration: tmpl.warcry.duration,
+              value: tmpl.warcry.hasteMult,
+              sourceId: mob.id,
+              school,
+            });
+            this.emit({ type: 'aura', targetId: ally.id, name: tmpl.warcry.name, gained: true });
           }
         }
       }
