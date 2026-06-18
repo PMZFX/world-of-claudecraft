@@ -474,6 +474,15 @@
     display: flex; align-items: center; justify-content: center;
     text-shadow: 1px 1px 1px #000; z-index: 3;
   }
+  /* crossed-swords combat indicator on the player portrait (classic WoW) */
+  .combat-flash {
+    position: absolute; top: -4px; right: -4px; width: 22px; height: 22px;
+    display: none; align-items: center; justify-content: center;
+    color: #ff5040; font-size: 15px; line-height: 1; z-index: 4;
+    pointer-events: none; text-shadow: 0 0 4px #000, 0 0 6px #ff5040;
+  }
+  #player-frame.combat .combat-flash { display: flex; animation: pf-combat-pulse 1s ease-in-out infinite; }
+  #player-frame.combat .portrait { border-color: #e74c3c; box-shadow: 0 0 8px #e74c3c99, inset 0 0 12px #0009; }
   .uf-bars { width: 190px; margin-left: -8px; padding: 5px 8px 5px 14px;
     background: var(--panel-bg); border: 2px solid var(--border); outline: 1px solid #000;
     border-radius: 0 6px 6px 0; box-shadow: 0 2px 10px #000a; }
@@ -5388,6 +5397,7 @@
             <div class="portrait-wrap">
               <div class="portrait"><canvas id="pf-portrait" width="54" height="54"></canvas></div>
               <div class="level-chip" id="pf-level">1</div>
+              <div class="combat-flash" id="pf-combat" title="In Combat">⚔</div>
             </div>
             <div class="uf-bars">
               <div class="uf-name" id="pf-name"></div>
