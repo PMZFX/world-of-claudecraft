@@ -4323,6 +4323,25 @@ export class Sim {
         school: plague.school ?? 'nature',
       });
     }
+
+    // Withering curse: a landed hit can rot the victim's sinews, draining Agility
+    // and so thinning their armor (agi*2) and dodge at once. Hostile mobs only, so a
+    // friendly pet (mobSwing's other caller) never debuffs the party; player targets
+    // only (mobs derive no stats from auras). Rides buff_agi with a negative value, so
+    // recalcPlayerStats folds it through with no new stat math.
+    const wither = MOBS[mob.templateId]?.wither;
+    if (wither && mob.hostile && target.kind === 'player' && !target.dead && this.rng.chance(wither.chance)) {
+      this.applyAura(target, {
+        id: `wither_${mob.templateId}`,
+        name: wither.name,
+        kind: 'buff_agi',
+        remaining: wither.duration,
+        duration: wither.duration,
+        value: -Math.abs(wither.agi),
+        sourceId: mob.id,
+        school: wither.school ?? 'nature',
+      });
+    }
     // On-hit chill: frost-touched mobs numb the victim, slowing their movement.
     const chill = MOBS[mob.templateId]?.chillOnHit;
     if (chill && !mob.dead && !target.dead && this.rng.chance(chill.chance)) {

@@ -45,7 +45,7 @@ export type AiState = 'idle' | 'chase' | 'attack' | 'flee' | 'evade' | 'dead';
 
 export type AuraKind =
   | 'dot' | 'slow' | 'stun' | 'root' | 'incapacitate' | 'polymorph'
-  | 'attackspeed' | 'debuff_ap' | 'buff_ap' | 'buff_armor' | 'buff_int' | 'buff_dodge' | 'buff_speed' | 'buff_haste'
+  | 'attackspeed' | 'debuff_ap' | 'buff_ap' | 'buff_armor' | 'buff_int' | 'buff_agi' | 'buff_dodge' | 'buff_speed' | 'buff_haste'
   | 'hot' | 'absorb' | 'imbue' | 'buff_sta' | 'buff_allstats' | 'thorns' | 'form_bear'
   | 'form_cat' | 'stealth' | 'defensive_stance' | 'righteous_fury' | 'sunder' | 'mortal_wound' | 'silence' | 'vulnerability' | 'hex' | 'tongues';
 
@@ -265,6 +265,12 @@ export interface MobTemplate {
   // buff_sta aura with a NEGATIVE value. Unlike enfeeble (casters only) it
   // afflicts everyone, since Stamina matters to every class.
   plague?: { chance: number; sta: number; duration: number; name: string; school?: Aura['school'] };
+  // On-hit curse: a landed melee swing has `chance` to wither the victim's sinews,
+  // draining `agi` Agility for `duration`. Agility is a derived-stat hub — it feeds
+  // armor (agi*2), dodge and crit — so a single drain shreds both the victim's
+  // physical mitigation and their avoidance at once. Rides a `buff_agi` aura with a
+  // NEGATIVE value (recalcPlayerStats folds it through), so there is no new stat math.
+  wither?: { chance: number; agi: number; duration: number; name: string; school?: Aura['school'] };
   // Combat mechanic: a landed melee hit has `chance` to terrify the victim — a
   // fear that sends the struck player fleeing for `duration`s. Rides the existing
   // `fear_incap` incapacitate aura the player-cast Fear uses, so `updateFearMovement`

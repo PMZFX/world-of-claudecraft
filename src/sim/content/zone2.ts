@@ -146,6 +146,9 @@ export const ZONE2_MOBS: Record<string, MobTemplate> = {
     id: 'fen_troll', name: 'Mirefen Troll', minLevel: 10, maxLevel: 12, family: 'troll',
     hpBase: 56, hpPerLevel: 21, dmgBase: 9, dmgPerLevel: 2.4, attackSpeed: 2.2,
     armorPerLevel: 18, moveSpeed: 7.5, aggroRadius: 11,
+    // Withering Rot: the troll's fetid claws rot a struck victim's sinews, draining
+    // Agility (thinning their armor and dodge) for a few seconds.
+    wither: { chance: 0.3, agi: 18, duration: 8, name: 'Withering Rot', school: 'nature' },
     loot: [
       { copper: 50, chance: 1 },
       { itemId: 'troll_fetish', chance: 0.6, questId: 'q_troll_fetishes' },

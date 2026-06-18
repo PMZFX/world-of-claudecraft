@@ -90,6 +90,7 @@ export function recalcPlayerStats(e: Entity, cls: PlayerClass, equipment: Player
     if (a.kind === 'buff_ap') bonusAp += a.value;
     else if (a.kind === 'buff_armor') s.armor += a.value;
     else if (a.kind === 'buff_int') s.int += a.value;
+    else if (a.kind === 'buff_agi') s.agi += a.value;
     else if (a.kind === 'buff_sta') s.sta += a.value;
     else if (a.kind === 'buff_allstats') {
       s.str += a.value; s.agi += a.value; s.sta += a.value; s.int += a.value; s.spi += a.value;
@@ -107,6 +108,9 @@ export function recalcPlayerStats(e: Entity, cls: PlayerClass, equipment: Player
     bonusDodge += m.dodge;
     if (m.staPct) s.sta = Math.round(s.sta * (1 + m.staPct));
   }
+  // Floor Agility at 0 so a draining debuff (negative buff_agi) can never push the
+  // derived armor/dodge below what zero Agility would give.
+  s.agi = Math.max(0, s.agi);
   s.armor += s.agi * 2;
   if (bearForm) {
     s.armor = Math.round(s.armor * 1.65);
