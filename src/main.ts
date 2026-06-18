@@ -7,6 +7,7 @@ import { MobileControls, PHONE_TOUCH_QUERY, isPhoneTouchDevice } from './game/mo
 import { Hud } from './ui/hud';
 import { audio } from './game/audio';
 import { music } from './game/music';
+import { voice } from './game/voice';
 import { handlePickedEntity, hoverCursorKind } from './game/interactions';
 import { clickMoveShouldCancel, clickMoveStep, stepAngleToward } from './game/click_move';
 import { Api, ClientWorld, CharacterSummary, type ReleaseEntry } from './net/online';
@@ -673,12 +674,17 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
       settings.set('filterProfanity', !!value);
       return;
     }
+    if (key === 'voiceEnabled') {
+      voice.setEnabled(settings.set('voiceEnabled', !!value));
+      return;
+    }
     const v = settings.set(key as keyof typeof SETTING_RANGES, value as number);
     switch (key) {
       case 'cameraSpeed': input.setCameraSpeed(v); break;
       case 'touchLookSpeed': input.setTouchLookSpeed(v); break;
       case 'sfxVolume': audio.setVolume(v); break;
       case 'musicVolume': music.setVolume(v); break;
+      case 'voiceVolume': voice.setVolume(v); break;
       case 'brightness': renderer.setBrightness(v); break;
       case 'renderScale': renderer.setRenderScale(v); break;
       case 'fullscreen': v >= 0.5 ? requestPreferredFullscreen() : exitBrowserFullscreen(); break;

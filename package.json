@@ -28,6 +28,8 @@
     "server": "npm run build:server && node dist-server/server.cjs",
     "realms": "npm run build:server && node scripts/dev-realms.mjs",
     "admin:grant": "node scripts/grant_admin.mjs",
+    "voices:gen": "node scripts/gen_npc_voices.mjs",
+    "voices:lines": "node scripts/gen_npc_lines.mjs",
     "wiki:seed": "node scripts/mediawiki/build_seed.mjs"
   },
   "dependencies": {

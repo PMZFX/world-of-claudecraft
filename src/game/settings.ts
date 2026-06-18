@@ -9,6 +9,9 @@ export const SETTING_RANGES = {
   cameraSpeed: { min: 0.25, max: 1.25, def: 0.7 },
   sfxVolume: { min: 0, max: 1, def: 0.8 },
   musicVolume: { min: 0, max: 1, def: 0.8 },
+  // Pre-rendered NPC voice-line clips (public/audio/voice). Slightly louder than
+  // SFX by default so dialogue reads over ambient combat noise.
+  voiceVolume: { min: 0, max: 1, def: 0.9 },
   brightness: { min: 0.6, max: 1.5, def: 1 },
   // 0 auto, 1 low, 2 medium, 3 high, 4 ultra, 5 advanced. The renderer reads this
   // from localStorage during startup because tier choice controls preload.
@@ -49,6 +52,9 @@ export const BOOL_SETTINGS = {
   // local display choice; the server sends raw text and each client decides.
   // (Slurs are blocked server-side regardless and never reach here.)
   filterProfanity: { def: true },
+  // on by default: play an NPC's voiced line when its dialogue / quest detail
+  // opens. Off mutes voice-over entirely (independent of the SFX/music toggles).
+  voiceEnabled: { def: true },
 } as const;
 
 export type NumericSettingKey = keyof typeof SETTING_RANGES;

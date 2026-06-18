@@ -542,6 +542,8 @@ export const en: EnTranslations = {
       "graphicsNote": "Lower Camera Speed for a calmer mouselook. Render Quality below 100% boosts FPS on weaker machines.",
       "soundEffects": "Sound Effects",
       "musicVolume": "Music Volume",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Music",
       "keybindHelp": "Click a key cell, then press a key to bind it. Esc cancels. Each action has a primary and an alternate key.",
       "keybindCapture": "Press a key for \"{action}\"...",
@@ -4076,6 +4078,8 @@ export const es: EnTranslations = {
       "graphicsNote": "Baja la velocidad de cámara para un control más tranquilo. La calidad de renderizado bajo 100% mejora los FPS en equipos modestos.",
       "soundEffects": "Efectos de sonido",
       "musicVolume": "Volumen de música",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Música",
       "keybindHelp": "Haz clic en una celda y luego presiona una tecla para asignarla. Esc cancela. Cada acción tiene una tecla principal y una alternativa.",
       "keybindCapture": "Presiona una tecla para \"{action}\"...",
@@ -7610,6 +7614,8 @@ export const es_ES: EnTranslations = {
       "graphicsNote": "Baja la velocidad de cámara para un control más tranquilo. La calidad de renderizado bajo 100% mejora los FPS en equipos modestos.",
       "soundEffects": "Efectos de sonido",
       "musicVolume": "Volumen de música",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Música",
       "keybindHelp": "Haz clic en una celda y luego presiona una tecla para asignarla. Esc cancela. Cada acción tiene una tecla principal y una alternativa.",
       "keybindCapture": "Presiona una tecla para \"{action}\"...",
@@ -11144,6 +11150,8 @@ export const fr_FR: EnTranslations = {
       "graphicsNote": "Réduisez la vitesse de caméra pour une visée plus calme. Une qualité de rendu sous 100 % améliore les FPS sur les machines modestes.",
       "soundEffects": "Effets sonores",
       "musicVolume": "Volume de la musique",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Musique",
       "keybindHelp": "Cliquez sur une case, puis appuyez sur une touche pour l'assigner. Échap annule. Chaque action possède une touche principale et une alternative.",
       "keybindCapture": "Appuyez sur une touche pour \"{action}\"...",
@@ -14678,6 +14686,8 @@ export const fr_CA: EnTranslations = {
       "graphicsNote": "Réduisez la vitesse de caméra pour une visée plus calme. Une qualité de rendu sous 100 % améliore les FPS sur les machines modestes.",
       "soundEffects": "Effets sonores",
       "musicVolume": "Volume de la musique",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Musique",
       "keybindHelp": "Cliquez sur une case, puis appuyez sur une touche pour l'assigner. Échap annule. Chaque action possède une touche principale et une alternative.",
       "keybindCapture": "Appuyez sur une touche pour \"{action}\"...",
@@ -18212,6 +18222,8 @@ export const en_CA: EnTranslations = {
       "graphicsNote": "Lower Camera Speed for a calmer mouselook. Render Quality below 100% boosts FPS on weaker machines.",
       "soundEffects": "Sound Effects",
       "musicVolume": "Music Volume",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Music",
       "keybindHelp": "Click a key cell, then press a key to bind it. Esc cancels. Each action has a primary and an alternate key.",
       "keybindCapture": "Press a key for \"{action}\"...",
@@ -21746,6 +21758,8 @@ export const it_IT: EnTranslations = {
       "graphicsNote": "Riduci la velocità della camera per un mouselook più stabile. La qualità rendering sotto il 100% aumenta gli FPS sui dispositivi meno potenti.",
       "soundEffects": "Effetti sonori",
       "musicVolume": "Volume musica",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Musica",
       "keybindHelp": "Fai clic su una cella e premi un tasto per assegnarlo. Esc annulla. Ogni azione ha un tasto principale e uno alternativo.",
       "keybindCapture": "Premi un tasto per \"{action}\"...",
@@ -25280,6 +25294,8 @@ export const de_DE: EnTranslations = {
       "graphicsNote": "Senkt die Kamerageschwindigkeit für ruhigere Maussteuerung. Renderqualität unter 100 % verbessert die FPS auf schwächeren Geräten.",
       "soundEffects": "Soundeffekte",
       "musicVolume": "Musiklautstärke",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Musik",
       "keybindHelp": "Klickt auf ein Tastenfeld und drückt dann eine Taste zum Binden. Esc bricht ab. Jede Aktion hat eine Haupttaste und eine Alternativtaste.",
       "keybindCapture": "Drückt eine Taste für \"{action}\"...",
@@ -28814,6 +28830,8 @@ export const zh_CN: EnTranslations = {
       "graphicsNote": "降低镜头速度可让鼠标视角更平稳。渲染质量低于 100% 可在较弱设备上提升 FPS。",
       "soundEffects": "音效",
       "musicVolume": "音乐音量",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "音乐",
       "keybindHelp": "点击一个按键格，然后按下要绑定的键。Esc 取消。每个动作都有主键和备用键。",
       "keybindCapture": "按下用于“{action}”的按键...",
@@ -32348,6 +32366,8 @@ export const zh_TW: EnTranslations = {
       "graphicsNote": "降低鏡頭速度可讓滑鼠視角更平穩。渲染品質低於 100% 可在較弱裝置上提升 FPS。",
       "soundEffects": "音效",
       "musicVolume": "音樂音量",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "音樂",
       "keybindHelp": "點擊一個按鍵格，然後按下要綁定的按鍵。Esc 取消。每個動作都有主鍵與備用鍵。",
       "keybindCapture": "按下用於「{action}」的按鍵...",
@@ -35882,6 +35902,8 @@ export const ko_KR: EnTranslations = {
       "graphicsNote": "카메라 속도를 낮추면 마우스 시점이 더 안정됩니다. 렌더 품질을 100% 아래로 낮추면 낮은 사양 장치에서 FPS가 향상됩니다.",
       "soundEffects": "효과음",
       "musicVolume": "음악 음량",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "음악",
       "keybindHelp": "키 칸을 클릭한 뒤 지정할 키를 누르세요. Esc는 취소입니다. 각 행동에는 기본 키와 보조 키가 있습니다.",
       "keybindCapture": "\"{action}\"에 사용할 키를 누르세요...",
@@ -39416,6 +39438,8 @@ export const ja_JP: EnTranslations = {
       "graphicsNote": "カメラ速度を下げるとマウス視点が落ち着きます。描画品質を100%未満にすると、低性能環境でFPSが向上します。",
       "soundEffects": "効果音",
       "musicVolume": "音楽音量",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "音楽",
       "keybindHelp": "キー欄をクリックしてから割り当てるキーを押してください。Escでキャンセルします。各アクションにはメインキーと代替キーがあります。",
       "keybindCapture": "「{action}」に使うキーを押してください...",
@@ -42950,6 +42974,8 @@ export const pt_BR: EnTranslations = {
       "graphicsNote": "Reduza a velocidade da câmera para um mouselook mais calmo. Qualidade de renderização abaixo de 100% melhora o FPS em máquinas mais fracas.",
       "soundEffects": "Efeitos sonoros",
       "musicVolume": "Volume da música",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Música",
       "keybindHelp": "Clique em uma célula de tecla e pressione uma tecla para atribuí-la. Esc cancela. Cada ação tem uma tecla principal e uma alternativa.",
       "keybindCapture": "Pressione uma tecla para \"{action}\"...",
@@ -46484,6 +46510,8 @@ export const ru_RU: EnTranslations = {
       "graphicsNote": "Уменьшите скорость камеры для более спокойного обзора мышью. Качество рендера ниже 100% повышает FPS на слабых устройствах.",
       "soundEffects": "Звуковые эффекты",
       "musicVolume": "Громкость музыки",
+      "voiceVolume": "Voice Volume",
+      "npcVoices": "NPC Voices",
       "music": "Музыка",
       "keybindHelp": "Щелкните ячейку клавиши, затем нажмите клавишу для назначения. Esc отменяет. У каждого действия есть основная и запасная клавиша.",
       "keybindCapture": "Нажмите клавишу для \"{action}\"...",
@@ -49503,19 +49531,55 @@ export const translations = {
 };
 
 export const pending: Record<string, readonly string[]> = {
-  "es": [],
-  "es_ES": [],
-  "fr_FR": [],
-  "fr_CA": [],
+  "es": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "es_ES": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "fr_FR": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "fr_CA": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
   "en_CA": [],
-  "it_IT": [],
-  "de_DE": [],
-  "zh_CN": [],
-  "zh_TW": [],
-  "ko_KR": [],
-  "ja_JP": [],
-  "pt_BR": [],
-  "ru_RU": []
+  "it_IT": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "de_DE": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "zh_CN": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "zh_TW": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "ko_KR": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "ja_JP": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "pt_BR": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ],
+  "ru_RU": [
+    "hud.options.npcVoices",
+    "hud.options.voiceVolume"
+  ]
 };
 
 export const en_XA: EnTranslations = {
@@ -50051,6 +50115,8 @@ export const en_XA: EnTranslations = {
       "graphicsNote": "[Ļóŵéŕ Çáɱéŕá Šþééð ƒóŕ á çáļɱéŕ ɱóúšéļóóķ. Ŕéñðéŕ Ɋúáļíţý ƀéļóŵ 100% ƀóóšţš ƑÞŠ óñ ŵéáķéŕ ɱáçĥíñéš.]",
       "soundEffects": "[Šóúñð Éƒƒéçţš]",
       "musicVolume": "[Ɱúšíç Ʋóļúɱé]",
+      "voiceVolume": "[Ʋóíçé Ʋóļúɱé]",
+      "npcVoices": "[ÑÞÇ Ʋóíçéš]",
       "music": "[Ɱúšíç]",
       "keybindHelp": "[Çļíçķ á ķéý çéļļ, ţĥéñ þŕéšš á ķéý ţó ƀíñð íţ. Éšç çáñçéļš. Éáçĥ áçţíóñ ĥáš á þŕíɱáŕý áñð áñ áļţéŕñáţé ķéý.]",
       "keybindCapture": "[Þŕéšš á ķéý ƒóŕ \"{action}\"...]",

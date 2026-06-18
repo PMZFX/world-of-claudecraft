@@ -20,6 +20,7 @@ import { terrainHeight, WATER_LEVEL, roadDistance, generateDecorations } from '.
 import type { Decoration } from '../sim/world';
 import { Meters } from './meters';
 import { audio } from '../game/audio';
+import { voice } from '../game/voice';
 import { music, musicZoneForLocation } from '../game/music';
 import { iconDataUrl, iconCanvas, QUALITY_COLOR, raidMarkerDataUrl, RAID_MARKER_NAMES } from './icons';
 import { svgIcon } from './ui_icons';
@@ -3109,6 +3110,10 @@ export class Hud {
     if (!npc || npc.kind !== 'npc') return;
     if ($('#quest-dialog').style.display !== 'block') this.questDialogReturnFocus = this.currentFocusableElement();
     this.closeOtherWindows('#quest-dialog');
+    // Voice the greeting only on the initial open — renderGossip also runs when
+    // navigating back from a quest detail or after accept/turn-in, where a
+    // re-greeting would be noise.
+    voice.play(`greeting__${npc.templateId}`);
     this.renderGossip(npc);
   }
 
@@ -3172,6 +3177,7 @@ export class Hud {
     this.openQuestDetailId = questId;
     const state = this.sim.questState(questId);
     const text = questNarrative(questId, state === 'ready' ? 'completion' : 'text', this.sim.player.name);
+    voice.play(state === 'ready' ? `quest__${questId}__complete` : `quest__${questId}__offer`);
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'false');
     el.setAttribute('aria-labelledby', 'quest-dialog-title');
@@ -5648,6 +5654,36 @@ export class Hud {
     parent.appendChild(row);
   }
 
+  // On/off toggle for a real boolean setting, styled like the audio-menu rows
+  // (settingToggle above is for the numeric 0/1 keys; this one drives BOOL_SETTINGS).
+  private settingBoolToggle(parent: HTMLElement, label: string, key: BoolSettingKey): void {
+    const hooks = this.optionsHooks;
+    if (!hooks) return;
+    const row = document.createElement('div');
+    row.className = 'set-row';
+    const name = document.createElement('span');
+    name.className = 'set-name';
+    name.textContent = label;
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'btn set-toggle';
+    const sync = () => {
+      const on = hooks.settings.get(key);
+      toggle.textContent = on ? t('hud.options.on') : t('hud.options.off');
+      toggle.classList.toggle('off', !on);
+      toggle.setAttribute('aria-pressed', String(on));
+      toggle.setAttribute('aria-label', label);
+    };
+    sync();
+    toggle.addEventListener('click', () => {
+      audio.click();
+      hooks.onSettingChange(key, hooks.settings.set(key, !hooks.settings.get(key)));
+      sync();
+    });
+    row.append(name, toggle);
+    parent.appendChild(row);
+  }
+
   private settingChoice(parent: HTMLElement, label: string, key: NumericSettingKey, options: { value: number; label: string }[], onChange?: () => void): void {
     const hooks = this.optionsHooks;
     if (!hooks) return;
@@ -5774,6 +5810,7 @@ export class Hud {
     const body = this.settingsViewShell(t('hud.options.audio'));
     this.settingSlider(body, t('hud.options.soundEffects'), 'sfxVolume');
     this.settingSlider(body, t('hud.options.musicVolume'), 'musicVolume');
+    this.settingSlider(body, t('hud.options.voiceVolume'), 'voiceVolume');
     const row = document.createElement('div');
     row.className = 'set-row';
     const name = document.createElement('span');
@@ -5791,6 +5828,7 @@ export class Hud {
     toggle.addEventListener('click', () => { audio.click(); music.setEnabled(!music.enabled); sync(); });
     row.append(name, toggle);
     body.appendChild(row);
+    this.settingBoolToggle(body, t('hud.options.npcVoices'), 'voiceEnabled');
     this.settingsViewFooter();
   }
 
