@@ -994,6 +994,7 @@ const ABILITY_RECIPES: Record<string, IconRecipe> = {
   // warrior
   heroic_strike: r('fury', 'steel', ['sword'], ['glow']),
   battle_shout: r('fury', 'gold', ['fist'], ['arcs']),
+  demoralizing_shout: r('shadow', 'steel', ['fist'], ['arcs']),
   charge: r('fury', 'steel', ['boot', { p: 'sword', ...BR }], ['motion']),
   rend: r('blood', 'blood', ['claw_slash'], ['drips']),
   thunder_clap: r('storm', 'sky', ['lightning'], ['arcs']),

@@ -5794,6 +5794,7 @@ const classAbilityNamesEn = {
     abilities: abilityTranslations([
       ["heroic_strike", "Heroic Strike", "A strong attack that increases melee damage by {damage}. Activates on your next swing."],
       ["battle_shout", "Battle Shout", "Increases your attack power by 20 for 2 min."],
+      ["demoralizing_shout", "Demoralizing Shout", "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."],
       ["charge", "Charge", "Charges an enemy, generating 9 rage and stunning it for 1 sec. 8-25 yd range."],
       ["rend", "Rend", "Wounds the target, causing them to bleed for {damage} damage over 9 sec."],
       ["thunder_clap", "Thunder Clap", "Blasts nearby enemies for {damage} damage and slows their attacks by 10% for 10 sec."],
@@ -5917,6 +5918,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "Golpe heroico", "Un ataque poderoso que aumenta el daño cuerpo a cuerpo en {damage}. Se activa en tu siguiente golpe."],
         ["battle_shout", "Grito de batalla", "Aumenta tu poder de ataque en 20 durante 2 min."],
+        ["demoralizing_shout", "Grito desmoralizador", "Lanza un grito aterrador y reduce el poder de ataque de todos los enemigos cercanos en 30 durante 30 s."],
         ["charge", "Cargar", "Carga contra un enemigo, genera 9 de ira y lo aturde durante 1 s. Alcance de 8-25 m."],
         ["rend", "Desgarrar", "Hiere al objetivo y le hace sangrar por {damage} de daño durante 9 s."],
         ["thunder_clap", "Atronar", "Golpea a los enemigos cercanos por {damage} de daño y ralentiza sus ataques un 10% durante 10 s."],
@@ -6038,6 +6040,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "Frappe héroïque", "Une attaque puissante qui augmente les dégâts de mêlée de {damage}. S'active lors de votre prochaine frappe."],
         ["battle_shout", "Cri de guerre", "Augmente votre puissance d'attaque de 20 pendant 2 min."],
+        ["demoralizing_shout", "Cri démoralisant", "Pousse un cri terrifiant qui réduit la puissance d'attaque de tous les ennemis proches de 30 pendant 30 s."],
         ["charge", "Charge", "Charge un ennemi, génère 9 rage et l'étourdit pendant 1 s. Portée de 8-25 m."],
         ["rend", "Pourfendre", "Blesse la cible et la fait saigner pour {damage} points de dégâts en 9 s."],
         ["thunder_clap", "Coup de tonnerre", "Frappe les ennemis proches pour {damage} points de dégâts et ralentit leurs attaques de 10% pendant 10 s."],
@@ -6160,6 +6163,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "Colpo Eroico", "Un attacco potente che aumenta i danni in mischia di {damage}. Si attiva al tuo prossimo colpo."],
         ["battle_shout", "Urlo di Battaglia", "Aumenta la tua potenza d'attacco di 20 per 2 min."],
+        ["demoralizing_shout", "Urlo Demoralizzante", "Lancia un urlo spaventoso, riducendo la potenza d'attacco di tutti i nemici vicini di 30 per 30 sec."],
         ["charge", "Carica", "Carica un nemico, genera 9 rabbia e lo stordisce per 1 s. Portata 8-25 m."],
         ["rend", "Squarcio", "Ferisce il bersaglio e lo fa sanguinare per {damage} danni in 9 s."],
         ["thunder_clap", "Boato Tonante", "Colpisce i nemici vicini per {damage} danni e rallenta i loro attacchi del 10% per 10 s."],
@@ -6280,6 +6284,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "Heldenhafter Stoß", "Ein mächtiger Angriff, der den Nahkampfschaden um {damage} erhöht. Wird bei eurem nächsten Schwung ausgelöst."],
         ["battle_shout", "Schlachtruf", "Erhöht eure Angriffskraft 2 Min. lang um 20."],
+        ["demoralizing_shout", "Demoralisierender Ruf", "Stößt einen furchterregenden Ruf aus und verringert die Angriffskraft aller nahen Gegner 30 Sek. lang um 30."],
         ["charge", "Sturmangriff", "Stürmt auf einen Gegner zu, erzeugt 9 Wut und betäubt ihn 1 Sek. lang. Reichweite 8-25 m."],
         ["rend", "Verwunden", "Verwundet das Ziel und lässt es über 9 Sek. für {damage} Schaden bluten."],
         ["thunder_clap", "Donnerknall", "Trifft nahe Gegner für {damage} Schaden und verlangsamt ihre Angriffe 10 Sek. lang um 10%."],
@@ -6400,6 +6405,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "英勇打击", "一次强力攻击，使近战伤害提高 {damage}。在你的下一次挥击时触发。"],
         ["battle_shout", "战斗怒吼", "使你的攻击强度提高 20，持续 2 分钟。"],
+        ["demoralizing_shout", "挫志怒吼", "发出可怕的怒吼，使附近所有敌人的攻击强度降低 30，持续 30 秒。"],
         ["charge", "冲锋", "向一名敌人冲锋，产生 9 点怒气并使其昏迷 1 秒。8-25 码距离。"],
         ["rend", "撕裂", "撕裂目标，使其在 9 秒内流血并受到 {damage} 点伤害。"],
         ["thunder_clap", "雷霆一击", "轰击附近敌人，造成 {damage} 点伤害，并使其攻击速度降低 10%，持续 10 秒。"],
@@ -6520,6 +6526,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "英勇打擊", "一次強力攻擊，使近戰傷害提高 {damage}。在你的下一次揮擊時觸發。"],
         ["battle_shout", "戰鬥怒吼", "使你的攻擊強度提高 20，持續 2 分鐘。"],
+        ["demoralizing_shout", "挫志怒吼", "發出可怕的怒吼，使附近所有敵人的攻擊強度降低 30，持續 30 秒。"],
         ["charge", "衝鋒", "向一名敵人衝鋒，產生 9 點怒氣並使其昏迷 1 秒。8-25 碼距離。"],
         ["rend", "撕裂", "撕裂目標，使其在 9 秒內流血並受到 {damage} 點傷害。"],
         ["thunder_clap", "雷霆一擊", "轟擊附近敵人，造成 {damage} 點傷害，並使其攻擊速度降低 10%，持續 10 秒。"],
@@ -6640,6 +6647,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "영웅의 일격", "강력한 공격으로 근접 피해가 {damage}만큼 증가합니다. 다음 무기 공격 시 발동됩니다."],
         ["battle_shout", "전투의 외침", "2분 동안 전투력이 20만큼 증가합니다."],
+        ["demoralizing_shout", "사기의 외침", "무시무시한 고함을 질러 주위 모든 적의 전투력을 30만큼 30초 동안 감소시킵니다."],
         ["charge", "돌진", "적에게 돌진하여 분노 9를 생성하고 1초 동안 기절시킵니다. 사거리 8-25yd."],
         ["rend", "분쇄", "대상을 상처 입혀 9초에 걸쳐 {damage}의 출혈 피해를 입힙니다."],
         ["thunder_clap", "천둥벼락", "주위 적에게 {damage}의 피해를 입히고 10초 동안 공격 속도를 10%만큼 늦춥니다."],
@@ -6760,6 +6768,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "英雄の一撃", "強力な攻撃で近接ダメージが {damage} 増加します。次のスイングで発動します。"],
         ["battle_shout", "バトルシャウト", "2分間、攻撃力が20増加します。"],
+        ["demoralizing_shout", "デモラライジングシャウト", "恐ろしい雄叫びを上げ、30秒間、周囲の敵すべての攻撃力を30減少させます。"],
         ["charge", "チャージ", "敵に突撃し、怒りを9生成して1秒間スタンさせます。射程8-25yd。"],
         ["rend", "レンド", "対象を負傷させ、9秒間で {damage} の出血ダメージを与えます。"],
         ["thunder_clap", "サンダークラップ", "周囲の敵に {damage} のダメージを与え、10秒間、攻撃速度を10%低下させます。"],
@@ -6880,6 +6889,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "Golpe Heroico", "Um ataque forte que aumenta o dano corpo a corpo em {damage}. Ativa no seu próximo golpe."],
         ["battle_shout", "Grito de Batalha", "Aumenta seu poder de ataque em 20 por 2 min."],
+        ["demoralizing_shout", "Grito Desmoralizante", "Solta um grito assustador, reduzindo o poder de ataque de todos os inimigos próximos em 30 por 30 seg."],
         ["charge", "Investida", "Investe contra um inimigo, gera 9 de raiva e o atordoa por 1 s. Alcance de 8-25 m."],
         ["rend", "Rasgar", "Fere o alvo, fazendo-o sangrar por {damage} de dano ao longo de 9 s."],
         ["thunder_clap", "Trovoada", "Atinge inimigos próximos com {damage} de dano e reduz seus ataques em 10% por 10 s."],
@@ -7000,6 +7010,7 @@ export const classAbilityNames = {
       abilities: abilityTranslations([
         ["heroic_strike", "Удар героя", "Мощная атака, увеличивающая урон в ближнем бою на {damage}. Срабатывает при следующем взмахе оружием."],
         ["battle_shout", "Боевой крик", "Повышает вашу силу атаки на 20 на 2 мин."],
+        ["demoralizing_shout", "Деморализующий крик", "Издает устрашающий крик, снижая силу атаки всех противников поблизости на 30 на 30 сек."],
         ["charge", "Рывок", "Вы бросаетесь к врагу, накапливаете 9 ярости и оглушаете его на 1 сек. Дальность 8-25 м."],
         ["rend", "Кровопускание", "Ранит цель, вызывая кровотечение на {damage} ед. урона за 9 сек."],
         ["thunder_clap", "Удар грома", "Поражает ближайших врагов на {damage} ед. урона и замедляет их атаки на 10% на 10 сек."],

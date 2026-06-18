@@ -1244,6 +1244,10 @@ export const en: EnTranslations = {
         "name": "Battle Shout",
         "description": "Increases your attack power by 20 for 2 min."
       },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
+      },
       "charge": {
         "name": "Charge",
         "description": "Charges an enemy, generating 9 rage and stunning it for 1 sec. 8-25 yd range."
@@ -4828,6 +4832,10 @@ export const es: EnTranslations = {
       "battle_shout": {
         "name": "Grito de batalla",
         "description": "Aumenta tu poder de ataque en 20 durante 2 min."
+      },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
       },
       "charge": {
         "name": "Cargar",
@@ -8414,6 +8422,10 @@ export const es_ES: EnTranslations = {
         "name": "Grito de batalla",
         "description": "Aumenta tu poder de ataque en 20 durante 2 min."
       },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
+      },
       "charge": {
         "name": "Cargar",
         "description": "Carga contra un enemigo, genera 9 de ira y lo aturde durante 1 s. Alcance de 8-25 m."
@@ -11998,6 +12010,10 @@ export const fr_FR: EnTranslations = {
       "battle_shout": {
         "name": "Cri de guerre",
         "description": "Augmente votre puissance d'attaque de 20 pendant 2 min."
+      },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
       },
       "charge": {
         "name": "Charge",
@@ -15584,6 +15600,10 @@ export const fr_CA: EnTranslations = {
         "name": "Cri de guerre",
         "description": "Augmente votre puissance d'attaque de 20 pendant 2 min."
       },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
+      },
       "charge": {
         "name": "Charge",
         "description": "Charge un ennemi, génère 9 rage et l'étourdit pendant 1 s. Portée de 8-25 m."
@@ -19168,6 +19188,10 @@ export const en_CA: EnTranslations = {
       "battle_shout": {
         "name": "Battle Shout",
         "description": "Increases your attack power by 20 for 2 min."
+      },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
       },
       "charge": {
         "name": "Charge",
@@ -22754,6 +22778,10 @@ export const it_IT: EnTranslations = {
         "name": "Urlo di Battaglia",
         "description": "Aumenta la tua potenza d'attacco di 20 per 2 min."
       },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
+      },
       "charge": {
         "name": "Carica",
         "description": "Carica un nemico, genera 9 rabbia e lo stordisce per 1 s. Portata 8-25 m."
@@ -26338,6 +26366,10 @@ export const de_DE: EnTranslations = {
       "battle_shout": {
         "name": "Schlachtruf",
         "description": "Erhöht eure Angriffskraft 2 Min. lang um 20."
+      },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
       },
       "charge": {
         "name": "Sturmangriff",
@@ -29924,6 +29956,10 @@ export const zh_CN: EnTranslations = {
         "name": "战斗怒吼",
         "description": "使你的攻击强度提高 20，持续 2 分钟。"
       },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
+      },
       "charge": {
         "name": "冲锋",
         "description": "向一名敌人冲锋，产生 9 点怒气并使其昏迷 1 秒。8-25 码距离。"
@@ -33508,6 +33544,10 @@ export const zh_TW: EnTranslations = {
       "battle_shout": {
         "name": "戰鬥怒吼",
         "description": "使你的攻擊強度提高 20，持續 2 分鐘。"
+      },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
       },
       "charge": {
         "name": "衝鋒",
@@ -37094,6 +37134,10 @@ export const ko_KR: EnTranslations = {
         "name": "전투의 외침",
         "description": "2분 동안 전투력이 20만큼 증가합니다."
       },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
+      },
       "charge": {
         "name": "돌진",
         "description": "적에게 돌진하여 분노 9를 생성하고 1초 동안 기절시킵니다. 사거리 8-25yd."
@@ -40678,6 +40722,10 @@ export const ja_JP: EnTranslations = {
       "battle_shout": {
         "name": "バトルシャウト",
         "description": "2分間、攻撃力が20増加します。"
+      },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
       },
       "charge": {
         "name": "チャージ",
@@ -44264,6 +44312,10 @@ export const pt_BR: EnTranslations = {
         "name": "Grito de Batalha",
         "description": "Aumenta seu poder de ataque em 20 por 2 min."
       },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
+      },
       "charge": {
         "name": "Investida",
         "description": "Investe contra um inimigo, gera 9 de raiva e o atordoa por 1 s. Alcance de 8-25 m."
@@ -47849,6 +47901,10 @@ export const ru_RU: EnTranslations = {
         "name": "Боевой крик",
         "description": "Повышает вашу силу атаки на 20 на 2 мин."
       },
+      "demoralizing_shout": {
+        "name": "Demoralizing Shout",
+        "description": "Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec."
+      },
       "charge": {
         "name": "Рывок",
         "description": "Вы бросаетесь к врагу, накапливаете 9 ярости и оглушаете его на 1 сек. Дальность 8-25 м."
@@ -50218,24 +50274,32 @@ export const translations = {
 
 export const pending: Record<string, readonly string[]> = {
   "es": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "es_ES": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "fr_FR": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "fr_CA": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50243,48 +50307,64 @@ export const pending: Record<string, readonly string[]> = {
   ],
   "en_CA": [],
   "it_IT": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "de_DE": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "zh_CN": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "zh_TW": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "ko_KR": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "ja_JP": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "pt_BR": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
     "itemUi.slots.waist"
   ],
   "ru_RU": [
+    "entities.abilities.demoralizing_shout.description",
+    "entities.abilities.demoralizing_shout.name",
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -51526,6 +51606,10 @@ export const en_XA: EnTranslations = {
       "battle_shout": {
         "name": "[Ɓáţţļé Šĥóúţ]",
         "description": "[Íñçŕéášéš ýóúŕ áţţáçķ þóŵéŕ ƀý 20 ƒóŕ 2 ɱíñ.]"
+      },
+      "demoralizing_shout": {
+        "name": "[Ðéɱóŕáļížíñĝ Šĥóúţ]",
+        "description": "[Ļéţš óúţ á ƒéáŕšóɱé šĥóúţ, ŕéðúçíñĝ ţĥé áţţáçķ þóŵéŕ óƒ áļļ ñéáŕƀý éñéɱíéš ƀý 30 ƒóŕ 30 šéç.]"
       },
       "charge": {
         "name": "[Çĥáŕĝé]",

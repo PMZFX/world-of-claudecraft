@@ -22,6 +22,8 @@
 | battle_shout | 1 | 1 | 10 | inst | buff_ap +20, 120s |
 | | **2** | **12** | 10 | inst | buff_ap **+35**, 120s |
 | | **3** | **20** | 10 | inst | buff_ap **+50**, 120s |
+| demoralizing_shout | 1 | 14 | 10 | inst | aoeAttackPower −30, 30s, r10 |
+| | **2** | **20** | 10 | inst | aoeAttackPower **−45**, 30s, r10 |
 | rend | 1 | 4 | 10 | inst | dot 15 / 9s (3×5) |
 | | 2 | 10 | 10 | inst | dot 21 / 9s *(exists)* |
 | | **3** | **16** | 10 | inst | dot **36 / 12s** (4×9) |

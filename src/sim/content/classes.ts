@@ -39,7 +39,7 @@ export const CLASSES: Record<PlayerClass, ClassDef> = {
     resourceType: 'rage',
     startWeapon: 'worn_sword',
     startChest: 'recruit_tunic',
-    abilities: ['heroic_strike', 'battle_shout', 'charge', 'rend', 'thunder_clap', 'hamstring', 'bloodrage', 'overpower', 'execute', 'slam', 'cleave', 'defensive_stance', 'sunder_armor', 'taunt'],
+    abilities: ['heroic_strike', 'battle_shout', 'charge', 'rend', 'thunder_clap', 'hamstring', 'bloodrage', 'overpower', 'execute', 'slam', 'cleave', 'defensive_stance', 'demoralizing_shout', 'sunder_armor', 'taunt'],
     color: 0xc79c6e,
   },
   mage: {
@@ -197,6 +197,16 @@ export const ABILITIES: Record<string, AbilityDef> = {
       { rank: 3, level: 20, cost: 10, effects: [{ type: 'selfBuff', kind: 'buff_ap', value: 50, duration: 120 }] },
     ],
     description: 'Increases your attack power by 20 for 2 min.',
+  },
+  demoralizing_shout: {
+    id: 'demoralizing_shout', name: 'Demoralizing Shout', class: 'warrior', learnLevel: 14,
+    cost: 10, castTime: 0, cooldown: 0, range: 0, school: 'physical',
+    requiresTarget: false,
+    effects: [{ type: 'aoeAttackPower', amount: 30, duration: 30, radius: 10 }],
+    ranks: [
+      { rank: 2, level: 20, cost: 10, effects: [{ type: 'aoeAttackPower', amount: 45, duration: 30, radius: 10 }] },
+    ],
+    description: 'Lets out a fearsome shout, reducing the attack power of all nearby enemies by 30 for 30 sec.',
   },
   charge: {
     id: 'charge', name: 'Charge', class: 'warrior', learnLevel: 4,
