@@ -356,7 +356,7 @@
 | Paladin | flash_of_light@12, exorcism@14, consecration@18 | none |
 | Hunter | aspect_of_the_cheetah@14, aimed_shot@16, rapid_fire@20 | none |
 | Priest | heal@14 (R2@20), mind_flay@16, flash_heal@20 | none (drainTick healFrac 0) |
-| Shaman | frost_shock@14, ghost_wolf@16, stormstrike@20 | none |
+| Shaman | frost_shock@14, ghost_wolf@16, stormstrike@20, frostbrand_weapon@12 (R2@20) | none (imbue reuse) |
 | Warlock | fear@14, searing_pain@16, shadowburn@20 | none (incapacitate reuse) |
 | Druid | regrowth@14, barkskin@16, starfire@18 | none |
 

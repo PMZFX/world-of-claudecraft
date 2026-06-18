@@ -1556,6 +1556,10 @@ export const en: EnTranslations = {
         "name": "Frost Shock",
         "description": "Instantly shocks the target with frost for {damage} Frost damage and slows its movement by 50% for 8 sec."
       },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
+      },
       "ghost_wolf": {
         "name": "Ghost Wolf",
         "description": "Turns you into a Ghost Wolf, increasing movement speed by 40% for 10 min."
@@ -5148,6 +5152,10 @@ export const es: EnTranslations = {
       "frost_shock": {
         "name": "Choque de Escarcha",
         "description": "Golpea al objetivo al instante con escarcha por {damage} de daño de Escarcha y reduce su velocidad de movimiento un 50% durante 8 s."
+      },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
       },
       "ghost_wolf": {
         "name": "Lobo fantasmal",
@@ -8742,6 +8750,10 @@ export const es_ES: EnTranslations = {
         "name": "Choque de Escarcha",
         "description": "Golpea al objetivo al instante con escarcha por {damage} de daño de Escarcha y reduce su velocidad de movimiento un 50% durante 8 s."
       },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
+      },
       "ghost_wolf": {
         "name": "Lobo fantasmal",
         "description": "Te transforma en lobo fantasmal y aumenta tu velocidad de movimiento un 40% durante 10 min."
@@ -12334,6 +12346,10 @@ export const fr_FR: EnTranslations = {
       "frost_shock": {
         "name": "Horion de givre",
         "description": "Frappe instantanément la cible par le givre pour {damage} points de dégâts de Givre et ralentit son déplacement de 50% pendant 8 s."
+      },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
       },
       "ghost_wolf": {
         "name": "Loup fantôme",
@@ -15928,6 +15944,10 @@ export const fr_CA: EnTranslations = {
         "name": "Horion de givre",
         "description": "Frappe instantanément la cible par le givre pour {damage} points de dégâts de Givre et ralentit son déplacement de 50% pendant 8 s."
       },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
+      },
       "ghost_wolf": {
         "name": "Loup fantôme",
         "description": "Vous transforme en loup fantôme et augmente votre vitesse de déplacement de 40% pendant 10 min."
@@ -19520,6 +19540,10 @@ export const en_CA: EnTranslations = {
       "frost_shock": {
         "name": "Frost Shock",
         "description": "Instantly shocks the target with frost for {damage} Frost damage and slows its movement by 50% for 8 sec."
+      },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
       },
       "ghost_wolf": {
         "name": "Ghost Wolf",
@@ -23114,6 +23138,10 @@ export const it_IT: EnTranslations = {
         "name": "Folgore del Gelo",
         "description": "Scuote istantaneamente il bersaglio col gelo per {damage} danni da Gelo e rallenta il movimento del 50% per 8 s."
       },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
+      },
       "ghost_wolf": {
         "name": "Lupo Spettrale",
         "description": "Ti trasforma in un Lupo Spettrale, aumentando la velocità di movimento del 40% per 10 min."
@@ -26706,6 +26734,10 @@ export const de_DE: EnTranslations = {
       "frost_shock": {
         "name": "Frostschock",
         "description": "Schockt das Ziel sofort mit Frost für {damage} Frostschaden und verlangsamt seine Bewegung 8 Sek. lang um 50%."
+      },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
       },
       "ghost_wolf": {
         "name": "Geisterwolf",
@@ -30300,6 +30332,10 @@ export const zh_CN: EnTranslations = {
         "name": "冰霜震击",
         "description": "立即以冰霜冲击目标，造成 {damage} 点冰霜伤害，并使其移动速度降低 50%，持续 8 秒。"
       },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
+      },
       "ghost_wolf": {
         "name": "幽魂之狼",
         "description": "变成幽魂之狼，使移动速度提高 40%，持续 10 分钟。"
@@ -33892,6 +33928,10 @@ export const zh_TW: EnTranslations = {
       "frost_shock": {
         "name": "冰霜震擊",
         "description": "立即以冰霜衝擊目標，造成 {damage} 點冰霜傷害，並使其移動速度降低 50%，持續 8 秒。"
+      },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
       },
       "ghost_wolf": {
         "name": "幽魂之狼",
@@ -37486,6 +37526,10 @@ export const ko_KR: EnTranslations = {
         "name": "냉기 충격",
         "description": "대상을 즉시 냉기로 강타해 {damage}의 냉기 피해를 입히고 8초 동안 이동 속도를 50%만큼 감소시킵니다."
       },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
+      },
       "ghost_wolf": {
         "name": "늑대 정령",
         "description": "늑대 정령으로 변신하여 10분 동안 이동 속도가 40%만큼 증가합니다."
@@ -41078,6 +41122,10 @@ export const ja_JP: EnTranslations = {
       "frost_shock": {
         "name": "フロストショック",
         "description": "対象を冷気で即座に打ち、{damage} の冷気ダメージを与え、8秒間、移動速度を50%低下させます。"
+      },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
       },
       "ghost_wolf": {
         "name": "ゴーストウルフ",
@@ -44672,6 +44720,10 @@ export const pt_BR: EnTranslations = {
         "name": "Choque Gélido",
         "description": "Choca o alvo instantaneamente com gelo, causando {damage} de dano de Gelo e reduzindo a velocidade de movimento em 50% por 8 s."
       },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
+      },
       "ghost_wolf": {
         "name": "Lobo Fantasma",
         "description": "Transforma você em Lobo Fantasma, aumentando a velocidade de movimento em 40% por 10 min."
@@ -48265,6 +48317,10 @@ export const ru_RU: EnTranslations = {
         "name": "Ледяной шок",
         "description": "Мгновенно поражает цель льдом, нанося {damage} ед. урона от магии льда и снижая скорость передвижения на 50% на 8 сек."
       },
+      "frostbrand_weapon": {
+        "name": "Frostbrand Weapon",
+        "description": "Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min."
+      },
       "ghost_wolf": {
         "name": "Призрачный волк",
         "description": "Превращает вас в призрачного волка, повышая скорость передвижения на 40% на 10 мин."
@@ -50331,12 +50387,17 @@ export const translations = {
 export const pending: Record<string, readonly string[]> = {
   "es": [
 <<<<<<< HEAD
+<<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
 =======
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50344,12 +50405,17 @@ export const pending: Record<string, readonly string[]> = {
   ],
   "es_ES": [
 <<<<<<< HEAD
+<<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
 =======
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50357,18 +50423,6 @@ export const pending: Record<string, readonly string[]> = {
   ],
   "fr_FR": [
 <<<<<<< HEAD
-    "entities.abilities.aspect_of_the_monkey.description",
-    "entities.abilities.aspect_of_the_monkey.name",
-=======
-    "entities.abilities.flametongue_weapon.description",
-    "entities.abilities.flametongue_weapon.name",
->>>>>>> origin/feature/shaman-flametongue
-    "itemUi.slots.gloves",
-    "itemUi.slots.helmet",
-    "itemUi.slots.shoulder",
-    "itemUi.slots.waist"
-  ],
-  "fr_CA": [
 <<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
@@ -50376,6 +50430,28 @@ export const pending: Record<string, readonly string[]> = {
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
+    "itemUi.slots.gloves",
+    "itemUi.slots.helmet",
+    "itemUi.slots.shoulder",
+    "itemUi.slots.waist"
+  ],
+  "fr_CA": [
+<<<<<<< HEAD
+<<<<<<< HEAD
+    "entities.abilities.aspect_of_the_monkey.description",
+    "entities.abilities.aspect_of_the_monkey.name",
+=======
+    "entities.abilities.flametongue_weapon.description",
+    "entities.abilities.flametongue_weapon.name",
+>>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50384,12 +50460,17 @@ export const pending: Record<string, readonly string[]> = {
   "en_CA": [],
   "it_IT": [
 <<<<<<< HEAD
+<<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
 =======
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50397,12 +50478,17 @@ export const pending: Record<string, readonly string[]> = {
   ],
   "de_DE": [
 <<<<<<< HEAD
+<<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
 =======
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50410,12 +50496,17 @@ export const pending: Record<string, readonly string[]> = {
   ],
   "zh_CN": [
 <<<<<<< HEAD
+<<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
 =======
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50423,12 +50514,17 @@ export const pending: Record<string, readonly string[]> = {
   ],
   "zh_TW": [
 <<<<<<< HEAD
+<<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
 =======
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50436,12 +50532,17 @@ export const pending: Record<string, readonly string[]> = {
   ],
   "ko_KR": [
 <<<<<<< HEAD
+<<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
 =======
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50449,12 +50550,17 @@ export const pending: Record<string, readonly string[]> = {
   ],
   "ja_JP": [
 <<<<<<< HEAD
+<<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
 =======
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -50462,18 +50568,6 @@ export const pending: Record<string, readonly string[]> = {
   ],
   "pt_BR": [
 <<<<<<< HEAD
-    "entities.abilities.aspect_of_the_monkey.description",
-    "entities.abilities.aspect_of_the_monkey.name",
-=======
-    "entities.abilities.flametongue_weapon.description",
-    "entities.abilities.flametongue_weapon.name",
->>>>>>> origin/feature/shaman-flametongue
-    "itemUi.slots.gloves",
-    "itemUi.slots.helmet",
-    "itemUi.slots.shoulder",
-    "itemUi.slots.waist"
-  ],
-  "ru_RU": [
 <<<<<<< HEAD
     "entities.abilities.aspect_of_the_monkey.description",
     "entities.abilities.aspect_of_the_monkey.name",
@@ -50481,6 +50575,28 @@ export const pending: Record<string, readonly string[]> = {
     "entities.abilities.flametongue_weapon.description",
     "entities.abilities.flametongue_weapon.name",
 >>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
+    "itemUi.slots.gloves",
+    "itemUi.slots.helmet",
+    "itemUi.slots.shoulder",
+    "itemUi.slots.waist"
+  ],
+  "ru_RU": [
+<<<<<<< HEAD
+<<<<<<< HEAD
+    "entities.abilities.aspect_of_the_monkey.description",
+    "entities.abilities.aspect_of_the_monkey.name",
+=======
+    "entities.abilities.flametongue_weapon.description",
+    "entities.abilities.flametongue_weapon.name",
+>>>>>>> origin/feature/shaman-flametongue
+=======
+    "entities.abilities.frostbrand_weapon.description",
+    "entities.abilities.frostbrand_weapon.name",
+>>>>>>> origin/feature/shaman-frostbrand
     "itemUi.slots.gloves",
     "itemUi.slots.helmet",
     "itemUi.slots.shoulder",
@@ -52034,6 +52150,10 @@ export const en_XA: EnTranslations = {
       "frost_shock": {
         "name": "[Ƒŕóšţ Šĥóçķ]",
         "description": "[Íñšţáñţļý šĥóçķš ţĥé ţáŕĝéţ ŵíţĥ ƒŕóšţ ƒóŕ {damage} Ƒŕóšţ ðáɱáĝé áñð šļóŵš íţš ɱóʋéɱéñţ ƀý 50% ƒóŕ 8 šéç.]"
+      },
+      "frostbrand_weapon": {
+        "name": "[Ƒŕóšţƀŕáñð Ŵéáþóñ]",
+        "description": "[Íɱƀúéš ýóúŕ ŵéáþóñ ŵíţĥ ƀíţíñĝ ƒŕóšţ: éáçĥ šŵíñĝ ðéáļš 8 áððíţíóñáļ ðáɱáĝé ƒóŕ 5 ɱíñ.]"
       },
       "ghost_wolf": {
         "name": "[Ĝĥóšţ Ŵóļƒ]",

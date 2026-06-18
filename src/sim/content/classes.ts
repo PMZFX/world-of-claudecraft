@@ -132,7 +132,7 @@ export const CLASSES: Record<PlayerClass, ClassDef> = {
     resourceType: 'mana',
     startWeapon: 'training_mace',
     startChest: 'footpad_jerkin',
-    abilities: ['lightning_bolt', 'rockbiter_weapon', 'healing_wave', 'earth_shock', 'lightning_shield', 'flame_shock', 'flametongue_weapon', 'frost_shock', 'ghost_wolf', 'stormstrike'],
+    abilities: ['lightning_bolt', 'rockbiter_weapon', 'healing_wave', 'earth_shock', 'lightning_shield', 'flame_shock', 'flametongue_weapon', 'frost_shock', 'frostbrand_weapon', 'ghost_wolf', 'stormstrike'],
     color: 0x0070de,
   },
   warlock: {
@@ -960,6 +960,16 @@ export const ABILITIES: Record<string, AbilityDef> = {
     requiresTarget: true,
     effects: [{ type: 'directDamage', min: 36, max: 42 }, { type: 'slow', mult: 0.5, duration: 8 }],
     description: 'Instantly shocks the target with frost for $d Frost damage and slows its movement by 50% for 8 sec.',
+  },
+  frostbrand_weapon: {
+    id: 'frostbrand_weapon', name: 'Frostbrand Weapon', class: 'shaman', learnLevel: 12,
+    cost: 25, castTime: 0, cooldown: 0, range: 0, school: 'frost',
+    requiresTarget: false,
+    effects: [{ type: 'imbue', bonus: 8, duration: 300 }],
+    ranks: [
+      { rank: 2, level: 20, cost: 40, effects: [{ type: 'imbue', bonus: 13, duration: 300 }] },
+    ],
+    description: 'Imbues your weapon with biting frost: each swing deals 8 additional damage for 5 min.',
   },
   ghost_wolf: {
     id: 'ghost_wolf', name: 'Ghost Wolf', class: 'shaman', learnLevel: 16,
