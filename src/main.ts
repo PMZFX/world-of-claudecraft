@@ -713,6 +713,7 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
       case 'clickToMove': if (v < 0.5) input.clearClickMove(); syncClickMoveInput(); break;
       case 'clickToMoveButton': syncClickMoveInput(); break;
       case 'touchOpacity': document.documentElement.style.setProperty('--touch-opacity', String(v)); break;
+      case 'weather': renderer.setWeatherEnabled(v >= 0.5); break;
     }
   }
   // apply persisted settings to the freshly-built subsystems

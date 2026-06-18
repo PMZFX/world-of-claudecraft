@@ -5973,7 +5973,7 @@ export class Hud {
     parent.appendChild(row);
   }
 
-  private settingToggle(parent: HTMLElement, label: string, key: 'fullscreen' | 'showOverflowXp'): void {
+  private settingToggle(parent: HTMLElement, label: string, key: 'fullscreen' | 'showOverflowXp' | 'weather'): void {
     const hooks = this.optionsHooks;
     if (!hooks) return;
     const row = document.createElement('div');
@@ -6107,6 +6107,7 @@ export class Hud {
     this.settingToggle(body, t('game.settings.showOverflowXp'), 'showOverflowXp');
     // Touch-only: lets phone players dim the on-screen joysticks + buttons.
     if (isPhoneTouchDevice()) this.settingSlider(body, t('hud.options.touchOpacity'), 'touchOpacity');
+    this.settingToggle(body, t('game.settings.weather'), 'weather');
     const note = document.createElement('div');
     note.className = 'set-note';
     note.textContent = t('hud.options.graphicsNote');

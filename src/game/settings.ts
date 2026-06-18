@@ -37,6 +37,9 @@ export const SETTING_RANGES = {
   // 1.0 (fully opaque) by default; touch-only. Lets phone players dim the
   // on-screen joysticks + buttons so they obscure less of the world.
   touchOpacity: { min: 0.3, max: 1, def: 1 },
+  // on by default: biome-driven ambient snow/rain. Stored 0/1 so it reuses the
+  // existing settingToggle UI; players on weak machines can switch it off.
+  weather: { min: 0, max: 1, def: 1 },
 } as const;
 
 export const BOOL_SETTINGS = {

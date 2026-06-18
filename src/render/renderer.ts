@@ -17,6 +17,7 @@ import { plankTexture, sparkleTexture } from './textures';
 import { DungeonInteriors, ensureDungeonAssets } from './dungeon';
 import { buildGroundQuestObject } from './quest_objects';
 import { Vfx } from './vfx';
+import { Weather } from './weather';
 import {
   GFX, initGfxTier, sharedUniforms, SUN_ANCHOR, SUN_DIR, surfaceMat, urlForcedTier,
 } from './gfx';
@@ -26,6 +27,9 @@ import { buildWater, WaterView } from './water';
 import { buildClouds, buildSky, SkyView } from './sky';
 import { buildFoliage, FoliageView } from './foliage';
 import { buildFish, FishView } from './fish';
+import { buildCritters, CritterField } from './critters';
+import { buildMotes, MotesView } from './motes';
+import { buildBirds, BirdsView } from './birds';
 import { shouldRenderStealthGhost } from './stealth';
 import { t } from '../ui/i18n';
 import { tEntity } from '../ui/entity_i18n';
@@ -65,6 +69,7 @@ const AIRBORNE_EPS = 0.4;
 const LIGHT_BUDGET_RANGE_SQ = 55 * 55;
 // HDR boosts so the bloom pass picks these out (composer tiers only)
 const SELECTION_RING_BOOST = 1.5;
+const SELECTION_RING_SPIN = 0.6; // rad/s — slow classic target-reticle rotation
 const SPARKLE_BOOST = 1.5;
 const PORTAL_BOOST = 2;
 // Third-person camera collision (see updateCamera). Prop colliders marked
@@ -245,6 +250,9 @@ export class Renderer {
   private terrainView: TerrainView;
   private foliage: FoliageView;
   private fish: FishView;
+  private critters: CritterField;
+  private motes: MotesView;
+  private birds: BirdsView;
   private fogScratch = new THREE.Color();
   private flames: THREE.Mesh[];
   private fireLights: THREE.PointLight[];
@@ -264,6 +272,7 @@ export class Renderer {
   private time = 0;
   private frameIdx = 0;
   vfx: Vfx;
+  private weather: Weather;
 
   private lowGfx: boolean;
   private post: PostPipeline | null = null;
@@ -453,19 +462,38 @@ export class Renderer {
     this.scene.add(this.foliage.group);
     this.fish = buildFish(this.sim.cfg.seed);
     this.scene.add(this.fish.group);
+    this.critters = buildCritters(this.sim.cfg.seed);
+    this.scene.add(this.critters.group);
+    this.motes = buildMotes(this.sim.cfg.seed);
+    this.scene.add(this.motes.group);
+    this.birds = buildBirds(this.sim.cfg.seed);
+    this.scene.add(this.birds.group);
     const props = buildProps(this.sim.cfg.seed);
     this.scene.add(props.group);
     this.flames = props.flames;
     this.fireLights = props.fireLights;
     this.propsView = props;
 
-    // selection ring
-    const ringGeo = new THREE.RingGeometry(0.9, 1.15, 32);
+    // selection ring — a classic target reticle: a base ring plus four
+    // inward-pointing ticks. The ring is radially symmetric (so spin reads
+    // only off the ticks); it rotates slowly and pulses in sync() below.
+    const ringGeo = new THREE.RingGeometry(0.9, 1.15, 48);
     ringGeo.rotateX(-Math.PI / 2);
-    this.selectionRing = new THREE.Mesh(
-      ringGeo,
-      new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.9, depthWrite: false }),
-    );
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.9, depthWrite: false });
+    this.selectionRing = new THREE.Mesh(ringGeo, ringMat);
+    // four cardinal ticks, flat in the XZ plane, sharing the ring material so
+    // the per-frame hostile/friendly recolour carries over for free.
+    const tickGeo = new THREE.BufferGeometry();
+    tickGeo.setAttribute('position', new THREE.Float32BufferAttribute([
+      0.72, 0, 0,     // inner tip (points toward the unit)
+      1.2, 0, 0.16,   // outer corners
+      1.2, 0, -0.16,
+    ], 3));
+    for (let i = 0; i < 4; i++) {
+      const t = new THREE.Mesh(tickGeo, ringMat);
+      t.rotation.y = (i * Math.PI) / 2;
+      this.selectionRing.add(t);
+    }
     this.selectionRing.visible = false;
     this.scene.add(this.selectionRing);
 
@@ -478,6 +506,9 @@ export class Renderer {
       return new THREE.Vector3(v.group.position.x, v.group.position.y + h, v.group.position.z);
     });
     this.vfx.setViewportScale(this.webgl.domElement.clientHeight * this.webgl.getPixelRatio(), 60);
+
+    // ambient precipitation: biome-driven snow/rain that rides with the camera
+    this.weather = new Weather(this.scene, this.lowGfx);
 
     // post chain (bloom + grade, GTAO on ultra); low renders direct
     if (GFX.composer) this.post = buildComposer(this.webgl, this.scene, this.camera, this.viewport.width, this.viewport.height);
@@ -539,6 +570,11 @@ export class Renderer {
   /** Tone-mapping exposure multiplier (1.0 = the default look). */
   setBrightness(mult: number): void {
     this.webgl.toneMappingExposure = this.baseExposure * mult;
+  }
+
+  /** Toggle biome-driven ambient precipitation (snow/rain). */
+  setWeatherEnabled(on: boolean): void {
+    this.weather.setEnabled(on);
   }
 
   /** Resolution multiplier on top of the device pixel ratio (0.5..1). */
@@ -1274,9 +1310,11 @@ export class Renderer {
         this.selectionRing.position.copy(tv.group.position);
         this.selectionRing.position.y += 0.08;
         this.selectionRing.scale.setScalar(target.scale);
+        this.selectionRing.rotation.y += dt * SELECTION_RING_SPIN; // slow reticle spin
         const ringMat = this.selectionRing.material as THREE.MeshBasicMaterial;
         ringMat.color.setHex(target.hostile ? 0xcc2222 : 0xd4af37);
         if (!this.lowGfx) ringMat.color.multiplyScalar(SELECTION_RING_BOOST); // subtle bloom edge
+        ringMat.opacity = 0.78 + 0.2 * Math.sin(this.time * 4.5); // gentle pulse
         this.selectionRing.visible = true;
       } else {
         this.selectionRing.visible = false;
@@ -1340,6 +1378,9 @@ export class Renderer {
       fogFar,
     );
     this.fish.update(p.pos.x, p.pos.z, dt);
+    this.critters.update(p.pos.x, p.pos.z, dt);
+    this.motes.update(p.pos.x, p.pos.z, dt);
+    this.birds.update(p.pos.x, p.pos.z, dt);
 
     this.updateAmbience(p.pos.x, this.camera.position.y, dt);
     // shadow frustum follows the player
@@ -1356,6 +1397,12 @@ export class Renderer {
       this.skyView.setCameraZ(this.camera.position.z, dt);
       this.updateEnvBiome(dt);
     }
+    // precipitation only falls outdoors; indoors/underwater pass null to clear
+    this.weather.update(
+      this.camera.position,
+      dt,
+      this.fogState === 'outdoor' ? zoneBiomeAt(p.pos.z) : null,
+    );
     for (const sp of this.sunSprites) {
       sp.position.copy(this.camera.position).addScaledVector(this.sunDir, 760);
       sp.visible = this.fogState === 'outdoor';
