@@ -226,6 +226,10 @@ export interface MobTemplate {
   // other on-hit affixes it sustains the attacker instead of debuffing the
   // victim. Optional `chance` gates the proc (defaults to every landed hit).
   lifeleech?: { healFrac: number; chance?: number; name?: string };
+  // Melee mechanic: a landed swing has `chance` to land a concussive blow that
+  // STUNS the victim for `duration`s (can't move, cast, or act). The single-target
+  // cousin of War Stomp's AoE slam — rides the existing `stun` aura, no new kind.
+  concuss?: { chance: number; duration: number; name: string; school?: Aura['school'] };
   // Combat mechanic: a landed melee hit has `chance` to corrode the victim's
   // armor: a stacking `sunder` debuff (up to `maxStacks`) so the victim takes
   // more physical damage from everyone until it expires. Rides the existing

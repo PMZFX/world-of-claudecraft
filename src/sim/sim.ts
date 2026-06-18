@@ -4310,6 +4310,22 @@ export class Sim {
         });
       }
     }
+    // Concussive Blow: a landed hit can briefly STUN the victim (single-target,
+    // distinct from War Stomp's AoE slam). Hostile mobs only so a friendly pet
+    // never stuns an ally; CC DR is PvP-only so a mob source always lands full.
+    const concuss = MOBS[mob.templateId]?.concuss;
+    if (concuss && mob.hostile && target.kind === 'player' && !target.dead && this.rng.chance(concuss.chance)) {
+      this.applyAura(target, {
+        id: `concuss_${mob.templateId}`,
+        name: concuss.name,
+        kind: 'stun',
+        remaining: concuss.duration,
+        duration: concuss.duration,
+        value: 0,
+        sourceId: mob.id,
+        school: concuss.school ?? 'physical',
+      });
+    }
   }
 
   // Apply (or refresh + stack) a corrosive armor-shred debuff on the victim.
