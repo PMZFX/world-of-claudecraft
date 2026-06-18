@@ -2194,7 +2194,6 @@ export class Sim {
     if (target.dead) return;
     const crit = this.rng.chance(this.spellCrit(source));
     let healed = Math.round(amount * (crit ? 1.5 : 1) * this.hexOutputMult(source) * this.healingTakenMult(target));
-    let healed = Math.round(amount * (crit ? 1.5 : 1) * this.healingTakenMult(target));
     healed = this.consumeHealAbsorb(target, healed);
     healed = Math.min(healed, target.maxHp - target.hp);
     target.hp += healed;
