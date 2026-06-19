@@ -387,6 +387,23 @@
     cursor: text;
   }
 
+  /* Mobile zoom prevention: iOS Safari (10+) auto-zooms the page whenever a focused
+     text-entry control renders below 16px, and it ignores the viewport scale-lock
+     in the <meta> above (that obedience was dropped for accessibility). 16px is the
+     documented threshold. Floor every focusable control at 16px on coarse-pointer
+     (touch) devices, which also covers tablets/iPad that the JS-driven
+     body.mobile-touch class (gated to <=940px) would miss. !important guarantees the
+     floor wins over the small classic-font rules regardless of selector specificity
+     (e.g. .prompt .prompt-number, which out-specifies a plain catch-all); pointer:coarse
+     leaves desktop (fine pointer) untouched. New inputs are covered automatically. */
+  @media (pointer: coarse) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
   #nameplates { position: fixed; left: 0; top: 0; width: var(--app-vw); height: var(--app-vh); overflow: hidden; pointer-events: none; z-index: 1; }
   #ui { position: fixed; left: 0; top: 0; width: var(--app-vw); max-width: 100vw; height: var(--app-vh); overflow: hidden; pointer-events: none; z-index: 10; }
   #ui > * { pointer-events: auto; }

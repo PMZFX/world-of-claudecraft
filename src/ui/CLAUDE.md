@@ -32,7 +32,13 @@ held to these — verify in mobile portrait *and* landscape before calling UI wo
 - **Mobile touch** (gate on touch capability / runtime state, not only `max-width` —
   landscape phones need it too):
   - Every visible `input`/`select`/`textarea` is **≥16px** font, or iOS Safari
-    auto-zooms the page on focus.
+    auto-zooms the page on focus (iOS 10+ ignores the viewport `user-scalable=no`/
+    `maximum-scale`, so font-size is the only reliable fix). This is enforced centrally
+    by a `@media (pointer: coarse) { input, textarea, select { font-size: 16px !important } }`
+    floor in `index.html` (mirrored in `admin.html`), so new controls are covered for free
+    even when their own rule out-specifies a plain catch-all; the `!important` is what
+    wins. Don't set a per-control mobile font below 16px, and don't lean on the viewport
+    scale-lock. Regression check: `node scripts/mobile_input_zoom_check.mjs` (needs `npm run dev`).
   - Every tappable target (buttons, links, selects, tabs, icon-only controls, anything
     with `role="button"|"tab"|"option"`) is **≥40×40px**.
   - Narrow headers collapse to a hamburger drawer rather than wrapping/overflowing.
