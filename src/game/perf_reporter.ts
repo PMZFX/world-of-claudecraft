@@ -166,6 +166,44 @@ function scenarioFromUrl(): { source: 'gameplay' | 'benchmark'; zoneOrScenario: 
   return { source: 'gameplay', zoneOrScenario: 'gameplay' };
 }
 
+type RendererPrewarmSnapshot = NonNullable<NonNullable<PerfSnapshot['renderer']>['prewarm']>;
+
+function rendererPrewarmSummary(prewarm: RendererPrewarmSnapshot | null): Record<string, unknown> | null {
+  if (!prewarm) return null;
+  return {
+    elapsedMs: prewarm.elapsedMs,
+    maxMs: prewarm.maxMs,
+    remainingMs: prewarm.remainingMs,
+    budgetUsedRatio: prewarm.budgetUsedRatio,
+    timedOut: prewarm.timedOut,
+    createdViews: prewarm.createdViews,
+    candidateViews: prewarm.candidateViews,
+    renderPasses: prewarm.renderPasses,
+    programsDelta: prewarm.programsAfter - prewarm.programsBefore,
+    texturesDelta: prewarm.texturesAfter - prewarm.texturesBefore,
+    compileMode: prewarm.compileMode,
+    compileMs: prewarm.compileMs,
+    compileTimedOut: prewarm.compileTimedOut,
+    manifestPlanned: prewarm.manifestPlanned,
+    manifestCompleted: prewarm.manifestCompleted,
+    manifestTimedOut: prewarm.manifestTimedOut,
+    manifestFailed: prewarm.manifestFailed,
+    timedOutEntryIds: prewarm.timedOutEntryIds,
+    failedEntryIds: prewarm.failedEntryIds,
+    entries: prewarm.manifestEntries.map((entry) => ({
+      id: entry.id,
+      category: entry.category,
+      required: entry.required,
+      status: entry.status,
+      elapsedMs: entry.elapsedMs,
+      remainingMsAfter: entry.remainingMsAfter,
+      programDelta: entry.programDelta,
+      textureDelta: entry.textureDelta,
+      detail: entry.detail,
+    })),
+  };
+}
+
 function payloadFromSnapshot(
   snapshot: PerfSnapshot,
   settings: Settings,
@@ -187,6 +225,7 @@ function payloadFromSnapshot(
     sessionId,
     characterId,
     graphicsPreset: graphicsPresetLabel(settings.get('graphicsPreset')),
+    graphicsConfigVersion: renderer.graphicsConfigVersion,
     gfxTier: renderer.tier,
     autoGovernor: renderer.autoGovernor,
     targetFps: renderer.budget.targetFps,
@@ -220,6 +259,7 @@ function payloadFromSnapshot(
     source: scenario.source,
     zoneOrScenario: scenario.zoneOrScenario,
     rawSummary: {
+      graphicsConfigVersion: renderer.graphicsConfigVersion,
       seconds: snapshot.seconds,
       frames: snapshot.frames,
       windows: snapshot.windows,
@@ -227,7 +267,9 @@ function payloadFromSnapshot(
       rendererPhaseMs: renderer.phaseMs,
       rendererFoliage: renderer.foliage,
       rendererBudget: renderer.renderBudget,
+      rendererQualityBuckets: renderer.qualityBuckets,
       rendererDiagnostics: renderer.renderDiagnostics,
+      rendererPrewarmSummary: rendererPrewarmSummary(renderer.prewarm),
       rendererPrewarm: renderer.prewarm,
       assets: {
         preload: snapshot.assets.preload,

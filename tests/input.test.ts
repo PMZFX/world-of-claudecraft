@@ -56,6 +56,7 @@ function makeInput() {
     onUiKey: vi.fn(),
     onEmoteWheel: vi.fn(),
     onClickPick: vi.fn(),
+    onAttackMove: vi.fn(),
   };
   const input = new Input(canvas as any, cb, new Keybinds());
   return {
@@ -411,6 +412,26 @@ describe('Input Space handling', () => {
 
     expect(preventDefault).toHaveBeenCalledTimes(1);
     expect(input.readMoveInput().jump).toBe(true);
+  });
+});
+
+describe('Input attack move', () => {
+  it('reserves only the attack-move key and keeps other movement keys working', () => {
+    const { input, cb, windowListeners, canvasListeners } = makeInput();
+    input.setAttackMoveEnabled(true);
+    canvasListeners.get('mouseenter')!({});
+
+    windowListeners.get('keydown')!({ code: 'KeyW', repeat: false });
+    windowListeners.get('keydown')!({ code: 'KeyD', repeat: false });
+    expect(input.readMoveInput().forward).toBe(true);
+    expect(input.readMoveInput().turnRight).toBe(true);
+
+    const preventDefault = vi.fn();
+    windowListeners.get('keydown')!({ code: 'KeyA', repeat: false, preventDefault });
+
+    expect(cb.onAttackMove).toHaveBeenCalledTimes(1);
+    expect(input.readMoveInput().turnLeft).toBe(false);
+    expect(input.readMoveInput().forward).toBe(true);
   });
 });
 

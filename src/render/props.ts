@@ -255,6 +255,45 @@ function propAsset(key: PropKey): PropAsset {
   return asset;
 }
 
+export function buildPropMaterialPrewarmGroup(): THREE.Group {
+  const group = new THREE.Group();
+  group.name = 'prop-material-prewarm';
+  group.visible = true;
+  group.userData.renderCategory = 'prewarm';
+  const seen = new Set<string>();
+  let idx = 0;
+  const instanceMatrix = new THREE.Matrix4();
+  const place = (obj: THREE.Object3D): void => {
+    const col = idx % 10;
+    const row = Math.floor(idx / 10) % 8;
+    const layer = Math.floor(idx / 80);
+    obj.position.set((col - 4.5) * 1.2, row * 0.85, -8 - layer * 1.5);
+    obj.scale.setScalar(0.08);
+    obj.frustumCulled = false;
+    group.add(obj);
+    idx++;
+  };
+  for (const key of ACTIVE_PROP_KEYS) {
+    const asset = propAsset(key);
+    for (const part of asset.parts) {
+      const matKey = `${part.mat.uuid}:${part.geo.getAttribute('color') ? 'color' : 'plain'}`;
+      if (seen.has(matKey)) continue;
+      seen.add(matKey);
+      const mesh = new THREE.Mesh(part.geo, part.mat);
+      mesh.castShadow = false;
+      mesh.receiveShadow = false;
+      place(mesh);
+      const instanced = new THREE.InstancedMesh(part.geo, part.mat, 1);
+      instanced.setMatrixAt(0, instanceMatrix.identity());
+      instanced.instanceMatrix.needsUpdate = true;
+      instanced.castShadow = false;
+      instanced.receiveShadow = false;
+      place(instanced);
+    }
+  }
+  return group;
+}
+
 // ---------------------------------------------------------------------------
 // deterministic per-prop rand streams (no native random — placement is shared
 // with colliders/tests via the world seed)
@@ -299,6 +338,7 @@ export function buildProps(seed: number): PropsResult {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;
       keepFromMerge.add(mesh);
+      if (lowProps) return;
       const src = mesh.material as THREE.Material;
       let tm = matMap.get(src);
       if (!tm) {
@@ -771,10 +811,15 @@ export function buildProps(seed: number): PropsResult {
           h.group.visible = false; // fully fogged: drop it (shadow is out of range too)
           continue;
         }
-        h.group.visible = true;
         // Hide from the camera while still casting a shadow: disable colour +
         // depth writes, not the object.
         const hide = cameraSegmentHitsFootprint(h, eyeX, eyeY, eyeZ, camX, camY, camZ);
+        if (h.mats.length === 0) {
+          h.hidden = hide;
+          h.group.visible = !hide;
+          continue;
+        }
+        h.group.visible = true;
         if (hide !== h.hidden) {
           h.hidden = hide;
           for (const m of h.mats) {

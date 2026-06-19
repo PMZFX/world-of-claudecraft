@@ -35,10 +35,32 @@ describe('render budget governor', () => {
     }));
 
     expect(state.mode).toBe('disabled');
-    expect(state.levels).toEqual({ grass: 1, vfx: 1, resolution: 1 });
+    expect(state.levels).toEqual({ grass: 1, foliage: 1, vfx: 1, lighting: 1, resolution: 1 });
   });
 
-  it('reduces grass first for non-urgent foliage pressure', () => {
+  it('reduces model foliage before grass for non-urgent draw pressure', () => {
+    const governor = new RenderBudgetGovernor({ tier: 'low', budget: GFX_BUDGETS.low, enabled: true });
+    governor.reset(1, 0.65, 1);
+    governor.update(sample({ dt: 0.6 }));
+
+    const state = governor.update(sample({
+      frameMs: 20,
+      totalMs: 20,
+      submitMs: 8,
+      calls: 610,
+      triangles: 2_350_000,
+      grassVisibleTufts: 2_000,
+    }));
+
+    expect(state.mode).toBe('degrading');
+    expect(state.reason).toBe('draw');
+    expect(state.levels.foliage).toBeLessThan(0.9);
+    expect(state.levels.grass).toBe(0.9);
+    expect(state.levels.vfx).toBe(1);
+    expect(state.levels.resolution).toBe(1);
+  });
+
+  it('reduces grass when grass density alone is over budget', () => {
     const governor = new RenderBudgetGovernor({ tier: 'low', budget: GFX_BUDGETS.low, enabled: true });
     governor.reset(1, 0.65, 1);
     governor.update(sample({ dt: 0.6 }));
@@ -47,14 +69,15 @@ describe('render budget governor', () => {
       frameMs: 24,
       totalMs: 24,
       submitMs: 8,
-      calls: 260,
+      calls: 180,
       triangles: 500_000,
-      grassVisibleTufts: 2_000,
+      grassVisibleTufts: 5_900,
     }));
 
     expect(state.mode).toBe('degrading');
     expect(state.reason).toBe('grass');
-    expect(state.levels.grass).toBeLessThan(1);
+    expect(state.levels.foliage).toBe(0.9);
+    expect(state.levels.grass).toBeLessThan(0.9);
     expect(state.levels.vfx).toBe(1);
     expect(state.levels.resolution).toBe(1);
   });
@@ -74,9 +97,67 @@ describe('render budget governor', () => {
     }));
 
     expect(state.mode).toBe('degrading');
-    expect(state.levels.grass).toBeLessThan(1);
+    expect(state.levels.foliage).toBeLessThan(0.9);
+    expect(state.levels.grass).toBeLessThan(0.9);
+    expect(state.levels.lighting).toBeLessThan(1);
     expect(state.levels.vfx).toBeLessThan(1);
     expect(state.levels.resolution).toBeLessThan(1);
+  });
+
+  it('treats 60fps-class low frames as stable headroom', () => {
+    const governor = new RenderBudgetGovernor({ tier: 'low', budget: GFX_BUDGETS.low, enabled: true });
+    governor.reset(1, 0.65, 1);
+    governor.update(sample({ dt: 0.6 }));
+
+    const state = governor.update(sample({
+      frameMs: 18,
+      totalMs: 18,
+      submitMs: 7,
+      calls: 260,
+      triangles: 950_000,
+      grassVisibleTufts: 3_300,
+    }));
+
+    expect(state.mode).toBe('stable');
+    expect(state.levels).toEqual({ grass: 0.9, foliage: 0.9, vfx: 1, lighting: 1, resolution: 1 });
+  });
+
+  it('holds a separate submit-stall budget even when steady draw pressure is low', () => {
+    const governor = new RenderBudgetGovernor({ tier: 'low', budget: GFX_BUDGETS.low, enabled: true });
+    governor.reset(1, 0.65, 1);
+    governor.update(sample({ dt: 0.6 }));
+
+    let state = governor.update(sample({
+      frameMs: 16,
+      totalMs: 16,
+      submitMs: 180,
+      calls: 120,
+      triangles: 180_000,
+      grassVisibleTufts: 800,
+    }));
+
+    expect(state.mode).toBe('degrading');
+    expect(state.reason).toBe('submit-stall');
+    expect(state.stallPressure).toBeGreaterThan(1);
+    expect(state.recentSubmitStalls).toBe(1);
+    expect(state.lastSubmitStallMs).toBe(180);
+    expect(state.stallHoldSeconds).toBeGreaterThan(10);
+    expect(state.levels.foliage).toBeLessThan(0.9);
+    expect(state.levels.grass).toBeLessThan(0.9);
+
+    state = governor.update(sample({
+      dt: 1,
+      frameMs: 13,
+      totalMs: 13,
+      submitMs: 4,
+      calls: 100,
+      triangles: 150_000,
+      grassVisibleTufts: 500,
+    }));
+
+    expect(state.mode).toBe('degrading');
+    expect(state.reason).toBe('submit-stall');
+    expect(state.stableSeconds).toBe(0);
   });
 
   it('does not reduce resolution below the runtime floor', () => {

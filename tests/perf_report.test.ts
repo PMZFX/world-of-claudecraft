@@ -84,7 +84,7 @@ describe('perf report ingestion', () => {
       glRenderer: 'ANGLE (Apple, ANGLE Metal Renderer: Apple M2)',
       source: 'benchmark',
       zoneOrScenario: 'bench_town',
-      rawSummary: { large: 'x'.repeat(9000) },
+      rawSummary: { large: 'x'.repeat(18_000) },
     }, { token: VALID_TOKEN }), res);
 
     expect(res.statusCode).toBe(200);
@@ -120,6 +120,58 @@ describe('perf report ingestion', () => {
     expect(res.statusCode).toBe(200);
     expect(insertClientPerfReport).toHaveBeenCalledWith(expect.objectContaining({
       rawSummary: { seconds: 30 },
+    }));
+  });
+
+  it('preserves compact prewarm data when public raw summaries are truncated', async () => {
+    const res = fakeRes();
+
+    await handlePerfReport(fakeReq({
+      sessionId: 'public-large',
+      rawSummary: {
+        seconds: 30,
+        rendererPrewarmSummary: {
+          elapsedMs: 3200,
+          maxMs: 5000,
+          manifestPlanned: 14,
+          manifestCompleted: 11,
+          manifestTimedOut: 1,
+          timedOutEntryIds: ['diagnostics.baseline'],
+          entries: [
+            {
+              id: 'textures.scene',
+              category: 'world',
+              required: true,
+              status: 'completed',
+              elapsedMs: 120,
+              remainingMsAfter: 4200,
+              programDelta: 0,
+              textureDelta: 12,
+              detail: 'uploaded=12',
+            },
+          ],
+        },
+        oversized: 'x'.repeat(40_000),
+      },
+    }), res);
+
+    expect(res.statusCode).toBe(200);
+    expect(insertClientPerfReport).toHaveBeenCalledWith(expect.objectContaining({
+      rawSummary: expect.objectContaining({
+        truncated: true,
+        seconds: 30,
+        rendererPrewarmSummary: expect.objectContaining({
+          elapsedMs: 3200,
+          manifestPlanned: 14,
+          manifestTimedOut: 1,
+          entries: [
+            expect.objectContaining({
+              id: 'textures.scene',
+              textureDelta: 12,
+            }),
+          ],
+        }),
+      }),
     }));
   });
 

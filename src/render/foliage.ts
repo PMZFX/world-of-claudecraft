@@ -77,10 +77,10 @@ const FOLIAGE_MODEL_URLS_LOW = {
   twisted: [1].map((i) => `${MODEL_DIR}twisted_${i}.glb`),
   dead: [1].map((i) => `${MODEL_DIR}dead_${i}.glb`),
   rock: [1].map((i) => `${MODEL_DIR}rock_${i}.glb`),
-  bush: [],
-  bushFlowers: [],
-  fern: [],
-  mushroom: [],
+  bush: [`${MODEL_DIR}bush.glb`],
+  bushFlowers: [`${MODEL_DIR}bush_flowers.glb`],
+  fern: [`${MODEL_DIR}fern.glb`],
+  mushroom: [`${MODEL_DIR}mushroom.glb`],
 };
 const MODEL_URLS = GFX.standardMaterials ? FOLIAGE_MODEL_URLS_HIGH : FOLIAGE_MODEL_URLS_LOW;
 
@@ -126,10 +126,24 @@ export interface FoliageView {
     fogFar: number,
   ): void;
   setGrassQuality(level: number): void;
+  setModelQuality(level: number): void;
   perfStats(): FoliagePerfStats;
 }
 
 export interface FoliagePerfStats {
+  modelQuality: number;
+  modelBuckets: number;
+  modelVisibleBuckets: number;
+  modelBucketsByLod: Record<string, number>;
+  modelVisibleByLod: Record<string, number>;
+  modelDraws: number;
+  modelVisibleDraws: number;
+  modelDrawsByLod: Record<string, number>;
+  modelVisibleDrawsByLod: Record<string, number>;
+  modelTriangles: number;
+  modelVisibleTriangles: number;
+  modelTrianglesByLod: Record<string, number>;
+  modelVisibleTrianglesByLod: Record<string, number>;
   grassEnabled: boolean;
   grassQuality: number;
   grassActiveRadius: number;
@@ -161,6 +175,27 @@ interface BucketMesh {
   radius: number;
   minDist?: number;
   maxDist?: number;
+  lod: 'core' | 'near-fill' | 'shadow' | 'proxy' | 'impostor' | 'rock' | 'dressing';
+  draws: number;
+  triangles: number;
+}
+
+function drawCountFor(material: THREE.Material | THREE.Material[], geometry?: THREE.BufferGeometry): number {
+  if (Array.isArray(material)) return Math.max(1, geometry?.groups.length ? geometry.groups.length : material.length);
+  return Math.max(1, geometry?.groups.length && geometry.groups.length > 0 ? geometry.groups.length : 1);
+}
+
+function triangleCountFor(geometry?: THREE.BufferGeometry): number {
+  if (!geometry) return 0;
+  const drawCount = geometry.index?.count ?? geometry.getAttribute('position')?.count ?? 0;
+  return Math.max(0, Math.floor(drawCount / 3));
+}
+
+function bucketMeshCost(mesh: THREE.InstancedMesh): Pick<BucketMesh, 'draws' | 'triangles'> {
+  return {
+    draws: drawCountFor(mesh.material, mesh.geometry),
+    triangles: triangleCountFor(mesh.geometry) * Math.max(0, mesh.count),
+  };
 }
 
 interface TreeHidePart {
@@ -187,14 +222,16 @@ interface TreeHideable {
 // has no shadows or fog-flattering post, and raw triangle rate is its limit.
 interface LodDists {
   barkFar: number;
+  treeDetailFar: number;
   dressFar: number;
   rockFar: number;
+  treeFillFar: number;
 }
-const LOD_HIGH: LodDists = { barkFar: 330, dressFar: 200, rockFar: 360 };
+const LOD_HIGH: LodDists = { barkFar: 330, treeDetailFar: 300, dressFar: 200, rockFar: 360, treeFillFar: 310 };
 // low caps must clear the worst camera-to-bucket-CENTRE distance (~158u for a
 // 2-column x 240u-band bucket) or nearby dressing vanishes and trunks pop at
 // bucket boundaries — the windows test bucket centres, not instances
-const LOD_LOW: LodDists = { barkFar: 120, dressFar: 0, rockFar: 150 };
+const LOD_LOW: LodDists = { barkFar: 170, treeDetailFar: 250, dressFar: 185, rockFar: 190, treeFillFar: 245 };
 function lodDists(): LodDists {
   return GFX.standardMaterials ? LOD_HIGH : LOD_LOW;
 }
@@ -379,10 +416,64 @@ interface SpeciesSpec {
   sink: number; // x instance scale, beyond the model's own below-ground roots
   leafTint: Record<BiomeId, number> | number;
   castBarkShadow: boolean;
+  proxyShape: 'pine' | 'round' | 'twisted' | 'dead';
   /** hide the heavy bark mesh beyond BARK_FAR (needs a canopy that covers) */
   cullBarkFar?: boolean;
   /** beyond BARK_FAR swap the bark for a cheap cylinder (straight trunks) */
   farTrunkProxy?: boolean;
+}
+
+const farTreeProxyGeoCache = new Map<SpeciesSpec['proxyShape'], THREE.BufferGeometry>();
+const farTreeProxyMatCache = new Map<string, THREE.Material>();
+
+function withWhiteVertexColors(geo: THREE.BufferGeometry): THREE.BufferGeometry {
+  const count = geo.getAttribute('position')?.count ?? 0;
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(count * 3).fill(1), 3));
+  return geo;
+}
+
+function farTreeProxyGeo(shape: SpeciesSpec['proxyShape']): THREE.BufferGeometry {
+  const cached = farTreeProxyGeoCache.get(shape);
+  if (cached) return cached;
+  let geo: THREE.BufferGeometry;
+  if (shape === 'pine') {
+    geo = new THREE.ConeGeometry(2.2, 7.2, 7, 2);
+    geo.translate(0, 3.6, 0);
+  } else if (shape === 'dead') {
+    geo = new THREE.CylinderGeometry(0.18, 0.42, 6.4, 7, 2, true);
+    geo.translate(0, 3.2, 0);
+  } else if (shape === 'twisted') {
+    geo = new THREE.ConeGeometry(2.6, 5.6, 8, 2);
+    geo.scale(1.15, 1, 0.75);
+    geo.translate(0, 2.8, 0);
+  } else {
+    geo = new THREE.SphereGeometry(2.35, 8, 5);
+    geo.scale(1.15, 0.9, 1.15);
+    geo.translate(0, 4.4, 0);
+  }
+  geo = withWhiteVertexColors(geo);
+  farTreeProxyGeoCache.set(shape, geo);
+  return geo;
+}
+
+function farTreeProxyMaterial(shape: SpeciesSpec['proxyShape']): THREE.Material {
+  const cached = farTreeProxyMatCache.get(shape);
+  if (cached) return cached;
+  const fallback = shape === 'dead'
+    ? 0xbca784
+    : shape === 'pine'
+      ? 0xb8d7a5
+      : shape === 'twisted'
+        ? 0xb7cda0
+        : 0xc0d8a8;
+  const mat = new THREE.MeshLambertMaterial({
+    color: fallback,
+    vertexColors: true,
+    fog: true,
+  });
+  mat.name = `foliage:far-${shape}`;
+  farTreeProxyMatCache.set(shape, mat);
+  return mat;
 }
 
 // far-LOD stand-in for a straight trunk: an open tapered cylinder sized from
@@ -450,7 +541,7 @@ function makeShadowOnlyMaterial(src: THREE.Material): THREE.Material {
 
 function placeSpecies(
   parent: THREE.Group, seed: number, bucket: Bucket, items: Decoration[],
-  spec: SpeciesSpec, register: (mesh: THREE.InstancedMesh, minDist?: number, maxDist?: number) => void,
+  spec: SpeciesSpec, register: (mesh: THREE.InstancedMesh, lod: BucketMesh['lod'], minDist?: number, maxDist?: number) => void,
   hideRegistry: TreeHideable[],
 ): void {
   if (items.length === 0) return;
@@ -462,63 +553,111 @@ function placeSpecies(
   }
   groups.forEach((list, gi) => {
     if (list.length === 0) return;
-    const handles: TreeHideable[] = list.map((d) => ({
-      x: d.x,
-      z: d.z,
-      r: 0.55 * d.scale,
-      topY: terrainHeight(d.x, d.z, seed) + 7.5 * d.scale,
-      hidden: false,
-      parts: [],
-    }));
-    hideRegistry.push(...handles);
-    for (const part of spec.sets[subset[gi]]) {
-      const im = new THREE.InstancedMesh(part.geometry, part.material, list.length);
-      list.forEach((d, i) => {
-        const y = terrainHeight(d.x, d.z, seed);
-        const s = d.scale * spec.baseScale;
-        const heightJitter = 1 + (hashAt(d.x, d.z, 31) - 0.5) * 0.18;
-        q.setFromAxisAngle(up, d.variant * 2.1 + hashAt(d.x, d.z, 11) * Math.PI * 2);
-        m.compose(v.set(d.x, y - spec.sink * s, d.z), q, sv.set(s, s * heightJitter, s));
-        im.setMatrixAt(i, m);
-        const visibleMatrix = new THREE.Matrix4().copy(m);
-        const hiddenMatrix = new THREE.Matrix4().copy(m).scale(zeroScale);
-        handles[i].parts.push({ mesh: im, index: i, visibleMatrix, hiddenMatrix });
-        if (part.isLeaf) {
-          const hex = typeof spec.leafTint === 'number' ? spec.leafTint : spec.leafTint[d.biome];
-          im.setColorAt(i, softTint(d.x, d.z, hex, c, LEAF_TINT_SOFTEN));
-        } else {
-          im.setColorAt(i, softTint(d.x, d.z, TRUNK_TINT[d.biome], c, BARK_TINT_SOFTEN, 0.5));
-        }
-      });
-      // canopy owns the tree shadow; bark casts only when there is no canopy
-      const castsShadow = part.isLeaf || spec.castBarkShadow;
-      im.castShadow = false;
-      im.receiveShadow = true;
-      parent.add(im);
-      const { barkFar } = lodDists();
-      const cullBark = !part.isLeaf && (spec.cullBarkFar || spec.farTrunkProxy);
-      register(im, undefined, cullBark ? barkFar : undefined);
-      if (castsShadow) {
-        const shadow = cloneInstancedTo(im, part.geometry, makeShadowOnlyMaterial(part.material));
-        shadow.castShadow = true;
-        shadow.receiveShadow = false;
-        parent.add(shadow);
-        register(shadow, undefined, cullBark ? barkFar : undefined);
-      }
-      if (!part.isLeaf && spec.farTrunkProxy) {
-        const proxy = cloneInstancedTo(im, farTrunkGeo(part.geometry), part.material);
+    const { treeDetailFar, treeFillFar } = lodDists();
+    const coreItems: Decoration[] = [];
+    const nearFillItems: Decoration[] = [];
+    const coreRatio = GFX.standardMaterials ? 0.5 : 0.42;
+    for (const d of list) {
+      if (list.length < 4 || hashAt(d.x, d.z, spec.salt + 91) < coreRatio) coreItems.push(d);
+      else nearFillItems.push(d);
+    }
+    const lodGroups = [
+      { lod: 'core' as const, items: coreItems, maxDist: undefined },
+      { lod: 'near-fill' as const, items: nearFillItems, maxDist: treeFillFar },
+    ].filter((g) => g.items.length > 0);
+    const handlesByLod = lodGroups.map((g) => {
+      const handles: TreeHideable[] = g.items.map((d) => ({
+        x: d.x,
+        z: d.z,
+        r: 0.55 * d.scale,
+        topY: terrainHeight(d.x, d.z, seed) + 7.5 * d.scale,
+        hidden: false,
+        parts: [],
+      }));
+      hideRegistry.push(...handles);
+      return { ...g, handles };
+    });
+    if (GFX.standardMaterials) {
+      for (const group of handlesByLod) {
+        if (group.maxDist !== undefined && group.maxDist <= treeDetailFar) continue;
+        const proxy = new THREE.InstancedMesh(
+          farTreeProxyGeo(spec.proxyShape),
+          farTreeProxyMaterial(spec.proxyShape),
+          group.items.length,
+        );
+        group.items.forEach((d, i) => {
+          const y = terrainHeight(d.x, d.z, seed);
+          const s = d.scale * spec.baseScale;
+          q.setFromAxisAngle(up, d.variant * 2.1 + hashAt(d.x, d.z, 11) * Math.PI * 2);
+          m.compose(v.set(d.x, y - spec.sink * s, d.z), q, sv.set(s, s, s));
+          proxy.setMatrixAt(i, m);
+          const tintHex = spec.proxyShape === 'dead'
+            ? TRUNK_TINT[d.biome]
+            : typeof spec.leafTint === 'number' ? spec.leafTint : spec.leafTint[d.biome];
+          proxy.setColorAt(i, softTint(d.x, d.z, tintHex, c, spec.proxyShape === 'dead' ? BARK_TINT_SOFTEN : LEAF_TINT_SOFTEN));
+        });
+        if (proxy.instanceColor) proxy.instanceColor.needsUpdate = true;
         proxy.receiveShadow = true;
-        for (let i = 0; i < list.length; i++) {
-          const source = handles[i].parts[handles[i].parts.length - 1];
-          handles[i].parts.push({
-            mesh: proxy,
-            index: i,
-            visibleMatrix: source.visibleMatrix,
-            hiddenMatrix: source.hiddenMatrix,
-          });
-        }
         parent.add(proxy);
-        register(proxy, barkFar, undefined);
+        register(proxy, 'impostor', treeDetailFar, group.maxDist);
+      }
+    }
+    for (const part of spec.sets[subset[gi]]) {
+      const { barkFar } = lodDists();
+      for (const group of handlesByLod) {
+        const im = new THREE.InstancedMesh(part.geometry, part.material, group.items.length);
+        group.items.forEach((d, i) => {
+          const y = terrainHeight(d.x, d.z, seed);
+          const s = d.scale * spec.baseScale;
+          const heightJitter = 1 + (hashAt(d.x, d.z, 31) - 0.5) * 0.18;
+          q.setFromAxisAngle(up, d.variant * 2.1 + hashAt(d.x, d.z, 11) * Math.PI * 2);
+          m.compose(v.set(d.x, y - spec.sink * s, d.z), q, sv.set(s, s * heightJitter, s));
+          im.setMatrixAt(i, m);
+          const visibleMatrix = new THREE.Matrix4().copy(m);
+          const hiddenMatrix = new THREE.Matrix4().copy(m).scale(zeroScale);
+          group.handles[i].parts.push({ mesh: im, index: i, visibleMatrix, hiddenMatrix });
+          if (part.isLeaf) {
+            const hex = typeof spec.leafTint === 'number' ? spec.leafTint : spec.leafTint[d.biome];
+            im.setColorAt(i, softTint(d.x, d.z, hex, c, LEAF_TINT_SOFTEN));
+          } else {
+            im.setColorAt(i, softTint(d.x, d.z, TRUNK_TINT[d.biome], c, BARK_TINT_SOFTEN, 0.5));
+          }
+        });
+        // canopy owns the tree shadow; bark casts only when there is no canopy
+        const castsShadow = part.isLeaf || spec.castBarkShadow;
+        im.castShadow = false;
+        im.receiveShadow = true;
+        parent.add(im);
+        const cullBark = GFX.standardMaterials && !part.isLeaf && (spec.cullBarkFar || spec.farTrunkProxy);
+        const detailMaxDist = group.maxDist === undefined
+          ? treeDetailFar
+          : Math.min(group.maxDist, treeDetailFar);
+        const maxDist = cullBark
+          ? Math.min(detailMaxDist, barkFar)
+          : detailMaxDist;
+        register(im, group.lod, undefined, maxDist === Infinity ? undefined : maxDist);
+        if (GFX.standardMaterials && castsShadow) {
+          const shadow = cloneInstancedTo(im, part.geometry, makeShadowOnlyMaterial(part.material));
+          shadow.castShadow = true;
+          shadow.receiveShadow = false;
+          parent.add(shadow);
+          register(shadow, 'shadow', undefined, maxDist === Infinity ? undefined : maxDist);
+        }
+        if (GFX.standardMaterials && !part.isLeaf && spec.farTrunkProxy && detailMaxDist > barkFar) {
+          const proxy = cloneInstancedTo(im, farTrunkGeo(part.geometry), part.material);
+          proxy.receiveShadow = true;
+          for (let i = 0; i < group.items.length; i++) {
+            const source = group.handles[i].parts[group.handles[i].parts.length - 1];
+            group.handles[i].parts.push({
+              mesh: proxy,
+              index: i,
+              visibleMatrix: source.visibleMatrix,
+              hiddenMatrix: source.hiddenMatrix,
+            });
+          }
+          parent.add(proxy);
+          register(proxy, 'proxy', barkFar, detailMaxDist);
+        }
       }
     }
   });
@@ -529,7 +668,7 @@ function buildTrees(parent: THREE.Group, seed: number, registry: BucketMesh[], h
   const sourceDecos = GFX.standardMaterials
     ? decos
     : decos.filter((d) => {
-      const keep = d.kind === 'rock' ? 0.42 : 0.34;
+      const keep = d.kind === 'rock' ? 0.55 : 0.46;
       return hashAt(d.x, d.z, 83) < keep;
     });
   const buckets = new Map<string, Bucket>();
@@ -552,12 +691,14 @@ function buildTrees(parent: THREE.Group, seed: number, registry: BucketMesh[], h
     sets: MODEL_URLS.pine.map(extractParts),
     perBucket: treeVariants, salt: 51, baseScale: 1.1, sink: 0.05,
     leafTint: PINE_TINT, castBarkShadow: false,
+    proxyShape: 'pine',
     cullBarkFar: true, // pine canopies start ~2u up: no proxy needed in fog
   };
   const oakSpec: SpeciesSpec = {
     sets: MODEL_URLS.oak.map(extractParts),
     perBucket: treeVariants, salt: 54, baseScale: 1.15, sink: 0.05,
     leafTint: OAK_TINT, castBarkShadow: false,
+    proxyShape: 'round',
     farTrunkProxy: true, // oak crowns float without a trunk stand-in
   };
   const twistedSpec: SpeciesSpec = {
@@ -565,12 +706,14 @@ function buildTrees(parent: THREE.Group, seed: number, registry: BucketMesh[], h
     perBucket: treeVariants, salt: 57, baseScale: 0.5, sink: 0.05,
     // twisted trunks sprawl sideways — no cheap proxy fits, keep them whole
     leafTint: SWAMP_CANOPY_TINT, castBarkShadow: false,
+    proxyShape: 'twisted',
   };
   const deadSpec: SpeciesSpec = {
     sets: MODEL_URLS.dead.map(extractParts),
     perBucket: 1, salt: 60, baseScale: 0.7, sink: 0.05,
     // dead trees have no canopy — the bark must cast or they go shadowless
     leafTint: TRUNK_TINT.marsh, castBarkShadow: true,
+    proxyShape: 'dead',
   };
 
   // rocks: 3 single variants + a merged 3-boulder cluster, each in a mossy-top
@@ -617,8 +760,13 @@ function buildTrees(parent: THREE.Group, seed: number, registry: BucketMesh[], h
     }
     const bx = (minX + maxX) / 2, bz = (minZ + maxZ) / 2;
     const bRadius = Math.hypot(maxX - minX, maxZ - minZ) / 2 + 18; // canopy margin
-    const register = (mesh: THREE.InstancedMesh, minDist?: number, maxDist?: number): void => {
-      registry.push({ mesh, x: bx, z: bz, radius: bRadius, minDist, maxDist });
+    const register = (
+      mesh: THREE.InstancedMesh,
+      lod: BucketMesh['lod'],
+      minDist?: number,
+      maxDist?: number,
+    ): void => {
+      registry.push({ mesh, x: bx, z: bz, radius: bRadius, minDist, maxDist, lod, ...bucketMeshCost(mesh) });
     };
 
     placeSpecies(parent, seed, bucket, pines, pineSpec, register, hideRegistry);
@@ -668,7 +816,7 @@ function buildTrees(parent: THREE.Group, seed: number, registry: BucketMesh[], h
         // no rock shadows cast: sub-pixel at typical camera range, real draw cost
         rockMesh.receiveShadow = true;
         parent.add(rockMesh);
-        register(rockMesh, undefined, lodDists().rockFar);
+        register(rockMesh, 'rock', undefined, lodDists().rockFar);
       }
     }
   }
@@ -687,8 +835,16 @@ interface DressingSpot {
   scale: number;
 }
 
-const DRESS_STEP = 12;
+const DRESS_STEP_HIGH = 12;
+const DRESS_STEP_LOW = 10;
 const DRESS_DENSITY: Record<BiomeId, number> = { vale: 0.26, marsh: 0.26, peaks: 0.15 };
+const DRESS_DENSITY_LOW_SCALE = 1.24;
+const DRESS_LOW_SCALE_BOOST = 1.08;
+const DRESS_TINT_SOFTEN_LOW = 0.56;
+
+function dressStep(): number {
+  return GFX.standardMaterials ? DRESS_STEP_HIGH : DRESS_STEP_LOW;
+}
 
 function dressKindFor(biome: BiomeId, r: number): DressKind {
   if (biome === 'vale') {
@@ -718,13 +874,16 @@ function tooSteep(x: number, z: number, seed: number): boolean {
 function generateDressing(seed: number): DressingSpot[] {
   const out: DressingSpot[] = [];
   const xHalf = WORLD_MAX_X - 16;
-  for (let gx = -xHalf; gx < xHalf; gx += DRESS_STEP) {
-    for (let gz = WORLD_MIN_Z + 16; gz < WORLD_MAX_Z - 16; gz += DRESS_STEP) {
+  const step = dressStep();
+  const scaleBoost = GFX.standardMaterials ? 1 : DRESS_LOW_SCALE_BOOST;
+  for (let gx = -xHalf; gx < xHalf; gx += step) {
+    for (let gz = WORLD_MIN_Z + 16; gz < WORLD_MAX_Z - 16; gz += step) {
       const r = hashAt(gx, gz, 41);
       const biome = zoneBiomeAt(gz);
-      if (r > DRESS_DENSITY[biome]) continue;
-      const x = gx + (hashAt(gx, gz, 42) - 0.5) * DRESS_STEP;
-      const z = gz + (hashAt(gx, gz, 43) - 0.5) * DRESS_STEP;
+      const density = DRESS_DENSITY[biome] * (GFX.standardMaterials ? 1 : DRESS_DENSITY_LOW_SCALE);
+      if (r > density) continue;
+      const x = gx + (hashAt(gx, gz, 42) - 0.5) * step;
+      const z = gz + (hashAt(gx, gz, 43) - 0.5) * step;
       let blocked = false;
       for (const zone of ZONES) {
         if (Math.hypot(x - zone.hub.x, z - zone.hub.z) < zone.hub.radius + 4) { blocked = true; break; }
@@ -739,7 +898,7 @@ function generateDressing(seed: number): DressingSpot[] {
       if (tooSteep(x, z, seed)) continue;
       const kind = dressKindFor(biome, hashAt(gx, gz, 44));
       const [sMin, sRange] = DRESS_SCALE[kind];
-      out.push({ x, z, kind, scale: sMin + hashAt(gx, gz, 45) * sRange });
+      out.push({ x, z, kind, scale: (sMin + hashAt(gx, gz, 45) * sRange) * scaleBoost });
     }
   }
   return out;
@@ -777,11 +936,13 @@ function buildDressing(parent: THREE.Group, seed: number, registry: BucketMesh[]
       if (list) list.push(s);
       else byKind.set(s.kind, [s]);
     }
-    // cap kinds per bucket: dropping a bucket's rarest dressing kind is
-    // invisible, the draw call is not
+    // Keep all four low-cost dressing kinds. Recent low-tier telemetry has
+    // dressing well below both call and triangle budgets, so variety here is
+    // higher ROI than adding more far canopy or post-processing work.
+    const maxKinds = 4;
     const kept = [...byKind.entries()]
       .sort((a, b) => b[1].length - a[1].length)
-      .slice(0, 3);
+      .slice(0, maxKinds);
     for (const [kind, list] of kept) {
       for (const part of kindParts[kind]) {
         const im = new THREE.InstancedMesh(part.geometry, part.material, list.length);
@@ -794,12 +955,18 @@ function buildDressing(parent: THREE.Group, seed: number, registry: BucketMesh[]
             // mushrooms keep their painted cap colors — brightness jitter only
             im.setColorAt(i, c.setScalar(0.85 + hashAt(s.x, s.z, 47) * 0.3));
           } else {
-            im.setColorAt(i, softTint(s.x, s.z, DRESS_TINT[zoneBiomeAt(s.z)], c, DRESS_TINT_SOFTEN));
+            im.setColorAt(i, softTint(
+              s.x,
+              s.z,
+              DRESS_TINT[zoneBiomeAt(s.z)],
+              c,
+              GFX.standardMaterials ? DRESS_TINT_SOFTEN : DRESS_TINT_SOFTEN_LOW,
+            ));
           }
         });
         im.receiveShadow = true; // dressing casts nothing: too small to matter
         parent.add(im);
-        registry.push({ mesh: im, x: bx, z: bz, radius: bRadius, maxDist: lodDists().dressFar });
+        registry.push({ mesh: im, x: bx, z: bz, radius: bRadius, maxDist: lodDists().dressFar, lod: 'dressing', ...bucketMeshCost(im) });
       }
     }
   }
@@ -883,6 +1050,19 @@ function localGrassDisabled(): boolean {
 
 function emptyGrassStats(enabled: boolean, cacheLimit = 0): FoliagePerfStats {
   return {
+    modelQuality: 1,
+    modelBuckets: 0,
+    modelVisibleBuckets: 0,
+    modelBucketsByLod: {},
+    modelVisibleByLod: {},
+    modelDraws: 0,
+    modelVisibleDraws: 0,
+    modelDrawsByLod: {},
+    modelVisibleDrawsByLod: {},
+    modelTriangles: 0,
+    modelVisibleTriangles: 0,
+    modelTrianglesByLod: {},
+    modelVisibleTrianglesByLod: {},
     grassEnabled: enabled,
     grassQuality: enabled ? 1 : 0,
     grassActiveRadius: 0,
@@ -1195,8 +1375,27 @@ export function buildFoliage(seed: number): FoliageView {
   group.name = 'foliage';
   const bucketMeshes: BucketMesh[] = [];
   const treeHideables: TreeHideable[] = [];
+  let modelQuality = GFX.bucketBaselines.foliage;
+  let modelVisibleBuckets = 0;
+  let modelVisibleDraws = 0;
+  let modelVisibleTriangles = 0;
+  const modelBucketsByLod: Record<string, number> = {};
+  const modelDrawsByLod: Record<string, number> = {};
+  const modelTrianglesByLod: Record<string, number> = {};
+  let modelVisibleByLod: Record<string, number> = {};
+  let modelVisibleDrawsByLod: Record<string, number> = {};
+  let modelVisibleTrianglesByLod: Record<string, number> = {};
+  let modelDraws = 0;
+  let modelTriangles = 0;
   buildTrees(group, seed, bucketMeshes, treeHideables);
-  if (GFX.standardMaterials) buildDressing(group, seed, bucketMeshes);
+  buildDressing(group, seed, bucketMeshes);
+  for (const b of bucketMeshes) {
+    modelBucketsByLod[b.lod] = (modelBucketsByLod[b.lod] ?? 0) + 1;
+    modelDraws += b.draws;
+    modelTriangles += b.triangles;
+    modelDrawsByLod[b.lod] = (modelDrawsByLod[b.lod] ?? 0) + b.draws;
+    modelTrianglesByLod[b.lod] = (modelTrianglesByLod[b.lod] ?? 0) + b.triangles;
+  }
   const grass = localGrassDisabled()
     ? {
       update(): void {},
@@ -1209,6 +1408,9 @@ export function buildFoliage(seed: number): FoliageView {
     setGrassQuality(level: number): void {
       grass.setQuality(level);
     },
+    setModelQuality(level: number): void {
+      modelQuality = Math.min(1, Math.max(0, Number.isFinite(level) ? level : 1));
+    },
     update(
       px: number, pz: number,
       camX: number, camY: number, camZ: number,
@@ -1220,14 +1422,51 @@ export function buildFoliage(seed: number): FoliageView {
       // buckets fully behind the fog wall are pure overdraw; the optional
       // [minDist, maxDist) window uses the bucket-CENTER distance so a bark
       // mesh and its far-trunk proxy are never drawn together
+      const distanceScale = GFX.standardMaterials
+        ? 0.72 + 0.28 * modelQuality
+        : 0.56 + 0.44 * modelQuality;
+      const fogLimit = fogFar * (0.78 + 0.22 * modelQuality);
+      modelVisibleBuckets = 0;
+      modelVisibleDraws = 0;
+      modelVisibleTriangles = 0;
+      modelVisibleByLod = {};
+      modelVisibleDrawsByLod = {};
+      modelVisibleTrianglesByLod = {};
       for (const b of bucketMeshes) {
         const d = Math.hypot(b.x - camX, b.z - camZ);
-        b.mesh.visible = d >= (b.minDist ?? 0) && d < (b.maxDist ?? Infinity)
-          && d - b.radius < fogFar;
+        const minDist = (b.minDist ?? 0) * distanceScale;
+        const revealScale = !GFX.standardMaterials && (b.lod === 'core' || b.lod === 'near-fill')
+          ? 0.94 + hashAt(b.x, b.z, 109) * 0.06
+          : 1;
+        const maxDist = b.maxDist === undefined ? Infinity : b.maxDist * distanceScale * revealScale;
+        b.mesh.visible = d >= minDist && d < maxDist
+          && d - b.radius < fogLimit;
+        if (b.mesh.visible) {
+          modelVisibleBuckets++;
+          modelVisibleDraws += b.draws;
+          modelVisibleTriangles += b.triangles;
+          modelVisibleByLod[b.lod] = (modelVisibleByLod[b.lod] ?? 0) + 1;
+          modelVisibleDrawsByLod[b.lod] = (modelVisibleDrawsByLod[b.lod] ?? 0) + b.draws;
+          modelVisibleTrianglesByLod[b.lod] = (modelVisibleTrianglesByLod[b.lod] ?? 0) + b.triangles;
+        }
       }
     },
     perfStats(): FoliagePerfStats {
-      return grass.perfStats();
+      const stats = grass.perfStats();
+      stats.modelQuality = Math.round(modelQuality * 100) / 100;
+      stats.modelBuckets = bucketMeshes.length;
+      stats.modelVisibleBuckets = modelVisibleBuckets;
+      stats.modelBucketsByLod = { ...modelBucketsByLod };
+      stats.modelVisibleByLod = { ...modelVisibleByLod };
+      stats.modelDraws = modelDraws;
+      stats.modelVisibleDraws = modelVisibleDraws;
+      stats.modelDrawsByLod = { ...modelDrawsByLod };
+      stats.modelVisibleDrawsByLod = { ...modelVisibleDrawsByLod };
+      stats.modelTriangles = modelTriangles;
+      stats.modelVisibleTriangles = modelVisibleTriangles;
+      stats.modelTrianglesByLod = { ...modelTrianglesByLod };
+      stats.modelVisibleTrianglesByLod = { ...modelVisibleTrianglesByLod };
+      return stats;
     },
   };
 }

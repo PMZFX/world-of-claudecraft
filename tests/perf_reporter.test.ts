@@ -34,6 +34,152 @@ function renderDiagnostics() {
   };
 }
 
+function qualityBuckets(): NonNullable<PerfSnapshot['renderer']>['qualityBuckets'] {
+  return {
+    version: 11,
+    bands: {
+      resolution: { min: 0.6, baseline: 1, max: 1, roi: 0.88, cost: 'gpu', governable: true },
+      grass: { min: 0.6, baseline: 0.88, max: 1, roi: 0.86, cost: 'gpu', governable: true },
+      foliage: { min: 0.6, baseline: 0.9, max: 1, roi: 0.72, cost: 'gpu', governable: true },
+      props: { min: 0.7, baseline: 0.88, max: 1, roi: 0.58, cost: 'mixed', governable: false },
+      lighting: { min: 0.62, baseline: 0.9, max: 1, roi: 0.7, cost: 'gpu', governable: true },
+      materials: { min: 0.75, baseline: 0.92, max: 1, roi: 0.78, cost: 'gpu', governable: false },
+      waterSky: { min: 0.72, baseline: 0.92, max: 1, roi: 0.82, cost: 'gpu', governable: false },
+      vfx: { min: 0.68, baseline: 0.92, max: 1, roi: 0.7, cost: 'mixed', governable: true },
+      characters: { min: 0.9, baseline: 1, max: 1, roi: 1, cost: 'mixed', governable: false },
+      weapons: { min: 1, baseline: 1, max: 1, roi: 1, cost: 'mixed', governable: false },
+      worldStreaming: { min: 0.55, baseline: 0.88, max: 1, roi: 0.62, cost: 'cpu', governable: true },
+      ui: { min: 0.86, baseline: 1, max: 1, roi: 0.86, cost: 'cpu', governable: false },
+    },
+    baseline: {
+      resolution: 1,
+      grass: 0.88,
+      foliage: 0.9,
+      props: 0.88,
+      lighting: 0.9,
+      materials: 0.92,
+      waterSky: 0.92,
+      vfx: 0.92,
+      characters: 1,
+      weapons: 1,
+      worldStreaming: 0.88,
+      ui: 1,
+    },
+    levels: {
+      resolution: 0.9,
+      grass: 1,
+      foliage: 1,
+      props: 0.88,
+      lighting: 1,
+      materials: 0.92,
+      waterSky: 0.92,
+      vfx: 1,
+      characters: 1,
+      weapons: 1,
+      worldStreaming: 0.88,
+      ui: 1,
+    },
+    features: {
+      composer: true,
+      ao: true,
+      standardMaterials: true,
+      terrainSplat: true,
+      windSway: true,
+      maxPointLights: 6,
+      activePointLights: 6,
+      shadowMap: 4096,
+    },
+  };
+}
+
+function prewarmStats(): NonNullable<NonNullable<PerfSnapshot['renderer']>['prewarm']> {
+  return {
+    elapsedMs: 3200,
+    maxMs: 5000,
+    createdViews: 36,
+    candidateViews: 80,
+    renderPasses: 10,
+    programsBefore: 10,
+    programsAfter: 18,
+    texturesBefore: 40,
+    texturesAfter: 52,
+    compileMode: 'async',
+    compileMs: 480,
+    compileTimedOut: false,
+    timedOut: false,
+    remainingMs: 1800,
+    budgetUsedRatio: 0.64,
+    createdViewTypes: ['player:player', 'mob:forest_wolf'],
+    manifestPlanned: 14,
+    manifestEntries: [
+      {
+        id: 'views.required',
+        category: 'views',
+        priority: 10,
+        required: true,
+        status: 'completed',
+        elapsedMs: 25,
+        remainingMsAfter: 4975,
+        passes: 0,
+        programsBefore: 10,
+        programsAfter: 10,
+        programDelta: 0,
+        texturesBefore: 40,
+        texturesAfter: 40,
+        textureDelta: 0,
+        detail: 'created=12',
+      },
+      {
+        id: 'textures.scene',
+        category: 'world',
+        priority: 50,
+        required: true,
+        status: 'completed',
+        elapsedMs: 120,
+        remainingMsAfter: 4200,
+        passes: 0,
+        programsBefore: 10,
+        programsAfter: 10,
+        programDelta: 0,
+        texturesBefore: 40,
+        texturesAfter: 52,
+        textureDelta: 12,
+        detail: 'uploaded=12',
+      },
+    ],
+    manifestCompleted: 12,
+    manifestSkipped: 0,
+    manifestTimedOut: 0,
+    manifestFailed: 0,
+    timedOutEntryIds: [],
+    failedEntryIds: [],
+    diagnosticsBaseline: null,
+  };
+}
+
+function foliageCostStats(): Pick<
+  NonNullable<PerfSnapshot['renderer']>['foliage'],
+  | 'modelDraws'
+  | 'modelVisibleDraws'
+  | 'modelDrawsByLod'
+  | 'modelVisibleDrawsByLod'
+  | 'modelTriangles'
+  | 'modelVisibleTriangles'
+  | 'modelTrianglesByLod'
+  | 'modelVisibleTrianglesByLod'
+> {
+  return {
+    modelDraws: 96,
+    modelVisibleDraws: 48,
+    modelDrawsByLod: { core: 32, impostor: 12, dressing: 20 },
+    modelVisibleDrawsByLod: { core: 24, impostor: 8, dressing: 16 },
+    modelTriangles: 1_200_000,
+    modelVisibleTriangles: 540_000,
+    modelTrianglesByLod: { core: 900_000, impostor: 24_000, dressing: 80_000 },
+    modelVisibleTrianglesByLod: { core: 420_000, impostor: 16_000, dressing: 64_000 },
+  };
+}
+
 function snapshot(): PerfSnapshot {
   return {
     seconds: 80,
@@ -46,7 +192,9 @@ function snapshot(): PerfSnapshot {
     },
     mainMs: { renderer: { count: 1, avg: 5, p95: 5, max: 5 } },
     renderer: {
+      graphicsConfigVersion: 11,
       tier: 'high',
+      qualityBuckets: qualityBuckets(),
       autoGovernor: true,
       budget: {
         targetFps: 60,
@@ -71,9 +219,13 @@ function snapshot(): PerfSnapshot {
         pressure: 0.4,
         frameMsEma: 16.7,
         submitMsEma: 1,
+        stallPressure: 0,
+        recentSubmitStalls: 0,
+        lastSubmitStallMs: 0,
+        stallHoldSeconds: 0,
         stableSeconds: 0,
         cooldownSeconds: 0,
-        levels: { grass: 1, vfx: 1, resolution: 0.9 },
+        levels: { grass: 1, foliage: 1, vfx: 1, lighting: 1, resolution: 0.9 },
         caps: {
           targetCalls: 330,
           urgentCalls: 500,
@@ -82,7 +234,9 @@ function snapshot(): PerfSnapshot {
           targetGrassTufts: 2850,
           urgentGrassTufts: 4500,
           minGrassLevel: 0.6,
+          minFoliageLevel: 0.6,
           minVfxLevel: 0.68,
+          minLightingLevel: 0.62,
         },
       },
       pixelRatio: 1.5,
@@ -94,6 +248,12 @@ function snapshot(): PerfSnapshot {
       programs: 30,
       views: 40,
       foliage: {
+        modelQuality: 1,
+        modelBuckets: 64,
+        modelVisibleBuckets: 48,
+        modelBucketsByLod: { core: 32, impostor: 12, dressing: 20 },
+        modelVisibleByLod: { core: 24, impostor: 8, dressing: 16 },
+        ...foliageCostStats(),
         grassEnabled: true,
         grassQuality: 1,
         grassActiveRadius: 82,
@@ -122,6 +282,7 @@ function snapshot(): PerfSnapshot {
         total: { count: 1, avg: 5, p95: 5, max: 5 },
       },
       renderDiagnostics: renderDiagnostics(),
+      prewarm: prewarmStats(),
     },
     hud: null,
     assets: { preload: { tasks: 0, waitMs: 0, complete: true }, byType: {}, files: [] },
@@ -162,6 +323,7 @@ describe('perf reporter payload', () => {
     expect(body.releaseVersion).toBe('0.9.0');
     expect(body.buildId).toBe('testbuild');
     expect(body.graphicsPreset).toBe('auto');
+    expect(body.graphicsConfigVersion).toBe(11);
     expect(body.gfxTier).toBe('high');
     expect(body.autoGovernor).toBe(true);
     expect(body.effectiveRenderScale).toBe(0.9);
@@ -171,6 +333,13 @@ describe('perf reporter payload', () => {
     expect(body.source).toBe('benchmark');
     expect(body.zoneOrScenario).toBe('bench_dense_foliage');
     expect(JSON.stringify(body.rawSummary)).not.toContain('Safari/605');
+    expect((body.rawSummary as { graphicsConfigVersion?: number }).graphicsConfigVersion).toBe(11);
+    expect((body.rawSummary as { rendererQualityBuckets?: { levels?: { foliage?: number } } }).rendererQualityBuckets?.levels?.foliage).toBe(1);
+    expect((body.rawSummary as { rendererQualityBuckets?: { levels?: { weapons?: number } } }).rendererQualityBuckets?.levels?.weapons).toBe(1);
+    expect((body.rawSummary as { rendererPrewarmSummary?: { manifestPlanned?: number } }).rendererPrewarmSummary?.manifestPlanned).toBe(14);
+    expect((body.rawSummary as { rendererPrewarmSummary?: { entries?: unknown[] } }).rendererPrewarmSummary?.entries).toHaveLength(2);
+    expect((body.rawSummary as { rendererPrewarm?: { manifestEntries?: unknown[] } }).rendererPrewarm?.manifestEntries).toHaveLength(2);
+    expect((body.rawSummary as { rendererFoliage?: { modelVisibleTrianglesByLod?: { core?: number } } }).rendererFoliage?.modelVisibleTrianglesByLod?.core).toBe(420_000);
   });
 
   it('keeps local dev trace frames and long-task correlation in raw summary', () => {
@@ -201,9 +370,13 @@ describe('perf reporter payload', () => {
             pressure: 0.4,
             frameMsEma: 16.7,
             submitMsEma: 1,
+            stallPressure: 0,
+            recentSubmitStalls: 0,
+            lastSubmitStallMs: 0,
+            stallHoldSeconds: 0,
             stableSeconds: 0,
             cooldownSeconds: 0,
-            levels: { grass: 1, vfx: 1, resolution: 0.9 },
+            levels: { grass: 1, foliage: 1, vfx: 1, lighting: 1, resolution: 0.9 },
             caps: {
               targetCalls: 330,
               urgentCalls: 500,
@@ -212,13 +385,22 @@ describe('perf reporter payload', () => {
               targetGrassTufts: 2850,
               urgentGrassTufts: 4500,
               minGrassLevel: 0.6,
+              minFoliageLevel: 0.6,
               minVfxLevel: 0.68,
+              minLightingLevel: 0.62,
             },
           },
+          qualityBuckets: qualityBuckets(),
           pixelRatio: 1.5,
           width: 1440,
           height: 900,
           foliage: {
+            modelQuality: 1,
+            modelBuckets: 64,
+            modelVisibleBuckets: 48,
+            modelBucketsByLod: { core: 32, impostor: 12, dressing: 20 },
+            modelVisibleByLod: { core: 24, impostor: 8, dressing: 16 },
+            ...foliageCostStats(),
             grassEnabled: true,
             grassQuality: 1,
             grassActiveRadius: 82,
@@ -279,6 +461,7 @@ describe('perf reporter payload', () => {
     expect(rawSummary.devTrace.longTasks[0].nearestFrameMs).toBe(80);
     expect((body.rawSummary as { rendererFoliage?: { grassVisibleChunks?: number } }).rendererFoliage?.grassVisibleChunks).toBe(42);
     expect((body.rawSummary as { rendererBudget?: { levels?: { grass?: number } } }).rendererBudget?.levels?.grass).toBe(1);
+    expect((body.rawSummary as { rendererQualityBuckets?: { features?: { windSway?: boolean } } }).rendererQualityBuckets?.features?.windSway).toBe(true);
     expect((body.rawSummary as { rendererDiagnostics?: { enabled?: boolean } }).rendererDiagnostics?.enabled).toBe(false);
   });
 });

@@ -49,6 +49,29 @@ export interface TouchMoveInput {
   strafeRight: boolean;
 }
 
+export interface InputDebugState {
+  suspendMovement: boolean;
+  attackMoveEnabled: boolean;
+  mouseCameraEnabled: boolean;
+  activeElementTag: string;
+  keyCount: number;
+  keys: string[];
+  movementHeld: {
+    forward: boolean;
+    back: boolean;
+    turnLeft: boolean;
+    turnRight: boolean;
+    strafeLeft: boolean;
+    strafeRight: boolean;
+    jump: boolean;
+  };
+  leftDown: boolean;
+  rightDown: boolean;
+  cameraDragActive: boolean;
+  pointerLocked: boolean;
+  hoverActive: boolean;
+}
+
 export class Input {
   keys = new Set<string>();
   leftDown = false;
@@ -75,8 +98,9 @@ export class Input {
   // True while the current click-to-move was issued as an attack-move (walk to
   // the point and auto-attack enemies). Set by setClickMoveTarget, cleared on stop.
   clickMoveAttack = false;
-  // When on (the Attack Move setting), WASD/keyboard steering is disabled and the
-  // Attack Move key issues attack-moves toward the cursor instead of turning.
+  // When on (the Attack Move setting), only the attack-move key itself is
+  // reserved. Other movement keys still work so enabling Attack Move cannot
+  // make WASD appear dead.
   private attackMoveEnabled = false;
   /** Latest pointer position while over the canvas (for hover pick). */
   hoverX = 0;
@@ -221,6 +245,31 @@ export class Input {
 
   setAttackMoveEnabled(on: boolean): void {
     this.attackMoveEnabled = on;
+  }
+
+  debugState(): InputDebugState {
+    return {
+      suspendMovement: this.suspendMovement,
+      attackMoveEnabled: this.attackMoveEnabled,
+      mouseCameraEnabled: this.mouseCameraEnabled,
+      activeElementTag: (document.activeElement?.tagName ?? '').toLowerCase(),
+      keyCount: this.keys.size,
+      keys: [...this.keys].sort(),
+      movementHeld: {
+        forward: this.heldAction('forward'),
+        back: this.heldAction('back'),
+        turnLeft: this.heldAction('turnLeft'),
+        turnRight: this.heldAction('turnRight'),
+        strafeLeft: this.heldAction('strafeLeft'),
+        strafeRight: this.heldAction('strafeRight'),
+        jump: this.keybinds.codesForAction('jump').some((c) => this.keys.has(c)),
+      },
+      leftDown: this.leftDown,
+      rightDown: this.rightDown,
+      cameraDragActive: this.cameraDragActive,
+      pointerLocked: document.pointerLockElement === this.canvas,
+      hoverActive: this.hoverActive,
+    };
   }
 
   setMouseCameraEnabled(on: boolean): void {
@@ -575,22 +624,25 @@ export class Input {
     this.cb.onInputIntent?.(kind);
   }
 
+  private isAttackMoveReservedCode(code: string): boolean {
+    return this.attackMoveEnabled && this.keybinds.codesForAction('attackMove').includes(code);
+  }
+
+  private heldAction(id: string): boolean {
+    return this.keybinds.codesForAction(id).some((c) => this.keys.has(c) && !this.isAttackMoveReservedCode(c));
+  }
+
   readMoveInput(): MoveInput {
     if (this.suspendMovement) {
       return { forward: false, back: false, turnLeft: false, turnRight: false, strafeLeft: false, strafeRight: false, jump: false };
     }
     if (this.controllerMoveInput) return { ...this.controllerMoveInput };
-    const k = this.keys;
-    // Attack Move mode replaces keyboard steering with click/key-driven movement,
-    // so WASD (and Q/E strafe / arrow turn) are ignored; the mouse-run, autorun
-    // and touch joystick still work.
-    const held = (id: string) => !this.attackMoveEnabled
-      && this.keybinds.codesForAction(id).some((c) => k.has(c));
+    const held = (id: string) => this.heldAction(id);
     const bothButtons = this.leftDown && this.rightDown;
     const forward = held('forward') || bothButtons || this.autorun || this.touchMove.forward;
     const back = held('back') || this.touchMove.back;
     // Jump is not a WASD key, so it keeps working in Attack Move mode.
-    const jump = this.keybinds.codesForAction('jump').some((c) => k.has(c)) || performance.now() <= this.touchJumpUntil;
+    const jump = this.keybinds.codesForAction('jump').some((c) => this.keys.has(c)) || performance.now() <= this.touchJumpUntil;
 
     if (this.mouseCameraEnabled) {
       return {

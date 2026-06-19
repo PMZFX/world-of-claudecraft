@@ -227,6 +227,34 @@ export class Vfx {
     this.quality = Math.min(1, Math.max(0, Number.isFinite(level) ? level : 1));
   }
 
+  prewarm(at: THREE.Vector3): void {
+    const sprites = Object.values(SPR);
+    for (let i = 0; i < sprites.length; i++) {
+      const a = (i / sprites.length) * Math.PI * 2;
+      this.spawn(
+        at.x + Math.sin(a) * 1.2, at.y + 0.6 + (i % 4) * 0.25, at.z + Math.cos(a) * 1.2,
+        0, 0, 0,
+        i % 3 === 0 ? 0xffd28a : i % 3 === 1 ? 0x8ed2ff : 0xd98aff,
+        0.35 + (i % 4) * 0.08,
+        1.0,
+        0,
+        sprites[i],
+        0,
+      );
+    }
+    this.update(0);
+  }
+
+  clear(): void {
+    this.projectiles.length = 0;
+    this.life.fill(0);
+    this.size.fill(0);
+    this.alphaAttr.fill(0);
+    const geo = this.points.geometry;
+    (geo.attributes.aSize as THREE.BufferAttribute).needsUpdate = true;
+    (geo.attributes.aAlpha as THREE.BufferAttribute).needsUpdate = true;
+  }
+
   private scaledCount(count: number): number {
     if (count <= 1) return count;
     const scale = 0.45 + 0.55 * this.quality;

@@ -1,20 +1,21 @@
 import * as THREE from 'three';
-import { Entity, SimEvent } from '../sim/types';
+import { ALL_CLASSES, type Entity, type SimEvent } from '../sim/types';
 import { OVERHEAD_EMOTES, type IWorld } from '../world_api';
 import { groundHeight, WATER_LEVEL, zoneBiomeAt } from '../sim/world';
 import {
-  MOBS, ABILITIES, DUNGEON_X_THRESHOLD, DUNGEON_LIST, QUESTS,
+  CLASSES, MOBS, ABILITIES, DUNGEON_X_THRESHOLD, DUNGEON_LIST, QUESTS,
   instanceOrigin, INSTANCE_SLOT_COUNT, ARENA_SLOT_COUNT, arenaOrigin, isArenaPos, dungeonAt,
+  WORLD_MAX_Z, WORLD_MIN_Z, ZONES,
 } from '../sim/data';
 import { cameraOcclusion } from '../sim/colliders';
 import type { BiomeId } from '../sim/types';
 import { AnimState, CharacterVisual, createCharacterVisual } from './characters';
-import { visualKeyFor } from './characters/manifest';
+import { skinCount, visualKeyFor } from './characters/manifest';
 import { mechAssetsReady, preloadMechAssets } from './characters/assets';
 import { isVisuallyDead } from './anim_state';
 import { LocoTrack, newLocoTrack, updateLocomotion } from './locomotion';
 import type { SpatialAudioSink, Surface } from './audio_sink';
-import { buildProps } from './props';
+import { buildPropMaterialPrewarmGroup, buildProps } from './props';
 import { plankTexture, sparkleTexture } from './textures';
 import { DungeonInteriors, ensureDungeonAssets } from './dungeon';
 import { buildGroundQuestObject } from './quest_objects';
@@ -22,6 +23,7 @@ import { Vfx } from './vfx';
 import { Weather } from './weather';
 import {
   GFX, initGfxTier, sharedUniforms, SUN_ANCHOR, SUN_DIR, surfaceMat, urlForcedTier,
+  type GfxBucketBands, type GfxBucketLevels,
 } from './gfx';
 import { buildComposer, PostPipeline } from './post';
 import { buildTerrain, TerrainView } from './terrain';
@@ -71,9 +73,10 @@ const ENTITY_SHADOW_RANGE_SQ = 25 * 25;
 const ENTITY_PROXY_SHADOW_RANGE_SQ = 62 * 62;
 // loot sparkles further than this are hidden (sub-pixel, real draw cost)
 const SPARKLE_DRAW_RANGE_SQ = 40 * 40;
-// beyond this, the articulated rig swaps for its single-draw merged far LOD
-// (just inside the nameplate range; rigs out there are ~30px tall)
-const ENTITY_LOD_RANGE_SQ = 50 * 50;
+// beyond this, the articulated rig swaps for its single-draw merged far LOD.
+// Keep the full rig just past nameplate range so nearby characters and held
+// weapons stay readable on low while the 80u draw cap still bounds total cost.
+const ENTITY_LOD_RANGE_SQ = 58 * 58;
 // Feet-above-terrain margin that counts as "airborne" for the jump pose. Mirrors
 // the sim's own 0.4u grounded tolerance (sim.ts), so walking slopes doesn't trip
 // it but a jump (apex ~1.1u) does. Needed because online snapshots don't carry
@@ -126,12 +129,26 @@ const DUNGEON_RIM_BOOST = 2.4;
 const RENDERER_PHASE_SAMPLE_LIMIT = 720;
 const RENDER_DIAGNOSTICS_SAMPLE_MS = 2000;
 const RENDER_DIAGNOSTICS_IDLE_TIMEOUT_MS = 1000;
+const RENDER_STALL_ATTRIBUTION_MS = 80;
 const PREWARM_MOB_TEMPLATE_IDS = [
   'forest_wolf',
+  'wild_boar',
+  'webwood_spider',
   'mudfin_murloc',
+  'tunnel_rat',
+  'vale_bandit',
   'restless_bones',
   'old_greyjaw',
   'mogger',
+  'mire_widow',
+  'fen_troll',
+  'gravecaller_cultist',
+  'stormcrag_elemental',
+  'thornpeak_ogre',
+  'glimmermere_wader',
+  'sethrael_palecoil',
+  'warlock_imp',
+  'warlock_voidwalker',
 ] as const;
 const PREWARM_OBJECT_ITEM_IDS = [
   'supply_crate',
@@ -139,9 +156,20 @@ const PREWARM_OBJECT_ITEM_IDS = [
   'morthen_grimoire',
   'gravecaller_sigil',
   'weathered_ledger_page',
+  'fen_muster_order',
+  'rusted_censer',
+  'bastion_ward_stone',
+  'ogre_war_totem',
+  'sanctum_key_shard',
+  'gravewyrm_sigil',
+  'crypt_ritual_circle',
 ] as const;
 const PREWARM_MOB_POOL_COPIES = 3;
 const PREWARM_OBJECT_POOL_COPIES = 2;
+
+function prewarmPlayerSkinVariantCount(): number {
+  return ALL_CLASSES.reduce((sum, cls) => sum + skinCount(`player_${cls}`), 0);
+}
 
 type RendererPhase = 'setup' | 'entities' | 'world' | 'nameplates' | 'submit' | 'total';
 type RendererWorldPhase =
@@ -175,6 +203,23 @@ type RenderableDiagnosticObject = THREE.Object3D & {
   material?: THREE.Material | THREE.Material[];
   count?: number;
 };
+
+type TextureBackedMaterial = THREE.Material & {
+  map?: THREE.Texture | null;
+  alphaMap?: THREE.Texture | null;
+  aoMap?: THREE.Texture | null;
+  bumpMap?: THREE.Texture | null;
+  displacementMap?: THREE.Texture | null;
+  emissiveMap?: THREE.Texture | null;
+  envMap?: THREE.Texture | null;
+  lightMap?: THREE.Texture | null;
+  metalnessMap?: THREE.Texture | null;
+  normalMap?: THREE.Texture | null;
+  roughnessMap?: THREE.Texture | null;
+  specularMap?: THREE.Texture | null;
+  gradientMap?: THREE.Texture | null;
+};
+type TextureMaterialKey = keyof Omit<TextureBackedMaterial, keyof THREE.Material>;
 interface ViewCandidate {
   e: Entity;
   d2: number;
@@ -210,6 +255,10 @@ interface RendererFrameStats {
   worldPhaseMs: RendererWorldPhaseMs;
   foliage: FoliagePerfStats;
   renderDiagnostics: RenderDiagnosticsSnapshot;
+  cameraPosition: { x: number; y: number; z: number };
+  playerPosition: { x: number; y: number; z: number };
+  biome: BiomeId;
+  lastQualityChange: RendererQualityChangeStats | null;
   createdViews: number;
   createdViewTypes: string[];
   removedViews: number;
@@ -218,17 +267,70 @@ interface RendererFrameStats {
   visibleViews: number;
 }
 
+interface RendererQualityChangeStats {
+  atMs: number;
+  ageMs: number;
+  mode: RenderBudgetState['mode'];
+  reason: RenderBudgetState['reason'];
+  previousLevels: RenderBudgetState['levels'];
+  levels: RenderBudgetState['levels'];
+}
+
+type RendererPrewarmCategory = 'views' | 'world' | 'sky' | 'props' | 'entities' | 'objects' | 'vfx' | 'post' | 'diagnostics';
+
+interface RendererPrewarmManifestEntryStats {
+  id: string;
+  category: RendererPrewarmCategory;
+  priority: number;
+  required: boolean;
+  status: 'completed' | 'skipped' | 'timed-out' | 'failed';
+  elapsedMs: number;
+  remainingMsAfter: number;
+  passes: number;
+  programsBefore: number;
+  programsAfter: number;
+  programDelta: number;
+  texturesBefore: number;
+  texturesAfter: number;
+  textureDelta: number;
+  detail?: string;
+}
+
+interface RendererPrewarmDiagnosticsBaselineStats {
+  programs: number;
+  textures: number;
+  totalObjects: number;
+  estimatedDraws: number;
+  estimatedTriangles: number;
+  categories: Record<string, { draws: number; triangles: number; materials: number }>;
+}
+
 export interface RendererPrewarmStats {
   elapsedMs: number;
   maxMs: number;
   createdViews: number;
   candidateViews: number;
   renderPasses: number;
+  programsBefore: number;
+  programsAfter: number;
+  texturesBefore: number;
+  texturesAfter: number;
   compileMode: 'async' | 'sync' | 'none';
   compileMs: number;
   compileTimedOut: boolean;
   timedOut: boolean;
+  remainingMs: number;
+  budgetUsedRatio: number;
   createdViewTypes: string[];
+  manifestPlanned: number;
+  manifestEntries: RendererPrewarmManifestEntryStats[];
+  manifestCompleted: number;
+  manifestSkipped: number;
+  manifestTimedOut: number;
+  manifestFailed: number;
+  timedOutEntryIds: string[];
+  failedEntryIds: string[];
+  diagnosticsBaseline: RendererPrewarmDiagnosticsBaselineStats | null;
 }
 
 interface PooledObjectView {
@@ -350,6 +452,19 @@ function emptyWorldPhaseMs(): RendererWorldPhaseMs {
 
 function emptyFoliagePerfStats(): FoliagePerfStats {
   return {
+    modelQuality: 1,
+    modelBuckets: 0,
+    modelVisibleBuckets: 0,
+    modelBucketsByLod: {},
+    modelVisibleByLod: {},
+    modelDraws: 0,
+    modelVisibleDraws: 0,
+    modelDrawsByLod: {},
+    modelVisibleDrawsByLod: {},
+    modelTriangles: 0,
+    modelVisibleTriangles: 0,
+    modelTrianglesByLod: {},
+    modelVisibleTrianglesByLod: {},
     grassEnabled: false,
     grassQuality: 0,
     grassActiveRadius: 0,
@@ -503,6 +618,7 @@ export class Renderer {
   private fogScratch = new THREE.Color();
   private flames: THREE.Mesh[];
   private fireLights: THREE.PointLight[];
+  private effectivePointLights = 0;
   private propsView!: {
     update(
       camX: number, camY: number, camZ: number,
@@ -555,6 +671,10 @@ export class Renderer {
     worldPhaseMs: emptyWorldPhaseMs(),
     foliage: emptyFoliagePerfStats(),
     renderDiagnostics: emptyRenderDiagnosticsSnapshot(),
+    cameraPosition: { x: 0, y: 0, z: 0 },
+    playerPosition: { x: 0, y: 0, z: 0 },
+    biome: 'vale',
+    lastQualityChange: null,
     createdViews: 0,
     createdViewTypes: [],
     removedViews: 0,
@@ -571,6 +691,8 @@ export class Renderer {
   private renderDiagnosticsKnownVisibleObjects = new Set<string>();
   private renderDiagnosticsLastPrograms = 0;
   private renderDiagnosticsLastTextures = 0;
+  private appliedBudgetLevels: RenderBudgetState['levels'] | null = null;
+  private lastQualityChange: Omit<RendererQualityChangeStats, 'ageMs'> | null = null;
   private visualPool = new Map<string, CharacterVisual[]>();
   private objectPool = new Map<string, PooledObjectView[]>();
 
@@ -639,10 +761,10 @@ export class Renderer {
       pmrem.dispose(); // prefiltered envRTs stay alive for the session
     }
 
-    const hemi = new THREE.HemisphereLight(0xd8ecff, 0x405a35, LOW_GFX ? 0.9 : HEMI_INTENSITY);
+    const hemi = new THREE.HemisphereLight(0xdcefff, 0x465f39, LOW_GFX ? 0.98 : HEMI_INTENSITY);
     this.scene.add(hemi);
     this.hemi = hemi;
-    const sun = new THREE.DirectionalLight(LOW_GFX ? 0xfff2d6 : 0xffedd0, LOW_GFX ? 2.45 : SUN_INTENSITY);
+    const sun = new THREE.DirectionalLight(LOW_GFX ? 0xfff0d0 : 0xffedd0, LOW_GFX ? 2.65 : SUN_INTENSITY);
     sun.position.copy(SUN_ANCHOR);
     sun.castShadow = !LOW_GFX;
     sun.shadow.mapSize.set(GFX.shadowMap, GFX.shadowMap);
@@ -933,14 +1055,62 @@ export class Renderer {
 
   private applyRenderBudgetState(state: RenderBudgetState): void {
     const previousScale = this.effectiveRenderScale;
+    const previousLevels = this.appliedBudgetLevels;
+    const levelsChanged = previousLevels
+      ? Object.entries(state.levels).some(([key, value]) => Math.abs(value - previousLevels[key as keyof RenderBudgetState['levels']]) >= 0.001)
+      : true;
+    if (levelsChanged) {
+      this.lastQualityChange = {
+        atMs: performance.now(),
+        mode: state.mode,
+        reason: state.reason,
+        previousLevels: previousLevels ?? state.levels,
+        levels: state.levels,
+      };
+      this.appliedBudgetLevels = { ...state.levels };
+    }
     this.effectiveRenderScale = Math.min(this.renderBudgetMaxScale(), Math.max(this.renderBudgetMinScale(), state.levels.resolution));
     this.foliage.setGrassQuality(state.levels.grass);
+    this.foliage.setModelQuality(state.levels.foliage);
     this.vfx.setQuality(state.levels.vfx);
+    this.effectivePointLights = Math.max(1, Math.round(GFX.maxPointLights * state.levels.lighting));
     if (Math.abs(previousScale - this.effectiveRenderScale) >= 0.001) this.applyResolution();
   }
 
+  private graphicsBucketLevels(state = this.renderBudgetGovernor.state()): GfxBucketLevels {
+    return {
+      ...GFX.bucketBaselines,
+      resolution: Math.round(this.effectiveRenderScale * 100) / 100,
+      grass: state.levels.grass,
+      foliage: state.levels.foliage,
+      vfx: state.levels.vfx,
+      lighting: state.levels.lighting,
+      characters: 1,
+      weapons: 1,
+      worldStreaming: this.lowGfx ? GFX.bucketBaselines.worldStreaming : 1,
+      ui: this.isMobileRuntime() ? Math.min(GFX.bucketBaselines.ui, 0.9) : GFX.bucketBaselines.ui,
+    };
+  }
+
   perfStats(): {
+    graphicsConfigVersion: number;
     tier: string;
+    qualityBuckets: {
+      version: number;
+      bands: GfxBucketBands;
+      baseline: GfxBucketLevels;
+      levels: GfxBucketLevels;
+      features: {
+        composer: boolean;
+        ao: boolean;
+        standardMaterials: boolean;
+        terrainSplat: boolean;
+        windSway: boolean;
+        maxPointLights: number;
+        activePointLights: number;
+        shadowMap: number;
+      };
+    };
     autoGovernor: boolean;
     budget: typeof GFX.budget;
     renderScale: number;
@@ -965,13 +1135,31 @@ export class Renderer {
     prewarm: RendererPrewarmStats | null;
   } {
     const info = this.webgl.info;
+    const renderBudget = this.renderBudgetGovernor.state();
     return {
+      graphicsConfigVersion: GFX.graphicsConfigVersion,
       tier: GFX.tier,
+      qualityBuckets: {
+        version: GFX.graphicsConfigVersion,
+        bands: GFX.bucketBands,
+        baseline: GFX.bucketBaselines,
+        levels: this.graphicsBucketLevels(renderBudget),
+        features: {
+          composer: GFX.composer,
+          ao: GFX.ao,
+          standardMaterials: GFX.standardMaterials,
+          terrainSplat: GFX.terrainSplat,
+          windSway: GFX.windSway,
+          maxPointLights: GFX.maxPointLights,
+          activePointLights: this.effectivePointLights || GFX.maxPointLights,
+          shadowMap: GFX.shadowMap,
+        },
+      },
       autoGovernor: GFX.autoGovernor,
       budget: GFX.budget,
       renderScale: this.renderScale,
       effectiveRenderScale: this.effectiveRenderScale,
-      renderBudget: this.renderBudgetGovernor.state(),
+      renderBudget,
       pixelRatio: this.webgl.getPixelRatio(),
       width: this.viewport.width,
       height: this.viewport.height,
@@ -1143,8 +1331,13 @@ export class Renderer {
     };
   }
 
-  private renderDiagnosticsForFrame(now: number): RenderDiagnosticsSnapshot {
+  private renderDiagnosticsForFrame(now: number, force = false): RenderDiagnosticsSnapshot {
     if (!this.renderDiagnosticsEnabled) return emptyRenderDiagnosticsSnapshot();
+    if (force) {
+      this.renderDiagnosticsSnapshot = this.collectRenderDiagnostics();
+      this.renderDiagnosticsNextSampleAt = now + RENDER_DIAGNOSTICS_SAMPLE_MS;
+      return this.renderDiagnosticsSnapshot;
+    }
     if (!this.renderDiagnosticsSamplePending && now >= this.renderDiagnosticsNextSampleAt) {
       this.renderDiagnosticsSamplePending = true;
       this.renderDiagnosticsNextSampleAt = now + RENDER_DIAGNOSTICS_SAMPLE_MS;
@@ -1323,11 +1516,11 @@ export class Renderer {
     this.updateChatBubbles();
   }
 
-  private prewarmEntity(kind: 'player' | 'mob', templateId: string, color: number, scale: number): Entity {
+  private prewarmEntity(kind: 'player' | 'mob', templateId: string, color: number, scale: number, skin = 0, id = -10_000): Entity {
     const p = this.sim.player;
     return {
       ...p,
-      id: -10_000,
+      id,
       kind,
       templateId,
       name: templateId,
@@ -1341,7 +1534,7 @@ export class Renderer {
       hostile: kind === 'mob',
       color,
       scale,
-      skin: 0,
+      skin,
       dead: false,
       castingAbility: null,
       overheadEmoteId: null,
@@ -1418,7 +1611,7 @@ export class Renderer {
     pool.push(object);
   }
 
-  private buildArchetypePrewarmGroup(): THREE.Group {
+  private buildEntityPrewarmGroup(): THREE.Group {
     const group = new THREE.Group();
     const p = this.sim.player;
     group.position.set(p.pos.x, p.pos.y, p.pos.z - 14);
@@ -1441,6 +1634,45 @@ export class Renderer {
         place(visual.root);
       }
     }
+    return group;
+  }
+
+  private buildPlayerPrewarmGroup(deadline: number): { group: THREE.Group; visualCount: number } {
+    const group = new THREE.Group();
+    const p = this.sim.player;
+    group.position.set(p.pos.x, p.pos.y, p.pos.z - 21);
+    setRenderCategory(group, 'prewarm');
+    let idx = 0;
+    const place = (obj: THREE.Object3D): void => {
+      obj.position.set(((idx % 8) - 3.5) * 2.8, 0, Math.floor(idx / 8) * 2.8);
+      group.add(obj);
+      idx++;
+    };
+    for (const cls of ALL_CLASSES) {
+      const variants = skinCount(`player_${cls}`);
+      for (let skin = 0; skin < variants; skin++) {
+        if (performance.now() >= deadline) return { group, visualCount: idx };
+        const color = CLASSES[cls]?.color ?? 0xffffff;
+        const entity = this.prewarmEntity('player', cls, color, 1, skin, -11_000 - idx);
+        const visual = createCharacterVisual(entity);
+        visual.root.visible = true;
+        place(visual.root);
+      }
+    }
+    return { group, visualCount: idx };
+  }
+
+  private buildObjectPrewarmGroup(): THREE.Group {
+    const group = new THREE.Group();
+    const p = this.sim.player;
+    group.position.set(p.pos.x, p.pos.y, p.pos.z - 17);
+    setRenderCategory(group, 'prewarm');
+    let idx = 0;
+    const place = (obj: THREE.Object3D): void => {
+      obj.position.set(((idx % 6) - 2.5) * 3.2, 0, Math.floor(idx / 6) * 3.2);
+      group.add(obj);
+      idx++;
+    };
     for (const itemId of PREWARM_OBJECT_ITEM_IDS) {
       const key = `object:${itemId}`;
       for (let i = 0; i < PREWARM_OBJECT_POOL_COPIES; i++) {
@@ -1453,30 +1685,296 @@ export class Renderer {
     return group;
   }
 
+  private prewarmCounts(): { programs: number; textures: number } {
+    return {
+      programs: this.webgl.info.programs?.length ?? 0,
+      textures: this.webgl.info.memory.textures,
+    };
+  }
+
+  private prewarmTexture(texture: THREE.Texture | null | undefined): void {
+    if (!texture) return;
+    this.webgl.initTexture(texture);
+  }
+
+  private prewarmMaterialTextures(material: THREE.Material | THREE.Material[] | undefined): void {
+    const mats = Array.isArray(material) ? material : material ? [material] : [];
+    const textureKeys: TextureMaterialKey[] = [
+      'map',
+      'alphaMap',
+      'aoMap',
+      'bumpMap',
+      'displacementMap',
+      'emissiveMap',
+      'envMap',
+      'lightMap',
+      'metalnessMap',
+      'normalMap',
+      'roughnessMap',
+      'specularMap',
+      'gradientMap',
+    ];
+    for (const mat of mats) {
+      const textureMat = mat as TextureBackedMaterial;
+      for (const key of textureKeys) this.prewarmTexture(textureMat[key]);
+    }
+  }
+
+  private prewarmObjectTextures(obj: THREE.Object3D): number {
+    let count = 0;
+    obj.traverse((child) => {
+      const renderable = child as RenderableDiagnosticObject;
+      if (!renderable.material) return;
+      const before = this.webgl.info.memory.textures;
+      this.prewarmMaterialTextures(renderable.material);
+      count += Math.max(0, this.webgl.info.memory.textures - before);
+    });
+    return count;
+  }
+
+  private renderPrewarmPass(dt: number): void {
+    this.prewarmWorldFrame(dt);
+    if (this.post) this.post.render();
+    else this.webgl.render(this.scene, this.camera);
+  }
+
+  private diagnosticsBaselineForPrewarm(): RendererPrewarmDiagnosticsBaselineStats | null {
+    if (!this.renderDiagnosticsEnabled) return null;
+    this.renderDiagnosticsSnapshot = this.collectRenderDiagnostics();
+    const categories: RendererPrewarmDiagnosticsBaselineStats['categories'] = {};
+    for (const [name, stat] of Object.entries(this.renderDiagnosticsSnapshot.categories)) {
+      categories[name] = {
+        draws: stat.draws,
+        triangles: stat.triangles,
+        materials: stat.materials,
+      };
+    }
+    return {
+      programs: this.renderDiagnosticsSnapshot.programs,
+      textures: this.renderDiagnosticsSnapshot.textures,
+      totalObjects: this.renderDiagnosticsSnapshot.totalObjects,
+      estimatedDraws: this.renderDiagnosticsSnapshot.estimatedDraws,
+      estimatedTriangles: this.renderDiagnosticsSnapshot.estimatedTriangles,
+      categories,
+    };
+  }
+
   async prewarmInitialScene(options: { maxMs?: number } = {}): Promise<RendererPrewarmStats> {
     const maxMs = Math.max(0, options.maxMs ?? VIEW_PREWARM_MAX_MS);
     const started = performance.now();
     const deadline = started + maxMs;
+    const manifestEntries: RendererPrewarmManifestEntryStats[] = [];
+    const startCounts = this.prewarmCounts();
     const createdViewTypes: string[] = [];
     const p = this.sim.player;
-    let createdViews = this.createRequiredViews(p, createdViewTypes);
-    createdViews += this.createPersistentPortalViews(createdViewTypes, deadline);
-    this.collectMissingViewCandidates(p, VIEW_PREWARM_RANGE_SQ, false);
-    const candidateViews = this.viewCandidates.length;
-    const maxViews = this.lowGfx ? VIEW_PREWARM_MAX_VIEWS_LOW : VIEW_PREWARM_MAX_VIEWS_HIGH;
-    createdViews += this.createCandidateViews(Math.max(0, maxViews - createdViews), createdViewTypes, deadline);
-    const doorPrewarmGroup = this.buildDoorPrewarmGroup();
-    const archetypePrewarmGroup = this.buildArchetypePrewarmGroup();
-    this.scene.add(doorPrewarmGroup);
-    this.scene.add(archetypePrewarmGroup);
+    let createdViews = 0;
+    let candidateViews = 0;
+    let doorPrewarmGroup: THREE.Group | null = null;
+    let entityPrewarmGroup: THREE.Group | null = null;
+    let playerPrewarmGroup: THREE.Group | null = null;
+    let objectPrewarmGroup: THREE.Group | null = null;
+    let propMaterialPrewarmGroup: THREE.Group | null = null;
 
     let renderPasses = 0;
+    let playerPrewarmVisuals = 0;
+    let vfxPrewarmBursts = 0;
     let compileMode: RendererPrewarmStats['compileMode'] = 'none';
     let compileMs = 0;
     let compileTimedOut = false;
-    try {
-      if (performance.now() < deadline) {
-        this.prewarmWorldFrame(1 / 60);
+    let textureUploads = 0;
+    let diagnosticsBaseline: RendererPrewarmDiagnosticsBaselineStats | null = null;
+
+    type PrewarmManifestEntry = {
+      id: string;
+      category: RendererPrewarmCategory;
+      priority: number;
+      required: boolean;
+      run: () => void | Promise<void>;
+      detail?: () => string;
+    };
+
+    const runEntry = async (
+      entry: PrewarmManifestEntry,
+    ): Promise<void> => {
+      const before = this.prewarmCounts();
+      const entryStarted = performance.now();
+      if (entryStarted >= deadline) {
+        manifestEntries.push({
+          id: entry.id,
+          category: entry.category,
+          priority: entry.priority,
+          required: entry.required,
+          status: 'timed-out',
+          elapsedMs: 0,
+          remainingMsAfter: 0,
+          passes: renderPasses,
+          programsBefore: before.programs,
+          programsAfter: before.programs,
+          programDelta: 0,
+          texturesBefore: before.textures,
+          texturesAfter: before.textures,
+          textureDelta: 0,
+          detail: entry.detail?.(),
+        });
+        return;
+      }
+      let status: RendererPrewarmManifestEntryStats['status'] = 'completed';
+      try {
+        await entry.run();
+      } catch (err) {
+        status = 'failed';
+        console.warn(`Renderer prewarm entry failed: ${entry.id}`, err);
+      }
+      const after = this.prewarmCounts();
+      const entryEnded = performance.now();
+      manifestEntries.push({
+        id: entry.id,
+        category: entry.category,
+        priority: entry.priority,
+        required: entry.required,
+        status,
+        elapsedMs: roundMs(entryEnded - entryStarted),
+        remainingMsAfter: roundMs(Math.max(0, deadline - entryEnded)),
+        passes: renderPasses,
+        programsBefore: before.programs,
+        programsAfter: after.programs,
+        programDelta: after.programs - before.programs,
+        texturesBefore: before.textures,
+        texturesAfter: after.textures,
+        textureDelta: after.textures - before.textures,
+        detail: entry.detail?.(),
+      });
+    };
+
+    const manifest: PrewarmManifestEntry[] = [
+      {
+        id: 'views.required',
+        category: 'views',
+        priority: 10,
+        required: true,
+        run: () => {
+        createdViews += this.createRequiredViews(p, createdViewTypes);
+        createdViews += this.createPersistentPortalViews(createdViewTypes, deadline);
+        },
+        detail: () => `created=${createdViews}`,
+      },
+      {
+        id: 'views.nearby',
+        category: 'views',
+        priority: 20,
+        required: true,
+        run: () => {
+        this.collectMissingViewCandidates(p, VIEW_PREWARM_RANGE_SQ, false);
+        candidateViews = this.viewCandidates.length;
+        const maxViews = this.lowGfx ? VIEW_PREWARM_MAX_VIEWS_LOW : VIEW_PREWARM_MAX_VIEWS_HIGH;
+        createdViews += this.createCandidateViews(Math.max(0, maxViews - createdViews), createdViewTypes, deadline);
+        },
+        detail: () => `created=${createdViews};candidates=${candidateViews}`,
+      },
+      {
+        id: 'props.dungeon-doors',
+        category: 'objects',
+        priority: 30,
+        required: true,
+        run: () => {
+        doorPrewarmGroup = this.buildDoorPrewarmGroup();
+          this.scene.add(doorPrewarmGroup);
+        },
+      },
+      {
+        id: 'entities.mob-archetypes',
+        category: 'entities',
+        priority: 35,
+        required: true,
+        run: () => {
+          entityPrewarmGroup = this.buildEntityPrewarmGroup();
+          this.scene.add(entityPrewarmGroup);
+        },
+        detail: () => `templates=${PREWARM_MOB_TEMPLATE_IDS.length};copies=${PREWARM_MOB_POOL_COPIES}`,
+      },
+      {
+        id: 'entities.player-archetypes',
+        category: 'entities',
+        priority: 37,
+        required: true,
+        run: () => {
+          const built = this.buildPlayerPrewarmGroup(deadline);
+          playerPrewarmGroup = built.group;
+          playerPrewarmVisuals = built.visualCount;
+          this.scene.add(playerPrewarmGroup);
+        },
+        detail: () => `classes=${ALL_CLASSES.length};skins=${prewarmPlayerSkinVariantCount()};visuals=${playerPrewarmVisuals}`,
+      },
+      {
+        id: 'objects.quest-archetypes',
+        category: 'objects',
+        priority: 40,
+        required: true,
+        run: () => {
+          objectPrewarmGroup = this.buildObjectPrewarmGroup();
+          this.scene.add(objectPrewarmGroup);
+        },
+        detail: () => `items=${PREWARM_OBJECT_ITEM_IDS.length};copies=${PREWARM_OBJECT_POOL_COPIES}`,
+      },
+      {
+        id: 'props.material-variants',
+        category: 'props',
+        priority: 45,
+        required: true,
+        run: () => {
+        propMaterialPrewarmGroup = buildPropMaterialPrewarmGroup();
+        propMaterialPrewarmGroup.position.set(p.pos.x, p.pos.y, p.pos.z - 18);
+        setRenderCategory(propMaterialPrewarmGroup, 'prewarm');
+        this.scene.add(propMaterialPrewarmGroup);
+        },
+        detail: () => `objects=${propMaterialPrewarmGroup?.children.length ?? 0}`,
+      },
+      {
+        id: 'textures.scene',
+        category: 'world',
+        priority: 50,
+        required: true,
+        run: () => {
+        textureUploads = this.prewarmObjectTextures(this.scene);
+        },
+        detail: () => `uploaded=${textureUploads}`,
+      },
+      {
+        id: 'vfx.atlas',
+        category: 'vfx',
+        priority: 60,
+        required: false,
+        run: () => {
+        const offsets = [
+          [0, -4],
+          [-3, -5],
+          [3, -5],
+          [0, -7],
+        ] as const;
+        for (const [dx, dz] of offsets) {
+          if (performance.now() >= deadline) break;
+          this.vfx.prewarm(new THREE.Vector3(p.pos.x + dx, p.pos.y + 1, p.pos.z + dz));
+          vfxPrewarmBursts++;
+        }
+        },
+        detail: () => `bursts=${vfxPrewarmBursts}`,
+      },
+      {
+        id: 'world.initial-frame',
+        category: 'world',
+        priority: 70,
+        required: true,
+        run: () => {
+        this.renderPrewarmPass(1 / 60);
+        renderPasses++;
+        },
+      },
+      {
+        id: 'programs.compile',
+        category: 'world',
+        priority: 80,
+        required: true,
+        run: async () => {
         const compileStart = performance.now();
         const compileBudgetMs = Math.max(0, deadline - compileStart);
         if (compileBudgetMs > 0 && this.webgl.compileAsync) {
@@ -1496,29 +1994,94 @@ export class Renderer {
           this.webgl.compile(this.scene, this.camera);
           compileMs = roundMs(performance.now() - compileStart);
         }
-        while (renderPasses < 2 && performance.now() < deadline) {
-          if (this.post) this.post.render();
-          else this.webgl.render(this.scene, this.camera);
+        },
+        detail: () => `mode=${compileMode};timedOut=${compileTimedOut}`,
+      },
+      {
+        id: 'sky.biome-variants',
+        category: 'sky',
+        priority: 90,
+        required: false,
+        run: () => {
+        const zs = [p.pos.z, ...ZONES.map((z) => z.zMax - 8), ...ZONES.map((z) => z.zMax + 8)]
+          .filter((z) => Number.isFinite(z) && z > WORLD_MIN_Z && z < WORLD_MAX_Z)
+          .slice(0, this.lowGfx ? 3 : 8);
+        for (const z of zs) {
+          if (performance.now() >= deadline) break;
+          this.skyView.setCameraZ(z, 1 / 20);
+          this.renderPrewarmPass(1 / 60);
           renderPasses++;
         }
+        },
+      },
+      {
+        id: 'render.settle-passes',
+        category: this.post ? 'post' : 'world',
+        priority: 100,
+        required: false,
+        run: () => {
+        const minPasses = this.lowGfx ? 8 : 10;
+        while (renderPasses < minPasses && performance.now() < deadline) {
+          this.renderPrewarmPass(1 / 60);
+          renderPasses++;
+        }
+        },
+        detail: () => `passes=${renderPasses}`,
+      },
+      {
+        id: 'diagnostics.baseline',
+        category: 'diagnostics',
+        priority: 110,
+        required: false,
+        run: () => {
+        diagnosticsBaseline = this.diagnosticsBaselineForPrewarm();
+        },
+      },
+    ];
+
+    try {
+      for (const entry of manifest) {
+        await runEntry(entry);
       }
     } finally {
-      this.scene.remove(doorPrewarmGroup);
-      this.scene.remove(archetypePrewarmGroup);
+      this.vfx.clear();
+      if (doorPrewarmGroup) this.scene.remove(doorPrewarmGroup);
+      if (entityPrewarmGroup) this.scene.remove(entityPrewarmGroup);
+      if (playerPrewarmGroup) this.scene.remove(playerPrewarmGroup);
+      if (objectPrewarmGroup) this.scene.remove(objectPrewarmGroup);
+      if (propMaterialPrewarmGroup) this.scene.remove(propMaterialPrewarmGroup);
     }
 
     const elapsed = performance.now() - started;
+    const finalCounts = this.prewarmCounts();
+    const manifestTimedOut = manifestEntries.filter((entry) => entry.status === 'timed-out');
+    const manifestFailed = manifestEntries.filter((entry) => entry.status === 'failed');
     const stats: RendererPrewarmStats = {
       elapsedMs: roundMs(elapsed),
       maxMs: roundMs(maxMs),
       createdViews,
       candidateViews,
       renderPasses,
+      programsBefore: startCounts.programs,
+      programsAfter: finalCounts.programs,
+      texturesBefore: startCounts.textures,
+      texturesAfter: finalCounts.textures,
       compileMode,
       compileMs,
       compileTimedOut,
       timedOut: elapsed >= maxMs,
+      remainingMs: roundMs(Math.max(0, deadline - performance.now())),
+      budgetUsedRatio: maxMs > 0 ? roundMs(elapsed / maxMs) : 1,
       createdViewTypes,
+      manifestPlanned: manifest.length,
+      manifestEntries,
+      manifestCompleted: manifestEntries.filter((entry) => entry.status === 'completed').length,
+      manifestSkipped: manifestEntries.filter((entry) => entry.status === 'skipped').length,
+      manifestTimedOut: manifestTimedOut.length,
+      manifestFailed: manifestFailed.length,
+      timedOutEntryIds: manifestTimedOut.map((entry) => entry.id),
+      failedEntryIds: manifestFailed.map((entry) => entry.id),
+      diagnosticsBaseline,
     };
     this.lastPrewarmStats = stats;
     return stats;
@@ -2570,12 +3133,34 @@ export class Renderer {
     for (const v of this.views.values()) {
       if (v.group.visible) visibleViews++;
     }
-    const renderDiagnostics = this.renderDiagnosticsForFrame(performance.now());
+    const afterSubmit = performance.now();
+    const renderDiagnostics = this.renderDiagnosticsForFrame(
+      afterSubmit,
+      framePhaseMs.submit >= RENDER_STALL_ATTRIBUTION_MS,
+    );
+    const qualityChange = this.lastQualityChange
+      ? {
+        ...this.lastQualityChange,
+        ageMs: roundMs(afterSubmit - this.lastQualityChange.atMs),
+      }
+      : null;
     this.lastFrameStats = {
       phaseMs: framePhaseMs,
       worldPhaseMs,
       foliage: this.foliage.perfStats(),
       renderDiagnostics,
+      cameraPosition: {
+        x: roundMs(this.camera.position.x),
+        y: roundMs(this.camera.position.y),
+        z: roundMs(this.camera.position.z),
+      },
+      playerPosition: {
+        x: roundMs(p.pos.x),
+        y: roundMs(p.pos.y),
+        z: roundMs(p.pos.z),
+      },
+      biome: zoneBiomeAt(p.pos.z),
+      lastQualityChange: qualityChange,
       createdViews,
       createdViewTypes,
       removedViews,
@@ -2600,9 +3185,10 @@ export class Renderer {
       const dx = entry.worldPos.x - px, dz = entry.worldPos.z - pz;
       entry.d2 = dx * dx + dz * dz;
     }
-    if (ranked.length > GFX.maxPointLights) ranked.sort((a, b) => a.d2 - b.d2);
+    const lightBudget = this.effectivePointLights || GFX.maxPointLights;
+    if (ranked.length > lightBudget) ranked.sort((a, b) => a.d2 - b.d2);
     for (let i = 0; i < ranked.length; i++) {
-      ranked[i].light.visible = i < GFX.maxPointLights && ranked[i].d2 < LIGHT_BUDGET_RANGE_SQ;
+      ranked[i].light.visible = i < lightBudget && ranked[i].d2 < LIGHT_BUDGET_RANGE_SQ;
     }
   }
 

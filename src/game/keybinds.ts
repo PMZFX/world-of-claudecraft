@@ -20,9 +20,9 @@ export interface BindAction {
   defaults: string[]; // 1 or 2 codes; index 0 = primary, 1 = secondary
   // When true this action is exempt from the WoW-style "one code per action"
   // uniqueness sweep: its code may deliberately overlap another action's. Used
-  // by Attack Move, whose default (A) intentionally shadows Turn Left — the two
-  // are mutually exclusive (Attack Move mode disables WASD), so they can share a
-  // key without either stealing it from the other on save/load.
+  // by Attack Move, whose default (A) intentionally shadows Turn Left while the
+  // setting is on, so they can share a key without either stealing it from the
+  // other on save/load.
   allowShared?: boolean;
 }
 
@@ -46,8 +46,8 @@ export const BIND_ACTIONS: BindAction[] = [
   { id: 'targetFriendly', label: 'Target Nearest Friendly', category: 'Targeting', kind: 'edge', defaults: ['KeyH'] },
   { id: 'targetFriendlyNext', label: 'Cycle Friendly Target', category: 'Targeting', kind: 'edge', defaults: ['KeyJ'] },
   { id: 'interact', label: 'Interact / Loot', category: 'Targeting', kind: 'edge', defaults: ['KeyF'] },
-  // Only acts while the Attack Move setting is on (then WASD is disabled); shares
-  // its default key with Turn Left intentionally — see allowShared.
+  // Only acts while the Attack Move setting is on; shares its default key with
+  // Turn Left intentionally, and only that key is reserved while active.
   { id: 'attackMove', label: 'Attack Move', category: 'Targeting', kind: 'edge', defaults: ['KeyA'], allowShared: true },
   // Interface windows
   { id: 'char', label: 'Character', category: 'Interface', kind: 'edge', defaults: ['KeyC'] },

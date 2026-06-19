@@ -1,6 +1,5 @@
 import type { Renderer } from '../render/renderer';
 import { assetTimingSnapshot, type AssetTimingSnapshot } from '../render/assets/stats';
-import { analyzePerfSuggestions, type PerfSuggestion } from './perf_doctor';
 
 export interface PerfSnapshot {
   seconds: number;
@@ -24,6 +23,7 @@ export interface PerfSnapshot {
     intentToSend: { count: number; avg: number; p95: number; max: number };
     sendToEcho: { count: number; avg: number; p95: number; max: number };
     intentToVisible: { count: number; avg: number; p95: number; max: number };
+    debug?: PerfInputDebugState | null;
   };
   browser: {
     longTasks: { count: number; totalMs: number; avg: number; p95: number; max: number; lastAge: number };
@@ -42,6 +42,8 @@ export interface PerfSnapshot {
   devTrace?: DevPerfTrace;
 }
 
+export type PerfInputDebugState = Record<string, unknown>;
+
 type TimedBucket = 'renderer' | 'hud' | 'events' | 'sim';
 const MAX_SAMPLES = 7200; // ~2 minutes at 60fps; enough for stable p95/p99 without unbounded growth.
 const MAX_WINDOW_MS = 30_000;
@@ -49,6 +51,9 @@ const DEV_TRACE_WORST_FRAME_LIMIT = 40;
 const DEV_TRACE_LONG_TASK_LIMIT = 80;
 const DEV_TRACE_ATTRIBUTION_LIMIT = 4;
 const DEV_TRACE_MIN_FRAME_MS = 33;
+const DEV_TRACE_STALL_ATTRIBUTION_MS = 80;
+const DEV_TRACE_STALL_CATEGORY_LIMIT = 8;
+const DEV_TRACE_STALL_SAMPLE_LIMIT = 12;
 const DEV_TRACE_SPAN_LIMIT = 120;
 const DEV_TRACE_SPAN_MIN_MS = 8;
 const DEV_TRACE_DETAIL_LIMIT = 16;
@@ -56,6 +61,51 @@ const DEV_TRACE_DETAIL_LIMIT = 16;
 type RendererStats = NonNullable<ReturnType<Renderer['perfStats']>>;
 type DevRendererFrame = Omit<NonNullable<RendererStats['lastFrame']>, 'renderDiagnostics'>;
 type DevTraceDetail = Record<string, string | number | boolean | null>;
+
+interface DevRenderStallCategory {
+  name: string;
+  objects: number;
+  draws: number;
+  triangles: number;
+  points: number;
+  materials: number;
+  materialSamples: string[];
+}
+
+interface DevRenderStallAttribution {
+  submitMs: number;
+  totalMs: number;
+  calls: number;
+  triangles: number;
+  programs: number;
+  textures: number;
+  programDelta: number;
+  textureDelta: number;
+  cameraPosition: { x: number; y: number; z: number };
+  playerPosition: { x: number; y: number; z: number };
+  biome: string;
+  createdViews: number;
+  removedViews: number;
+  candidateViews: number;
+  activeViews: number;
+  visibleViews: number;
+  createdViewTypes: string[];
+  lastQualityChange: DevRendererFrame['lastQualityChange'];
+  renderBudget: RendererStats['renderBudget'];
+  qualityLevels: RendererStats['qualityBuckets']['levels'];
+  qualityFeatures: RendererStats['qualityBuckets']['features'];
+  foliage: RendererStats['foliage'];
+  diagnostics: {
+    enabled: boolean;
+    totalObjects: number;
+    estimatedDraws: number;
+    estimatedTriangles: number;
+    estimatedPoints: number;
+    newMaterials: string[];
+    firstVisibleObjects: string[];
+    topCategories: DevRenderStallCategory[];
+  };
+}
 
 interface DevPerfTraceFrame {
   atMs: number;
@@ -72,6 +122,7 @@ interface DevPerfTraceFrame {
     renderScale: number;
     effectiveRenderScale: number;
     renderBudget: RendererStats['renderBudget'];
+    qualityBuckets: RendererStats['qualityBuckets'];
     pixelRatio: number;
     width: number;
     height: number;
@@ -85,6 +136,7 @@ interface DevPerfTraceFrame {
     memoryUsedMb: number | null;
   };
   network: PerfSnapshot['network'];
+  stallAttribution?: DevRenderStallAttribution;
 }
 
 interface DevPerfTraceSpan {
@@ -170,6 +222,64 @@ function pushSample(values: number[], sample: number): void {
   if (values.length > MAX_SAMPLES) values.splice(0, values.length - MAX_SAMPLES);
 }
 
+function renderStallCategories(rendererFrame: NonNullable<RendererStats['lastFrame']>): DevRenderStallCategory[] {
+  const categories = rendererFrame.renderDiagnostics.categories;
+  return Object.entries(categories)
+    .map(([name, stat]) => ({
+      name: name.slice(0, 80),
+      objects: stat.objects,
+      draws: stat.draws,
+      triangles: stat.triangles,
+      points: stat.points,
+      materials: stat.materials,
+      materialSamples: stat.materialSamples.slice(0, 4),
+    }))
+    .sort((a, b) => (b.triangles - a.triangles) || (b.draws - a.draws) || a.name.localeCompare(b.name))
+    .slice(0, DEV_TRACE_STALL_CATEGORY_LIMIT);
+}
+
+function renderStallAttribution(
+  renderer: RendererStats,
+  rendererFrame: NonNullable<RendererStats['lastFrame']>,
+): DevRenderStallAttribution | undefined {
+  if (rendererFrame.phaseMs.submit < DEV_TRACE_STALL_ATTRIBUTION_MS) return undefined;
+  const diagnostics = rendererFrame.renderDiagnostics;
+  return {
+    submitMs: rendererFrame.phaseMs.submit,
+    totalMs: rendererFrame.phaseMs.total,
+    calls: renderer.calls,
+    triangles: renderer.triangles,
+    programs: renderer.programs,
+    textures: renderer.textures,
+    programDelta: diagnostics.programDelta,
+    textureDelta: diagnostics.textureDelta,
+    cameraPosition: rendererFrame.cameraPosition,
+    playerPosition: rendererFrame.playerPosition,
+    biome: rendererFrame.biome,
+    createdViews: rendererFrame.createdViews,
+    removedViews: rendererFrame.removedViews,
+    candidateViews: rendererFrame.candidateViews,
+    activeViews: rendererFrame.activeViews,
+    visibleViews: rendererFrame.visibleViews,
+    createdViewTypes: rendererFrame.createdViewTypes.slice(0, DEV_TRACE_STALL_SAMPLE_LIMIT),
+    lastQualityChange: rendererFrame.lastQualityChange,
+    renderBudget: renderer.renderBudget,
+    qualityLevels: renderer.qualityBuckets.levels,
+    qualityFeatures: renderer.qualityBuckets.features,
+    foliage: renderer.foliage,
+    diagnostics: {
+      enabled: diagnostics.enabled,
+      totalObjects: diagnostics.totalObjects,
+      estimatedDraws: diagnostics.estimatedDraws,
+      estimatedTriangles: diagnostics.estimatedTriangles,
+      estimatedPoints: diagnostics.estimatedPoints,
+      newMaterials: diagnostics.newMaterials.slice(0, DEV_TRACE_STALL_SAMPLE_LIMIT),
+      firstVisibleObjects: diagnostics.firstVisibleObjects.slice(0, DEV_TRACE_STALL_SAMPLE_LIMIT),
+      topCategories: renderStallCategories(rendererFrame),
+    },
+  };
+}
+
 function sanitizeTraceDetail(detail?: Record<string, unknown>): DevTraceDetail | undefined {
   if (!detail) return undefined;
   const out: DevTraceDetail = {};
@@ -208,11 +318,6 @@ export function localDevPerfTraceEnabled(): boolean {
 export class PerfMonitor {
   readonly enabled: boolean;
   private overlay: HTMLDivElement | null = null;
-  private doctor: HTMLDivElement | null = null;
-  private doctorList: HTMLDivElement | null = null;
-  private doctorDismissed = false;
-  private lastDoctorAt = 0;
-  private lastDoctorIds = '';
   private startedAt = performance.now();
   private lastOverlayAt = 0;
   private frames = 0;
@@ -238,6 +343,7 @@ export class PerfMonitor {
   private lastLongTaskAt = 0;
   private longTaskObserver: PerformanceObserver | null = null;
   private readonly traceEnabled: boolean;
+  private inputDebugProvider: (() => PerfInputDebugState | null) | null = null;
   private devTraceFrames: DevPerfTraceFrame[] = [];
   private devTraceSpans: DevPerfTraceSpan[] = [];
   private devLongTasks: DevLongTaskRecord[] = [];
@@ -258,6 +364,10 @@ export class PerfMonitor {
 
   setHud(hud: { perfStats(): PerfSnapshot['hud'] }): void {
     this.hud = hud;
+  }
+
+  setInputDebugProvider(provider: () => PerfInputDebugState | null): void {
+    this.inputDebugProvider = provider;
   }
 
   frame(dt: number, now = performance.now()): void {
@@ -496,6 +606,9 @@ export class PerfMonitor {
         return frame;
       })()
       : null;
+    const stallAttribution = renderer && rendererFrame
+      ? renderStallAttribution(renderer, rendererFrame)
+      : undefined;
     const frame: DevPerfTraceFrame = {
       atMs: round(now - this.startedAt),
       frameMs: round(this.lastFrameMs),
@@ -511,6 +624,7 @@ export class PerfMonitor {
         renderScale: renderer.renderScale,
         effectiveRenderScale: renderer.effectiveRenderScale,
         renderBudget: renderer.renderBudget,
+        qualityBuckets: renderer.qualityBuckets,
         pixelRatio: renderer.pixelRatio,
         width: renderer.width,
         height: renderer.height,
@@ -524,6 +638,7 @@ export class PerfMonitor {
         memoryUsedMb: memory?.usedMB ?? null,
       },
       network: this.network,
+      ...(stallAttribution ? { stallAttribution } : {}),
     };
     this.devTraceFrames.push(frame);
     this.devTraceFrames.sort((a, b) => b.scoreMs - a.scoreMs || b.frameMs - a.frameMs || a.atMs - b.atMs);
@@ -539,7 +654,6 @@ export class PerfMonitor {
     this.lastSnapshot = this.snapshot(now);
     if (!this.enabled) return;
     this.renderOverlay(this.lastSnapshot);
-    this.renderDoctor(this.lastSnapshot, now);
   }
 
   snapshot(now = performance.now()): PerfSnapshot {
@@ -559,6 +673,7 @@ export class PerfMonitor {
         frameMs: summarizeFrames(samples.map((s) => s.ms)),
       };
     };
+    const inputDebug = this.readInputDebug();
     const snapshot: PerfSnapshot = {
       seconds: round(seconds),
       frames: this.frames,
@@ -581,6 +696,7 @@ export class PerfMonitor {
         intentToSend: summarize(this.inputToSendMs),
         sendToEcho: summarize(this.inputToEchoMs),
         intentToVisible: summarize(this.inputToVisibleMs),
+        ...(inputDebug ? { debug: inputDebug } : {}),
       },
       browser: {
         longTasks: {
@@ -612,6 +728,15 @@ export class PerfMonitor {
       };
     }
     return snapshot;
+  }
+
+  private readInputDebug(): PerfInputDebugState | null {
+    if (!this.inputDebugProvider) return null;
+    try {
+      return this.inputDebugProvider();
+    } catch {
+      return null;
+    }
   }
 
   report(): PerfSnapshot {
@@ -675,93 +800,6 @@ export class PerfMonitor {
     this.overlay.textContent = 'perf: collecting...';
     this.overlay.addEventListener('click', () => this.copyReport());
     document.body.appendChild(this.overlay);
-  }
-
-  private mountDoctor(): void {
-    this.doctor = document.createElement('div');
-    this.doctor.style.cssText = [
-      'position:fixed',
-      'right:14px',
-      'bottom:14px',
-      'z-index:2147483600',
-      'width:min(360px,calc(100vw - 28px))',
-      'font:13px/1.35 system-ui,-apple-system,Segoe UI,sans-serif',
-      'color:#e5edf8',
-      'background:rgba(8,13,22,0.94)',
-      'border:1px solid rgba(250,204,21,0.42)',
-      'border-radius:8px',
-      'box-shadow:0 12px 36px rgba(0,0,0,0.45)',
-      'padding:11px',
-      'pointer-events:auto',
-    ].join(';');
-    const head = document.createElement('div');
-    head.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px';
-    const title = document.createElement('div');
-    title.textContent = 'Performance suggestions';
-    title.style.cssText = 'font-weight:700;color:#fde68a;letter-spacing:0';
-    const close = document.createElement('button');
-    close.type = 'button';
-    close.textContent = 'x';
-    close.setAttribute('aria-label', 'Dismiss performance suggestions');
-    close.style.cssText = [
-      'width:28px',
-      'height:28px',
-      'border:1px solid rgba(255,255,255,0.18)',
-      'border-radius:6px',
-      'background:rgba(255,255,255,0.08)',
-      'color:#e5edf8',
-      'font:20px/1 system-ui,sans-serif',
-      'cursor:pointer',
-    ].join(';');
-    close.addEventListener('click', () => {
-      this.doctorDismissed = true;
-      this.doctor?.remove();
-      this.doctor = null;
-      this.doctorList = null;
-    });
-    head.append(title, close);
-    this.doctorList = document.createElement('div');
-    this.doctor.append(head, this.doctorList);
-    document.body.appendChild(this.doctor);
-  }
-
-  private renderDoctor(s: PerfSnapshot, now: number): void {
-    if (this.doctorDismissed || now - this.startedAt < 12_000 || now - this.lastDoctorAt < 5_000) return;
-    this.lastDoctorAt = now;
-    const suggestions = analyzePerfSuggestions(s, location.search);
-    if (!suggestions.length) {
-      this.doctor?.remove();
-      this.doctor = null;
-      this.doctorList = null;
-      this.lastDoctorIds = '';
-      return;
-    }
-    const ids = suggestions.map((x) => x.id).join('|');
-    if (ids === this.lastDoctorIds && this.doctor) return;
-    this.lastDoctorIds = ids;
-    if (!this.doctor) this.mountDoctor();
-    if (!this.doctorList) return;
-    this.doctorList.replaceChildren(...suggestions.map((suggestion) => this.doctorItem(suggestion)));
-  }
-
-  private doctorItem(suggestion: PerfSuggestion): HTMLElement {
-    const item = document.createElement('div');
-    item.style.cssText = 'padding:8px 0;border-top:1px solid rgba(255,255,255,0.08)';
-    const title = document.createElement('div');
-    title.textContent = suggestion.title;
-    title.style.cssText = `font-weight:700;color:${suggestion.severity === 'critical' ? '#fecaca' : '#dbeafe'};margin-bottom:3px`;
-    const body = document.createElement('div');
-    body.textContent = suggestion.body;
-    body.style.cssText = 'color:#b8c4d6';
-    item.append(title, body);
-    if (suggestion.action) {
-      const action = document.createElement('a');
-      action.textContent = suggestion.action.label;
-      action.href = suggestion.action.href;
-      action.style.cssText = 'display:inline-block;margin-top:7px;color:#93c5fd;text-decoration:underline;font-weight:700';
-      item.append(action);
-    }
-    return item;
   }
 
   private renderOverlay(s: PerfSnapshot): void {

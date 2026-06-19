@@ -35,6 +35,12 @@ const THRESHOLDS = {
   maxViews: numberEnv('PERF_MAX_VIEWS'),
   maxInputIntentToFrameP95: numberEnv('PERF_MAX_INPUT_FRAME_P95'),
   maxInputIntentToVisibleP95: numberEnv('PERF_MAX_INPUT_VISIBLE_P95'),
+  maxPrewarmMs: numberEnv('PERF_MAX_PREWARM_MS'),
+  maxPrewarmBudgetRatio: numberEnv('PERF_MAX_PREWARM_BUDGET_RATIO'),
+  maxPrewarmTimedOut: numberEnv('PERF_MAX_PREWARM_TIMED_OUT'),
+  maxPrewarmFailed: numberEnv('PERF_MAX_PREWARM_FAILED'),
+  minPrewarmCompleted: numberEnv('PERF_MIN_PREWARM_COMPLETED'),
+  minPrewarmEntries: numberEnv('PERF_MIN_PREWARM_ENTRIES'),
 };
 
 const VIEWPORTS = {
@@ -242,6 +248,8 @@ function summarizeResult(result) {
   const gltf = lastAssets.byType?.gltf;
   const texture = lastAssets.byType?.texture;
   const renderer = lastReport.renderer;
+  const prewarm = renderer?.prewarm;
+  const foliage = renderer?.foliage;
   const hud = lastReport.hud;
   const longTasks = lastReport.browser?.longTasks;
   const bootByType = bootBytesByType(lastReport);
@@ -277,6 +285,36 @@ function summarizeResult(result) {
     maxSampleTriangles: maxOf(result.samples, (s) => s.report?.renderer?.triangles),
     views: renderer?.views ?? 0,
     maxViews: maxOf(result.samples, (s) => s.report?.renderer?.views),
+    foliageModelQuality: foliage?.modelQuality ?? 0,
+    foliageModelVisibleBuckets: foliage?.modelVisibleBuckets ?? 0,
+    foliageModelVisibleDraws: foliage?.modelVisibleDraws ?? 0,
+    foliageModelVisibleTriangles: foliage?.modelVisibleTriangles ?? 0,
+    foliageModelVisibleByLod: foliage?.modelVisibleByLod ?? {},
+    foliageModelVisibleDrawsByLod: foliage?.modelVisibleDrawsByLod ?? {},
+    foliageModelVisibleTrianglesByLod: foliage?.modelVisibleTrianglesByLod ?? {},
+    foliageGrassVisibleTufts: foliage?.grassVisibleTufts ?? 0,
+    prewarmElapsedMs: prewarm?.elapsedMs ?? 0,
+    prewarmMaxMs: prewarm?.maxMs ?? 0,
+    prewarmRemainingMs: prewarm?.remainingMs ?? 0,
+    prewarmBudgetUsedRatio: prewarm?.budgetUsedRatio ?? 0,
+    prewarmTimedOut: prewarm?.timedOut ?? false,
+    prewarmCompleted: prewarm?.manifestCompleted ?? 0,
+    prewarmPlanned: prewarm?.manifestPlanned ?? 0,
+    prewarmTimedOutEntries: prewarm?.manifestTimedOut ?? 0,
+    prewarmFailedEntries: prewarm?.manifestFailed ?? 0,
+    prewarmTimedOutEntryIds: prewarm?.timedOutEntryIds ?? [],
+    prewarmFailedEntryIds: prewarm?.failedEntryIds ?? [],
+    prewarmEntries: prewarm?.manifestEntries?.map((entry) => ({
+      id: entry.id,
+      category: entry.category,
+      required: entry.required,
+      status: entry.status,
+      elapsedMs: entry.elapsedMs,
+      remainingMsAfter: entry.remainingMsAfter,
+      programDelta: entry.programDelta,
+      textureDelta: entry.textureDelta,
+      detail: entry.detail,
+    })) ?? [],
     contextLost: renderer?.contextLost ?? 0,
     hudHotDomWrites: hud?.hotDomWrites ?? 0,
     hudHotDomSkippedWrites: hud?.hotDomSkippedWrites ?? 0,
@@ -305,6 +343,10 @@ function budgetFailures(summary) {
     ['max sample draw calls', summary.maxSampleCalls, THRESHOLDS.maxSampleCalls, ''],
     ['max sample triangles', summary.maxSampleTriangles, THRESHOLDS.maxSampleTriangles, ''],
     ['renderer views', summary.maxViews, THRESHOLDS.maxViews, ''],
+    ['prewarm elapsed', summary.prewarmElapsedMs, THRESHOLDS.maxPrewarmMs, 'ms'],
+    ['prewarm budget ratio', summary.prewarmBudgetUsedRatio, THRESHOLDS.maxPrewarmBudgetRatio, ''],
+    ['prewarm timed-out entries', summary.prewarmTimedOutEntries, THRESHOLDS.maxPrewarmTimedOut, ''],
+    ['prewarm failed entries', summary.prewarmFailedEntries, THRESHOLDS.maxPrewarmFailed, ''],
     ['input intent->frame p95', summary.inputIntentToFrameP95, THRESHOLDS.maxInputIntentToFrameP95, 'ms'],
     ['input intent->visible p95', summary.inputIntentToVisibleP95, THRESHOLDS.maxInputIntentToVisibleP95, 'ms'],
   ];
@@ -312,6 +354,14 @@ function budgetFailures(summary) {
   for (const [label, actual, max, unit] of checks) {
     if (max !== null && actual > max) failures.push(`${label} ${actual}${unit} > ${max}${unit}`);
   }
+  const minChecks = [
+    ['prewarm completed entries', summary.prewarmCompleted, THRESHOLDS.minPrewarmCompleted],
+    ['prewarm entries', summary.prewarmEntries.length, THRESHOLDS.minPrewarmEntries],
+  ];
+  for (const [label, actual, min] of minChecks) {
+    if (min !== null && actual < min) failures.push(`${label} ${actual} < ${min}`);
+  }
+  if (summary.prewarmTimedOut) failures.push('prewarm exceeded startup budget');
   if (summary.contextLost > 0) failures.push(`context lost ${summary.contextLost} > 0`);
   return failures;
 }
@@ -415,7 +465,7 @@ fs.writeFileSync(OUTPUT, `${JSON.stringify(artifact, null, 2)}\n`);
 console.log(`wrote ${OUTPUT}`);
 for (const r of results) {
   const s = r.summary;
-  console.log(`${r.viewport}: fps ${s.fps} (10s ${s.fps10s}) p95 ${s.frameP95}ms maxP95 ${s.maxFrameP95}ms longtask ${s.longTasks}/${s.longTaskP95}ms tasks ${s.preloadTasks} gltf ${s.gltfCount} tex ${s.textureCount} boot ${s.bootMib}MiB calls ${s.calls}/${s.maxSampleCalls} tris ${s.triangles}/${s.maxSampleTriangles} views ${s.views}/${s.maxViews} input ${s.inputIntentToVisibleP95}ms tier ${s.rendererTier} hudSkip ${Math.round(s.hudHotDomSkipRate * 100)}%`);
+  console.log(`${r.viewport}: fps ${s.fps} (10s ${s.fps10s}) p95 ${s.frameP95}ms maxP95 ${s.maxFrameP95}ms longtask ${s.longTasks}/${s.longTaskP95}ms tasks ${s.preloadTasks} gltf ${s.gltfCount} tex ${s.textureCount} boot ${s.bootMib}MiB calls ${s.calls}/${s.maxSampleCalls} tris ${s.triangles}/${s.maxSampleTriangles} views ${s.views}/${s.maxViews} foliage q${s.foliageModelQuality} buckets ${s.foliageModelVisibleBuckets} draws ${s.foliageModelVisibleDraws} tris ${s.foliageModelVisibleTriangles} prewarm ${s.prewarmElapsedMs}/${s.prewarmMaxMs}ms ${s.prewarmCompleted}/${s.prewarmPlanned} fail ${s.prewarmFailedEntries} timeout ${s.prewarmTimedOutEntries} input ${s.inputIntentToVisibleP95}ms tier ${s.rendererTier} hudSkip ${Math.round(s.hudHotDomSkipRate * 100)}%`);
 }
 
 const hardErrors = results.flatMap((r) => [

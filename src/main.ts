@@ -667,6 +667,13 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
     canUseGameKeys: () => !hud.isModalOpen() && chatInput.style.display !== 'block',
   }, keybinds);
   input.camYaw = world.player.facing;
+  perf.setInputDebugProvider(() => ({
+    ...input.debugState(),
+    canUseGameKeys: !hud.isModalOpen() && chatInput.style.display !== 'block',
+    modalOpen: hud.isModalOpen(),
+    chatOpen: chatInput.style.display === 'block',
+    gameInputReady,
+  }));
 
   const mobileControls = new MobileControls(input, {
     onAttackNearest: () => attackNearest(),

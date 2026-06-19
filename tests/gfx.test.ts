@@ -4,6 +4,7 @@ import {
   configureMaskedDoubleSidedVegetationMaterial,
   forcedTierFromSearch, graphicsPresetLabel, isConstrainedBrowser, isWeakIntegratedGpu,
   shouldUseAutoGovernor, tierFromHints, GFX_BUDGETS, type GfxRuntimeHints,
+  GFX_BUCKET_BANDS, gfxInternalsForTest,
 } from '../src/render/gfx';
 
 const desktop: GfxRuntimeHints = {
@@ -70,7 +71,7 @@ describe('graphics tier resolution', () => {
 
   it('keeps every quality tier bounded by explicit runtime budgets', () => {
     for (const [tier, budget] of Object.entries(GFX_BUDGETS)) {
-      expect(budget.targetFps).toBeGreaterThanOrEqual(30);
+      expect(budget.targetFps).toBe(60);
       expect(budget.maxRenderScale).toBeLessThanOrEqual(1);
       expect(budget.minRenderScaleDesktop).toBeGreaterThanOrEqual(0.5);
       expect(budget.minRenderScaleMobile).toBeGreaterThanOrEqual(0.5);
@@ -78,6 +79,70 @@ describe('graphics tier resolution', () => {
       expect(budget.recoverFrameMs).toBeLessThan(budget.dropFrameMs);
       expect(tier).toMatch(/^(low|medium|high|ultra)$/);
     }
+  });
+
+  it('defines tunable bucket bands for every quality tier', () => {
+    for (const [tier, bands] of Object.entries(GFX_BUCKET_BANDS)) {
+      expect(Object.keys(bands).sort()).toEqual([
+        'characters',
+        'foliage',
+        'grass',
+        'lighting',
+        'materials',
+        'props',
+        'resolution',
+        'ui',
+        'vfx',
+        'waterSky',
+        'weapons',
+        'worldStreaming',
+      ].sort());
+      for (const band of Object.values(bands)) {
+        expect(band.min).toBeGreaterThanOrEqual(0);
+        expect(band.max).toBeLessThanOrEqual(1);
+        expect(band.min).toBeLessThanOrEqual(band.baseline);
+        expect(band.baseline).toBeLessThanOrEqual(band.max);
+      }
+      expect(tier).toMatch(/^(low|medium|high|ultra)$/);
+    }
+    expect(GFX_BUCKET_BANDS.low.grass.baseline).toBeGreaterThan(GFX_BUCKET_BANDS.low.grass.min);
+    expect(GFX_BUCKET_BANDS.low.foliage.baseline).toBeGreaterThan(GFX_BUCKET_BANDS.low.foliage.min);
+    expect(GFX_BUCKET_BANDS.low.characters.baseline).toBe(1);
+    expect(GFX_BUCKET_BANDS.low.weapons.baseline).toBe(1);
+  });
+
+  it('keeps medium as a middle tier while high and ultra retain the premium pipeline', () => {
+    const low = gfxInternalsForTest.settingsFor('low');
+    const medium = gfxInternalsForTest.settingsFor('medium');
+    const high = gfxInternalsForTest.settingsFor('high');
+    const ultra = gfxInternalsForTest.settingsFor('ultra');
+
+    expect(low.standardMaterials).toBe(false);
+    expect(low.composer).toBe(false);
+    expect(low.ao).toBe(false);
+
+    expect(medium.standardMaterials).toBe(true);
+    expect(medium.terrainSplat).toBe(true);
+    expect(medium.composer).toBe(false);
+    expect(medium.ao).toBe(false);
+    expect(medium.shadowMap).toBeGreaterThan(low.shadowMap);
+    expect(medium.shadowMap).toBeLessThan(high.shadowMap);
+    expect(medium.pixelRatioCap).toBeLessThan(high.pixelRatioCap);
+
+    expect(high.standardMaterials).toBe(true);
+    expect(high.composer).toBe(true);
+    expect(high.ao).toBe(true);
+    expect(high.msaaSamples).toBe(4);
+    expect(high.shadowMap).toBe(4096);
+
+    expect(ultra.standardMaterials).toBe(true);
+    expect(ultra.composer).toBe(true);
+    expect(ultra.ao).toBe(true);
+    expect(ultra.msaaSamples).toBe(4);
+    expect(ultra.shadowMap).toBe(high.shadowMap);
+    expect(ultra.pixelRatioCap).toBeGreaterThan(high.pixelRatioCap);
+    expect(GFX_BUCKET_BANDS.ultra.grass.baseline).toBeGreaterThan(GFX_BUCKET_BANDS.high.grass.baseline);
+    expect(GFX_BUCKET_BANDS.ultra.foliage.baseline).toBeGreaterThan(GFX_BUCKET_BANDS.high.foliage.baseline);
   });
 
   it('treats older Intel integrated GPUs as constrained in auto mode', () => {

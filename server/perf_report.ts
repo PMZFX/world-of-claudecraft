@@ -8,7 +8,7 @@ const PERF_REPORT_SCHEMA_VERSION = 1;
 const PERF_REPORT_MAX_PER_MINUTE = 30;
 const PERF_REPORT_WINDOW_MS = 60_000;
 const PERF_REPORT_MAX_TRACKED_IPS = 5000;
-const RAW_SUMMARY_MAX_BYTES = 8192;
+const RAW_SUMMARY_MAX_BYTES = 16 * 1024;
 const RAW_SUMMARY_DEV_TRACE_MAX_BYTES = 512 * 1024;
 const PERF_REPORT_MAX_BODY_BYTES = 64 * 1024;
 const PERF_REPORT_DEV_TRACE_MAX_BODY_BYTES = 768 * 1024;
@@ -120,6 +120,75 @@ function allowDevTrace(req: http.IncomingMessage): boolean {
   return process.env.NODE_ENV !== 'production' && isLoopbackIp(requestIp(req));
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function compactPrewarmSummary(value: unknown): Record<string, unknown> | null {
+  if (!isRecord(value)) return null;
+  const out: Record<string, unknown> = {};
+  const scalarKeys = [
+    'elapsedMs',
+    'maxMs',
+    'remainingMs',
+    'budgetUsedRatio',
+    'timedOut',
+    'createdViews',
+    'candidateViews',
+    'renderPasses',
+    'programsDelta',
+    'texturesDelta',
+    'compileMode',
+    'compileMs',
+    'compileTimedOut',
+    'manifestPlanned',
+    'manifestCompleted',
+    'manifestTimedOut',
+    'manifestFailed',
+    'timedOutEntryIds',
+    'failedEntryIds',
+  ];
+  for (const key of scalarKeys) {
+    if (value[key] !== undefined) out[key] = value[key];
+  }
+  const entries = Array.isArray(value.entries) ? value.entries : Array.isArray(value.manifestEntries) ? value.manifestEntries : [];
+  out.entries = entries.slice(0, 24).filter(isRecord).map((entry) => ({
+    id: textIn(entry.id, 80),
+    category: textIn(entry.category, 24),
+    required: Boolean(entry.required),
+    status: textIn(entry.status, 16),
+    elapsedMs: nullableNumberIn(entry.elapsedMs, 0, 60_000),
+    remainingMsAfter: nullableNumberIn(entry.remainingMsAfter, 0, 60_000),
+    programDelta: nullableNumberIn(entry.programDelta, -10_000, 10_000),
+    textureDelta: nullableNumberIn(entry.textureDelta, -10_000, 10_000),
+    detail: textIn(entry.detail, 160),
+  }));
+  return out;
+}
+
+function compactRawSummary(value: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { truncated: true };
+  for (const key of [
+    'graphicsConfigVersion',
+    'seconds',
+    'frames',
+    'windows',
+    'mainMs',
+    'rendererPhaseMs',
+    'rendererFoliage',
+    'rendererBudget',
+    'rendererQualityBuckets',
+    'network',
+    'input',
+    'hud',
+  ]) {
+    if (value[key] !== undefined) out[key] = value[key];
+  }
+  const prewarm = compactPrewarmSummary(value.rendererPrewarmSummary ?? value.rendererPrewarm);
+  if (prewarm) out.rendererPrewarmSummary = prewarm;
+  return out;
+}
+
 function rawSummary(value: unknown, devTraceAllowed = false): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   try {
@@ -128,7 +197,10 @@ function rawSummary(value: unknown, devTraceAllowed = false): Record<string, unk
     if (!devTraceAllowed) delete parsed.devTrace;
     const boundedText = JSON.stringify(parsed);
     const maxBytes = devTraceAllowed ? RAW_SUMMARY_DEV_TRACE_MAX_BYTES : RAW_SUMMARY_MAX_BYTES;
-    if (Buffer.byteLength(boundedText) > maxBytes) return { truncated: true };
+    if (Buffer.byteLength(boundedText) > maxBytes) {
+      const compact = compactRawSummary(parsed);
+      return Buffer.byteLength(JSON.stringify(compact)) > maxBytes ? { truncated: true } : compact;
+    }
     return JSON.parse(boundedText) as Record<string, unknown>;
   } catch {
     return {};
