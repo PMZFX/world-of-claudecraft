@@ -246,6 +246,9 @@ const MAP_DETAIL_ZOOM = 2.2; // at/above this zoom, overlay buildings + vegetati
 // engine in src/game/sfx.ts) ------------------------------------------------
 const SFX_MOB_FAMILIES = new Set(['beast', 'spider', 'murloc', 'kobold', 'humanoid', 'undead', 'troll', 'ogre', 'elemental', 'dragonkin', 'demon']);
 const SFX_CAST_SCHOOLS = new Set(['fire', 'frost', 'arcane', 'shadow', 'holy', 'nature']);
+// Combat/spell/creature SFX are trimmed this much under movement/ambience so the
+// soundscape doesn't get fatiguing in a long fight. One knob for the whole layer.
+const COMBAT_GAIN = 0.7;
 
 /** Creature-voice family for a mob templateId (boar split from beast), or null. */
 function mobVoiceFamily(templateId: string): string | null {
@@ -3051,6 +3054,12 @@ export class Hud {
   // Spatial sound for a sim event — positioned at the relevant entity so nearby
   // players' and creatures' combat attenuates with distance and pans correctly.
   // Personal/UI sounds stay on the procedural audio.* path in handleEvents.
+  // All combat/spell/creature SFX route through here so the whole layer can be
+  // balanced with the single COMBAT_GAIN knob (kept under movement/ambience).
+  private combat(key: string, x: number, y: number, z: number, gain: number, opts?: { rate?: number; cooldown?: number }): void {
+    sfx.playAt(key, x, y, z, { gain: gain * COMBAT_GAIN, rate: opts?.rate, cooldown: opts?.cooldown });
+  }
+
   private playEventSfx(ev: SimEvent): void {
     const sim = this.sim;
     switch (ev.type) {
@@ -3058,37 +3067,46 @@ export class Hud {
         const tgt = sim.entities.get(ev.targetId);
         if (!tgt) return;
         const tp = tgt.pos;
-        if (ev.kind === 'miss' || ev.kind === 'dodge') { sfx.playAt('combat_dodge', tp.x, tp.y, tp.z, { gain: 0.5 }); return; }
-        if (ev.kind === 'parry') { sfx.playAt('combat_parry', tp.x, tp.y, tp.z, { gain: 0.6 }); return; }
+        if (ev.kind === 'miss' || ev.kind === 'dodge') { this.combat('combat_dodge', tp.x, tp.y, tp.z, 0.5); return; }
+        if (ev.kind === 'parry') { this.combat('combat_parry', tp.x, tp.y, tp.z, 0.6); return; }
         const src = sim.entities.get(ev.sourceId);
         if (src) this.playAttackerSfx(src);
+        // a struck mob vocalizes its aggro alert the first time it's engaged
+        // (camp engage), whether you hit it or it hits you.
+        if (tgt.kind === 'mob') this.ensureMobEngaged(tgt);
         const physical = !ev.school || ev.school === 'physical';
-        sfx.playAt(physical ? materialImpactKey(tgt) : `impact_${ev.school}`, tp.x, tp.y, tp.z, { gain: 0.75, cooldown: 0.05 });
-        if (ev.crit) sfx.playAt('combat_crit', tp.x, tp.y, tp.z, { gain: 0.7 });
-        if (physical && ev.targetId === sim.playerId) sfx.playAt('player_hurt', tp.x, tp.y, tp.z, { gain: 0.5, cooldown: 0.3 });
+        this.combat(physical ? materialImpactKey(tgt) : `impact_${ev.school}`, tp.x, tp.y, tp.z, 0.75, { cooldown: 0.05 });
+        if (ev.crit) this.combat('combat_crit', tp.x, tp.y, tp.z, 0.7);
+        // pain vocalization only on a crit — never on ordinary hits.
+        if (ev.crit && ev.targetId === sim.playerId) {
+          this.combat('player_hurt', tp.x, tp.y, tp.z, 0.55, { cooldown: 0.3 });
+        } else if (ev.crit && tgt.kind === 'mob') {
+          const fam = mobVoiceFamily(tgt.templateId);
+          if (fam) this.combat(`mob_${fam}_attack`, tp.x, tp.y, tp.z, 0.6, { rate: 1.25, cooldown: 0.1 });
+        }
         return;
       }
       case 'castStart': {
         const ent = sim.entities.get(ev.entityId);
         const key = castKeyForAbility(ev.ability);
-        if (ent && key) { sfx.loop(`cast:${ev.entityId}`, key, 0.45, ent.pos.x, ent.pos.y, ent.pos.z); this.castLoopIds.add(ev.entityId); }
+        if (ent && key) { sfx.loop(`cast:${ev.entityId}`, key, 0.45 * COMBAT_GAIN, ent.pos.x, ent.pos.y, ent.pos.z); this.castLoopIds.add(ev.entityId); }
         return;
       }
       case 'castStop': sfx.unloop(`cast:${ev.entityId}`, 0.2); this.castLoopIds.delete(ev.entityId); return;
       case 'spellfx': {
-        if (ev.fx === 'projectile') { const s = sim.entities.get(ev.sourceId); if (s) sfx.playAt(`proj_${ev.school}`, s.pos.x, s.pos.y, s.pos.z, { gain: 0.55 }); }
-        else if (ev.fx === 'nova') { const e = sim.entities.get(ev.sourceId) ?? sim.entities.get(ev.targetId); if (e) sfx.playAt('spell_nova', e.pos.x, e.pos.y, e.pos.z, { gain: 0.6 }); }
+        if (ev.fx === 'projectile') { const s = sim.entities.get(ev.sourceId); if (s) this.combat(`proj_${ev.school}`, s.pos.x, s.pos.y, s.pos.z, 0.55); }
+        else if (ev.fx === 'nova') { const e = sim.entities.get(ev.sourceId) ?? sim.entities.get(ev.targetId); if (e) this.combat('spell_nova', e.pos.x, e.pos.y, e.pos.z, 0.6); }
         return;
       }
       case 'heal': case 'heal2': {
         const tgt = sim.entities.get(ev.targetId);
-        if (tgt) sfx.playAt('heal_impact', tgt.pos.x, tgt.pos.y, tgt.pos.z, { gain: 0.45, cooldown: 0.1 });
+        if (tgt) this.combat('heal_impact', tgt.pos.x, tgt.pos.y, tgt.pos.z, 0.45, { cooldown: 0.1 });
         return;
       }
       case 'aura': {
         if (ev.targetId !== sim.playerId) return; // only your own buffs/debuffs, else it's spammy
         const p = sim.player.pos;
-        sfx.playAt(ev.gained ? 'buff_apply' : 'debuff_apply', p.x, p.y, p.z, { gain: 0.4, cooldown: 0.1 });
+        this.combat(ev.gained ? 'buff_apply' : 'debuff_apply', p.x, p.y, p.z, 0.4, { cooldown: 0.1 });
         return;
       }
       case 'death': {
@@ -3100,30 +3118,35 @@ export class Hud {
         if (ent.kind === 'mob') {
           this.mobAggroed.delete(ev.entityId);
           const fam = mobVoiceFamily(ent.templateId);
-          if (fam) sfx.playAt(`mob_${fam}_death`, p.x, p.y, p.z, { gain: 0.8 });
+          if (fam) this.combat(`mob_${fam}_death`, p.x, p.y, p.z, 0.8);
         } else if (ent.kind === 'player' && ev.entityId !== sim.playerId) {
-          sfx.playAt('player_death', p.x, p.y, p.z, { gain: 0.7 });
+          this.combat('player_death', p.x, p.y, p.z, 0.7);
         }
         return;
       }
     }
   }
 
-  // Attacker side of a damage event: a creature vocalizes (first strike = aggro
-  // roar, then attack grunts), a player swings their weapon.
+  // First contact with a mob (it hits you, or you hit it) plays its aggro alert
+  // once — the "engage" sound. Returns true if this call fired it. Cleared on
+  // death / when the mob leaves interest (reconcileSfx).
+  private ensureMobEngaged(mob: Entity): boolean {
+    if (this.mobAggroed.has(mob.id)) return false;
+    this.mobAggroed.add(mob.id);
+    const fam = mobVoiceFamily(mob.templateId);
+    if (fam) this.combat(`mob_${fam}_aggro`, mob.pos.x, mob.pos.y, mob.pos.z, 0.7);
+    return true;
+  }
+
+  // Attacker side of a damage event: a creature roars on engage then grunts on
+  // subsequent strikes; a player swings their weapon.
   private playAttackerSfx(src: Entity): void {
-    const p = src.pos;
     if (src.kind === 'mob') {
+      if (this.ensureMobEngaged(src)) return; // just fired the aggro alert
       const fam = mobVoiceFamily(src.templateId);
-      if (!fam) return;
-      if (this.mobAggroed.has(src.id)) {
-        sfx.playAt(`mob_${fam}_attack`, p.x, p.y, p.z, { gain: 0.55, cooldown: 0.25 });
-      } else {
-        this.mobAggroed.add(src.id);
-        sfx.playAt(`mob_${fam}_aggro`, p.x, p.y, p.z, { gain: 0.7 });
-      }
+      if (fam) this.combat(`mob_${fam}_attack`, src.pos.x, src.pos.y, src.pos.z, 0.55, { cooldown: 0.25 });
     } else if (src.kind === 'player') {
-      sfx.playAt(weaponSwingKey(src.templateId), p.x, p.y, p.z, { gain: 0.5, cooldown: 0.08 });
+      this.combat(weaponSwingKey(src.templateId), src.pos.x, src.pos.y, src.pos.z, 0.5, { cooldown: 0.08 });
     }
   }
 

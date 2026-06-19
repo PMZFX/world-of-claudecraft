@@ -1661,7 +1661,9 @@ export class Renderer {
       const inDungeon = px > DUNGEON_X_THRESHOLD;
       const biome = zoneBiomeAt(pz);
       const precip = !this.weatherOn || inDungeon ? null : biome === 'peaks' ? 'snow' : biome === 'marsh' ? 'rain' : null;
-      const nearWater = !inDungeon && groundHeight(px, pz, seed) < WATER_LEVEL + 1.5;
+      // Only at the water's edge / in it — sampled at the player, so a loose
+      // threshold made the loop bleed across the low marsh from far off.
+      const nearWater = !inDungeon && groundHeight(px, pz, seed) < WATER_LEVEL + 0.4;
       sink.ambience(biome, inDungeon, precip, nearWater);
     }
   }

@@ -233,16 +233,18 @@ class Sfx {
     else if (this.loops.has(key)) this.unloop(key, 0.7);
   }
 
-  /** Cross-fade the global ambience loops to match the player's surroundings. */
+  /** Cross-fade the global ambience loops to match the player's surroundings.
+   *  These are continuous background beds, kept well under the foreground
+   *  footstep/jump/combat one-shots so movement always reads clearly over them. */
   ambience(biome: 'vale' | 'marsh' | 'peaks', inDungeon: boolean, precip: 'snow' | 'rain' | null, nearWater: boolean): void {
-    this.ambient('amb_dungeon', inDungeon ? 0.6 : 0);
-    this.ambient('amb_wind_vale', !inDungeon && biome === 'vale' ? 0.32 : 0);
-    this.ambient('amb_birds', !inDungeon && biome === 'vale' ? 0.28 : 0);
-    this.ambient('amb_wind_marsh', !inDungeon && biome === 'marsh' ? 0.4 : 0);
-    this.ambient('amb_wind_peaks', !inDungeon && biome === 'peaks' ? 0.5 : 0);
-    this.ambient('amb_rain', precip === 'rain' ? 0.5 : 0);
-    this.ambient('amb_snow', precip === 'snow' ? 0.4 : 0);
-    this.ambient('amb_water', nearWater ? 0.5 : 0);
+    this.ambient('amb_dungeon', inDungeon ? 0.3 : 0);
+    this.ambient('amb_wind_vale', !inDungeon && biome === 'vale' ? 0.12 : 0);
+    this.ambient('amb_birds', !inDungeon && biome === 'vale' ? 0.1 : 0);
+    this.ambient('amb_wind_marsh', !inDungeon && biome === 'marsh' ? 0.13 : 0);
+    this.ambient('amb_wind_peaks', !inDungeon && biome === 'peaks' ? 0.18 : 0);
+    this.ambient('amb_rain', precip === 'rain' ? 0.11 : 0); // sharp clip — kept very low
+    this.ambient('amb_snow', precip === 'snow' ? 0.13 : 0);
+    this.ambient('amb_water', nearWater ? 0.18 : 0);
   }
 }
 

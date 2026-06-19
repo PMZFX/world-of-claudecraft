@@ -9,6 +9,10 @@
 
 import { VOICE_LINES } from './voice_manifest.generated';
 
+// Voices sit slightly under their slider value so NPC dialogue doesn't overpower
+// the SFX/ambience mix.
+const VOICE_BASE_GAIN = 0.9;
+
 class GameVoice {
   private el: HTMLAudioElement | null = null;
   private vol = 0.9; // 0..1, from the settings slider
@@ -17,7 +21,7 @@ class GameVoice {
   /** Set voice volume (0..1). Safe any time. */
   setVolume(v: number): void {
     this.vol = Math.min(1, Math.max(0, v));
-    if (this.el) this.el.volume = this.vol;
+    if (this.el) this.el.volume = this.vol * VOICE_BASE_GAIN;
   }
 
   /** Enable/disable voice-over. Disabling also stops any line in progress. */
@@ -42,7 +46,7 @@ class GameVoice {
     this.stop();
     if (!this.el) this.el = new Audio();
     this.el.src = src;
-    this.el.volume = this.vol;
+    this.el.volume = this.vol * VOICE_BASE_GAIN;
     // Autoplay restrictions / a missing file reject the promise — ignore, the
     // dialogue text is the source of truth and audio is an enhancement.
     void this.el.play().catch(() => { /* no-op */ });
