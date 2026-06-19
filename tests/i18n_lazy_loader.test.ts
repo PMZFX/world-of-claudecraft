@@ -1,11 +1,12 @@
-// Phase 2 of the i18n Lazy Locales feature: the async loader seam.
+// The i18n Lazy Locales async loader seam (Phase 2 surface, made load-bearing by Phase 3).
 //
-// ensureLocaleLoaded is the ONLY async surface in src/ui/i18n.ts; t() and setLanguage
-// stay SYNCHRONOUS forever (locked decision 1). This proves the await is a NO-OP this
-// phase: a non-en current language renders its translated string synchronously BOTH
-// before AND after an awaited ensureLocaleLoaded. Everything is still static-imported
-// through the barrel, so the dense table resolves without the load (the resident table
-// is the seam Phase 3's real lazy flip switches onto).
+// ensureLocaleLoaded is the ONLY async surface in src/ui/i18n.ts; t() and setLanguage stay
+// SYNCHRONOUS forever (locked decision 1). After the Phase 3 lazy flip the non-en locales
+// are no longer statically resident, so the await is now REAL: t() falls back to English for
+// a not-yet-loaded locale (synchronous, never throws), and renders the localized table
+// synchronously once ensureLocaleLoaded has made it resident. A failed chunk fetch rejects
+// (the caller - bootstrap / picker - catches it) without crashing, leaving English in place
+// and a retry possible.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { t, setLanguage, ensureLocaleLoaded, isLocaleResident, en, de_DE, fr_FR } from "../src/ui/i18n";
@@ -14,26 +15,50 @@ import { LOCALE_LOADERS } from "../src/ui/i18n.resolved.generated/loaders";
 describe("lazy-locale loader: t() stays synchronous around ensureLocaleLoaded", () => {
   afterEach(() => setLanguage("en"));
 
-  it("renders a non-en locale synchronously BEFORE and AFTER the await", async () => {
-    // Non-vacuous floor: the locale genuinely differs from English, so a regression that
-    // fell back to en would be caught (not a trivially-passing equality).
+  it("falls back to English before the await, renders the locale synchronously after", async () => {
+    // Non-vacuous floor: the locale genuinely differs from English, so the English-fallback
+    // and the post-await localized read are distinguishable (not a trivially-passing equality).
     expect(de_DE.nav.play).not.toBe(en.nav.play);
+    expect(isLocaleResident("de_DE")).toBe(false);
 
     setLanguage("de_DE");
 
-    // Pre-await: synchronous and correct, resolved via the still-static table backstop
-    // (de_DE is not yet resident - only en + the boot language are pre-seeded).
+    // Pre-await: the de_DE chunk is not resident yet, so t() returns the synchronous English
+    // fallback - it never blocks and never throws (the lazy flip's R-class guarantee).
     const before = t("nav.play");
     expect(typeof before).toBe("string");
-    expect(before).toBe(de_DE.nav.play);
+    expect(before).toBe(en.nav.play);
 
     await ensureLocaleLoaded("de_DE");
     expect(isLocaleResident("de_DE")).toBe(true);
 
-    // Post-await: still synchronous, still correct, now resolved via the resident table.
+    // Post-await: still synchronous, now resolved against the resident German table.
     const after = t("nav.play");
     expect(typeof after).toBe("string");
     expect(after).toBe(de_DE.nav.play);
+  });
+
+  it("rejects a failed locale chunk softly: t() stays English, no crash, retry possible", async () => {
+    // Keep the active language English so a failed background load never disturbs the UI.
+    setLanguage("en");
+    expect(isLocaleResident("es")).toBe(false);
+
+    // Simulate a 404 / network failure on the es chunk. ensureLocaleLoaded rejects (so the
+    // picker/bootstrap can react - the picker renders settings.languageLoadFailed), but the
+    // app does not crash and es stays non-resident.
+    const failSpy = vi.spyOn(LOCALE_LOADERS, "es").mockRejectedValueOnce(new Error("simulated 404"));
+    await expect(ensureLocaleLoaded("es")).rejects.toThrow(/simulated 404/);
+    failSpy.mockRestore();
+    expect(isLocaleResident("es")).toBe(false);
+
+    // A synchronous read against the failed locale falls back to English - never throws.
+    setLanguage("es");
+    expect(t("nav.play")).toBe(en.nav.play);
+    setLanguage("en");
+
+    // The failed load cleared `inflight`, so a subsequent real load can still succeed.
+    await ensureLocaleLoaded("es");
+    expect(isLocaleResident("es")).toBe(true);
   });
 
   it("treats English as always resident and instant", async () => {

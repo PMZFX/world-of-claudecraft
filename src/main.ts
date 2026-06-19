@@ -21,7 +21,7 @@ import { DT, INTERACT_RANGE, MELEE_RANGE, PlayerClass, RUN_SPEED, dist2d } from 
 import { togglePasswordVisibility, syncInputAriaState, validateForm, handleKeyboardActivation, validateCharacterName } from './ui/auth_utils';
 import { CLASSES, ABILITIES } from './sim/content/classes';
 import { iconDataUrl } from './ui/icons';
-import { ensureLocaleLoaded, formatDateTime, formatNumber, getLanguage, isSupportedLanguage, languageTag, setLanguage, t, type SupportedLanguage, type TranslationKey } from './ui/i18n';
+import { ensureLocaleLoaded, formatDateTime, formatNumber, getLanguage, isLocaleResident, isSupportedLanguage, languageTag, setLanguage, t, type SupportedLanguage, type TranslationKey } from './ui/i18n';
 import { tServer } from './ui/server_i18n';
 import { tEntity } from './ui/entity_i18n';
 import { hydrateIcons } from './ui/ui_icons';
@@ -538,13 +538,17 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
   // Paint the loading screen before anything can block — assetsReady may resolve
   // immediately when assets are already cached, and the scene build is synchronous.
   await nextPaint();
-  // Phase 2 lazy-locales: ensure the active locale's table is resident before the HUD
-  // renders (mountGameUi -> translatePage fans out hundreds of t() calls). It sits
-  // behind the loading screen (already painted above), so there is no first-paint flash.
-  // A no-op this phase (the current language is pre-seeded resident + everything is still
-  // static-imported through the barrel); Phase 3's lazy flip makes this the real per-locale
-  // fetch.
-  await ensureLocaleLoaded(getLanguage());
+  // Phase 3 lazy flip: fetch the active locale's chunk and make it resident before the HUD
+  // renders (mountGameUi -> translatePage fans out hundreds of t() calls). It sits behind the
+  // loading screen (already painted above), so a stored non-en visitor never sees an English
+  // flash. This is now a REAL per-locale network request, so guard it: startGame is
+  // void-invoked (see the call sites) with no .catch, and English is always resident, so a
+  // failed fetch must fall back to English and keep booting rather than reject unhandled.
+  try {
+    await ensureLocaleLoaded(getLanguage());
+  } catch {
+    // Soft fallback: English is statically resident; boot in English (the picker can retry).
+  }
   try {
     await assetsReady((done, total) => setLoadingProgress(done, total));
   } catch (err) {
@@ -2712,13 +2716,29 @@ function wireHomepageMusicToggle(): void {
 }
 
 function wireStartScreens(): void {
-  // Initial page translation and stats load. Phase 2 lazy-locales: make the active locale
-  // resident before the first localized paint. A no-op this phase (the current language is
-  // pre-seeded into the resident table and everything is still static-imported via the
-  // barrel); the seam is what Phase 3's lazy flip needs so a stored non-en locale never
-  // flashes English on first paint. translatePage runs on both resolve and reject (the
-  // English fallback still renders if a future lazy load fails).
-  void ensureLocaleLoaded(getLanguage()).then(() => translatePage(), () => translatePage());
+  // Initial page translation and stats load. Phase 3 lazy flip: a stored non-en locale is now
+  // a real chunk fetch, and the homepage IS the first paint (there is no loading screen to sit
+  // behind), so we localize-then-reveal to prevent an English flash + text swap. The start
+  // screen is held with visibility:hidden - which PRESERVES layout, so there is no layout
+  // shift - ONLY when the boot locale is not already resident; English and any already-loaded
+  // locale skip the gate entirely (no blank, no delay). The gate lifts on BOTH resolve and
+  // reject (the English fallback still renders), so a failed locale fetch can never strand the
+  // homepage hidden. Phase 4's modulepreload will shrink the non-en hold toward zero.
+  const bootLang = getLanguage();
+  const startScreen = document.getElementById('start-screen');
+  const gated = !!startScreen && !isLocaleResident(bootLang);
+  if (gated) startScreen!.style.visibility = 'hidden';
+  const revealLocalized = () => {
+    // Restore visibility even if translatePage() throws (e.g. a dev-build untracked-key
+    // throw or any mid-translate DOM error), so a translation failure can never strand the
+    // homepage permanently hidden - a worse failure than the English flash this gate prevents.
+    try {
+      translatePage();
+    } finally {
+      if (gated) startScreen!.style.visibility = '';
+    }
+  };
+  void ensureLocaleLoaded(bootLang).then(revealLocalized, revealLocalized);
   hydrateIcons();
   void loadProjectStats();
   wireContractAddressCopy();
