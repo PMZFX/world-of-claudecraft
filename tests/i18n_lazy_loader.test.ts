@@ -9,7 +9,7 @@
 // and a retry possible.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { t, setLanguage, ensureLocaleLoaded, isLocaleResident, en, de_DE, fr_FR } from "../src/ui/i18n";
+import { t, setLanguage, ensureLocaleLoaded, isLocaleResident, en, es, de_DE, fr_FR } from "../src/ui/i18n";
 import { LOCALE_LOADERS } from "../src/ui/i18n.resolved.generated/loaders";
 
 describe("lazy-locale loader: t() stays synchronous around ensureLocaleLoaded", () => {
@@ -41,6 +41,10 @@ describe("lazy-locale loader: t() stays synchronous around ensureLocaleLoaded", 
   it("rejects a failed locale chunk softly: t() stays English, no crash, retry possible", async () => {
     // Keep the active language English so a failed background load never disturbs the UI.
     setLanguage("en");
+    // Non-vacuous floor: es genuinely differs from English, so the English-fallback assertion
+    // below (t("nav.play") === en.nav.play) proves the fallback fired - not a coincidental
+    // equality that would also pass if es.nav.play happened to equal en.nav.play.
+    expect(es.nav.play).not.toBe(en.nav.play);
     expect(isLocaleResident("es")).toBe(false);
 
     // Simulate a 404 / network failure on the es chunk. ensureLocaleLoaded rejects (so the
