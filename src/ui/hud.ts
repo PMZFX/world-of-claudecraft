@@ -5060,10 +5060,9 @@ export class Hud {
     this.marketBrowsePage = page.page;
     const note = document.createElement('div');
     note.className = 'mkt-note';
-    const start = formatNumber(page.start + 1, { maximumFractionDigits: 0 });
-    const end = formatNumber(page.end, { maximumFractionDigits: 0 });
+    const shown = `${formatNumber(page.start + 1, { maximumFractionDigits: 0 })}-${formatNumber(page.end, { maximumFractionDigits: 0 })}`;
     const total = formatNumber(page.total, { maximumFractionDigits: 0 });
-    note.textContent = t('itemUi.market.pageRange', { start, end, total });
+    note.textContent = t('itemUi.market.pageRange', { shown, total });
     list.appendChild(note);
     for (const l of page.items) {
       const item = ITEMS[l.itemId];
@@ -5102,7 +5101,7 @@ export class Hud {
       const pageCount = formatNumber(page.pageCount, { maximumFractionDigits: 0 });
       pager.innerHTML =
         `<button type="button" class="mkt-page-btn" data-market-page="prev"${page.page <= 0 ? ' disabled' : ''} aria-label="${esc(t('itemUi.market.pagePrevAria'))}">${esc(t('itemUi.market.pagePrev'))}</button>`
-        + `<span class="mkt-page-info">${esc(t('itemUi.market.pageStatus', { page: pageNumber, pages: pageCount }))}</span>`
+        + `<span class="mkt-page-info">${esc(t('itemUi.market.pageStatus', { current: pageNumber, total: pageCount }))}</span>`
         + `<button type="button" class="mkt-page-btn" data-market-page="next"${page.page >= page.pageCount - 1 ? ' disabled' : ''} aria-label="${esc(t('itemUi.market.pageNextAria'))}">${esc(t('itemUi.market.pageNext'))}</button>`;
       pager.querySelectorAll<HTMLButtonElement>('[data-market-page]').forEach((button) => {
         button.addEventListener('click', () => {
