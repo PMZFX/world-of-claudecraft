@@ -239,7 +239,6 @@ export const ru_RU: EnTranslations = {
       "sectionPosition": "Положение",
       "sectionAppearance": "Внешний вид",
       "sectionStats": "Показатели",
-      "positionLabel": "Положение оверлея",
       "positionX": "По горизонтали",
       "positionY": "По вертикали",
       "resetPosition": "Сбросить положение",

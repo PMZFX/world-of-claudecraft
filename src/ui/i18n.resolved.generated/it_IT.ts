@@ -239,7 +239,6 @@ export const it_IT: EnTranslations = {
       "sectionPosition": "Posizione",
       "sectionAppearance": "Aspetto",
       "sectionStats": "Statistiche",
-      "positionLabel": "Posizione del pannello",
       "positionX": "Orizzontale",
       "positionY": "Verticale",
       "resetPosition": "Ripristina posizione",

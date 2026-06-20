@@ -239,7 +239,6 @@ export const en_XA: EnTranslations = {
       "sectionPosition": "[Þóšíţíóñ]",
       "sectionAppearance": "[Áþþéáŕáñçé]",
       "sectionStats": "[Šţáţš]",
-      "positionLabel": "[Óʋéŕļáý Þóšíţíóñ]",
       "positionX": "[Ĥóŕížóñţáļ]",
       "positionY": "[Ʋéŕţíçáļ]",
       "resetPosition": "[Ŕéšéţ Þóšíţíóñ]",

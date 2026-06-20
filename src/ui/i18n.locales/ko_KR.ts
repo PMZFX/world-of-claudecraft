@@ -20,7 +20,6 @@ export const ko_KR: Partial<Record<TranslationKey, string>> = {
   "hudChrome.perf.sectionPosition": "위치",
   "hudChrome.perf.sectionAppearance": "모양",
   "hudChrome.perf.sectionStats": "통계",
-  "hudChrome.perf.positionLabel": "오버레이 위치",
   "hudChrome.perf.positionX": "가로",
   "hudChrome.perf.positionY": "세로",
   "hudChrome.perf.resetPosition": "위치 초기화",

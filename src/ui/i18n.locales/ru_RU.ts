@@ -20,7 +20,6 @@ export const ru_RU: Partial<Record<TranslationKey, string>> = {
   "hudChrome.perf.sectionPosition": "Положение",
   "hudChrome.perf.sectionAppearance": "Внешний вид",
   "hudChrome.perf.sectionStats": "Показатели",
-  "hudChrome.perf.positionLabel": "Положение оверлея",
   "hudChrome.perf.positionX": "По горизонтали",
   "hudChrome.perf.positionY": "По вертикали",
   "hudChrome.perf.resetPosition": "Сбросить положение",

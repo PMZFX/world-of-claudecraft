@@ -20,7 +20,6 @@ export const ja_JP: Partial<Record<TranslationKey, string>> = {
   "hudChrome.perf.sectionPosition": "位置",
   "hudChrome.perf.sectionAppearance": "外観",
   "hudChrome.perf.sectionStats": "統計",
-  "hudChrome.perf.positionLabel": "オーバーレイの位置",
   "hudChrome.perf.positionX": "横位置",
   "hudChrome.perf.positionY": "縦位置",
   "hudChrome.perf.resetPosition": "位置をリセット",

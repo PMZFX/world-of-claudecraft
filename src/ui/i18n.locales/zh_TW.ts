@@ -20,7 +20,6 @@ export const zh_TW: Partial<Record<TranslationKey, string>> = {
   "hudChrome.perf.sectionPosition": "位置",
   "hudChrome.perf.sectionAppearance": "外觀",
   "hudChrome.perf.sectionStats": "數據",
-  "hudChrome.perf.positionLabel": "監視器位置",
   "hudChrome.perf.positionX": "水平",
   "hudChrome.perf.positionY": "垂直",
   "hudChrome.perf.resetPosition": "重設位置",

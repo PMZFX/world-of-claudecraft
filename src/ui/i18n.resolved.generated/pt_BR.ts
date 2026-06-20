@@ -239,7 +239,6 @@ export const pt_BR: EnTranslations = {
       "sectionPosition": "Posição",
       "sectionAppearance": "Aparência",
       "sectionStats": "Estatísticas",
-      "positionLabel": "Posição da Sobreposição",
       "positionX": "Horizontal",
       "positionY": "Vertical",
       "resetPosition": "Redefinir Posição",

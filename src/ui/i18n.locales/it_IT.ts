@@ -20,7 +20,6 @@ export const it_IT: Partial<Record<TranslationKey, string>> = {
   "hudChrome.perf.sectionPosition": "Posizione",
   "hudChrome.perf.sectionAppearance": "Aspetto",
   "hudChrome.perf.sectionStats": "Statistiche",
-  "hudChrome.perf.positionLabel": "Posizione del pannello",
   "hudChrome.perf.positionX": "Orizzontale",
   "hudChrome.perf.positionY": "Verticale",
   "hudChrome.perf.resetPosition": "Ripristina posizione",

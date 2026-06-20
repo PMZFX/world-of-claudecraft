@@ -239,7 +239,6 @@ export const ja_JP: EnTranslations = {
       "sectionPosition": "位置",
       "sectionAppearance": "外観",
       "sectionStats": "統計",
-      "positionLabel": "オーバーレイの位置",
       "positionX": "横位置",
       "positionY": "縦位置",
       "resetPosition": "位置をリセット",

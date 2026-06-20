@@ -239,7 +239,6 @@ export const ko_KR: EnTranslations = {
       "sectionPosition": "위치",
       "sectionAppearance": "모양",
       "sectionStats": "통계",
-      "positionLabel": "오버레이 위치",
       "positionX": "가로",
       "positionY": "세로",
       "resetPosition": "위치 초기화",

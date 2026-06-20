@@ -239,7 +239,6 @@ export const zh_CN: EnTranslations = {
       "sectionPosition": "位置",
       "sectionAppearance": "外观",
       "sectionStats": "数据",
-      "positionLabel": "监视器位置",
       "positionX": "水平",
       "positionY": "垂直",
       "resetPosition": "重置位置",
