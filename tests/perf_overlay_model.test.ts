@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildPerfOverlayView, defaultMetricsMap, FrameMeter, METRIC_REGISTRY, metricsPreset,
-  overlayFractionFromPixel, overlayPixelPosition, PERF_METRIC_GROUPS, PERF_METRIC_KEYS,
-  perfMetricGroups,
+  buildPerfOverlayView, DEFAULT_PERF_BG, DEFAULT_PERF_BG_RGB, DEFAULT_PERF_FG, DEFAULT_PERF_FG_RGB,
+  defaultMetricsMap, FrameMeter, hexToRgb, METRIC_REGISTRY, metricsPreset,
+  overlayFractionFromPixel, overlayPixelPosition, PERF_COLOR_THEMES, PERF_METRIC_GROUPS, PERF_METRIC_KEYS,
+  perfMetricGroups, rgbaFromHex,
   type MetricsSample, type PerfMetricKey, type PerfOverlayViewConfig,
 } from '../src/ui/perf_overlay_model';
 
@@ -168,6 +169,32 @@ describe('FrameMeter', () => {
     m.step(0.08, 1000); // one 80ms hitch
     expect(m.hitches()).toBe(1);
     expect(m.graphSamples(10).length).toBeLessThanOrEqual(10);
+  });
+});
+
+describe('color helpers (shared by the overlay + graph painter)', () => {
+  it('parses #rrggbb into an [r,g,b] tuple, case-insensitively', () => {
+    expect(hexToRgb('#ffd76a', [0, 0, 0])).toEqual([255, 215, 106]);
+    expect(hexToRgb('#08080d', [0, 0, 0])).toEqual([8, 8, 13]);
+    expect(hexToRgb('#ABCDEF', [0, 0, 0])).toEqual([171, 205, 239]);
+  });
+
+  it('returns the caller-supplied fallback for a malformed hex', () => {
+    expect(hexToRgb('red', [1, 2, 3])).toEqual([1, 2, 3]);
+    expect(hexToRgb('#fff', [9, 9, 9])).toEqual([9, 9, 9]); // shorthand hex not supported
+    expect(hexToRgb('', [4, 5, 6])).toEqual([4, 5, 6]);
+  });
+
+  it('builds an rgba() string with the given alpha, using the fallback on bad input', () => {
+    expect(rgbaFromHex('#08080d', 0.55, DEFAULT_PERF_BG_RGB)).toBe('rgba(8, 8, 13, 0.55)');
+    expect(rgbaFromHex('nope', 1, DEFAULT_PERF_FG_RGB)).toBe('rgba(255, 215, 106, 1)');
+  });
+
+  it('derives the default fg/bg + their rgb from the first theme so they never drift', () => {
+    expect(DEFAULT_PERF_FG).toBe(PERF_COLOR_THEMES[0].fg);
+    expect(DEFAULT_PERF_BG).toBe(PERF_COLOR_THEMES[0].bg);
+    expect(DEFAULT_PERF_FG_RGB).toEqual(hexToRgb(PERF_COLOR_THEMES[0].fg, [0, 0, 0]));
+    expect(DEFAULT_PERF_BG_RGB).toEqual(hexToRgb(PERF_COLOR_THEMES[0].bg, [0, 0, 0]));
   });
 });
 

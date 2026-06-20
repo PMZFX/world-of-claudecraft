@@ -12,7 +12,8 @@ import { formatNumber, t } from './i18n';
 import type { PerfOverlayConfig } from './perf_overlay_config';
 import { paintFrameTimeGraph } from './perf_graph_painter';
 import {
-  overlayFractionFromPixel, overlayPixelPosition, PERF_OVERLAY_MARGIN,
+  DEFAULT_PERF_BG_RGB, DEFAULT_PERF_FG, overlayFractionFromPixel, overlayPixelPosition,
+  PERF_OVERLAY_MARGIN, rgbaFromHex,
   type PerfMetricKey, type PerfOverlayView, type PerfValue,
 } from './perf_overlay_model';
 
@@ -80,7 +81,7 @@ export class PerfOverlay {
     this.cfg = cfg;
     const s = this.el.style;
     s.setProperty('--perf-fg', cfg.textColor);
-    s.setProperty('--perf-bg', rgba(cfg.bgColor, cfg.solidBg ? 1 : cfg.opacity));
+    s.setProperty('--perf-bg', rgbaFromHex(cfg.bgColor, cfg.solidBg ? 1 : cfg.opacity, DEFAULT_PERF_BG_RGB));
     s.setProperty('--perf-scale', String(cfg.fontScale));
     this.reposition();
   }
@@ -179,7 +180,7 @@ export class PerfOverlay {
       targetMs: view.graph.targetMs,
       cssW,
       cssH,
-      color: this.cfg?.textColor ?? '#ffd76a',
+      color: this.cfg?.textColor ?? DEFAULT_PERF_FG,
     });
   }
 
@@ -248,7 +249,7 @@ export class PerfOverlay {
 }
 
 // ---------------------------------------------------------------------------
-// Value formatting (locale-aware) + color helpers
+// Value formatting (locale-aware)
 // ---------------------------------------------------------------------------
 
 function formatValue(v: PerfValue): string {
@@ -277,15 +278,4 @@ function formatValue(v: PerfValue): string {
     case 'text':
       return v.text;
   }
-}
-
-function hexToRgb(hex: string): [number, number, number] {
-  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
-  if (!m) return [8, 8, 13];
-  return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
-}
-
-function rgba(hex: string, alpha: number): string {
-  const [r, g, b] = hexToRgb(hex);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

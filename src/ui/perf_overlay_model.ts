@@ -433,6 +433,38 @@ export const PERF_COLOR_THEMES: readonly PerfColorTheme[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Color helpers (shared by the overlay DOM consumer + the graph painter so the
+// hex parse lives in one place; each caller passes its own context fallback —
+// the panel background and the accent line legitimately want different defaults).
+// ---------------------------------------------------------------------------
+
+const HEX_RGB_RE = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i;
+
+/** The factory overlay accent (text) + background colors, taken from the first
+ *  theme so the parse fallbacks never drift from the swatch the user sees. */
+export const DEFAULT_PERF_FG = PERF_COLOR_THEMES[0].fg;
+export const DEFAULT_PERF_BG = PERF_COLOR_THEMES[0].bg;
+
+/** Parse a #rrggbb hex into [r, g, b]; returns `fallback` for any non-matching string. */
+export function hexToRgb(hex: string, fallback: readonly [number, number, number]): [number, number, number] {
+  const m = HEX_RGB_RE.exec(hex);
+  if (!m) return [fallback[0], fallback[1], fallback[2]];
+  return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)];
+}
+
+/** The canonical fallbacks for a config color that fails to parse: the accent
+ *  default for line/text colors, the panel default for backgrounds. */
+export const DEFAULT_PERF_FG_RGB: readonly [number, number, number] = hexToRgb(DEFAULT_PERF_FG, [255, 215, 106]);
+export const DEFAULT_PERF_BG_RGB: readonly [number, number, number] = hexToRgb(DEFAULT_PERF_BG, [8, 8, 13]);
+
+/** Build an `rgba(...)` string from a #rrggbb hex + alpha (0..1), parsed through
+ *  hexToRgb with the caller's context fallback. */
+export function rgbaFromHex(hex: string, alpha: number, fallback: readonly [number, number, number]): string {
+  const [r, g, b] = hexToRgb(hex, fallback);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// ---------------------------------------------------------------------------
 // Free positioning (normalized 0..1 → on-screen pixels, clamped)
 // ---------------------------------------------------------------------------
 

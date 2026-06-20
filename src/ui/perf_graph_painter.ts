@@ -5,6 +5,8 @@
 // canvas. perf_overlay.ts keeps only the DPR-aware backing-store sizing and hands
 // the 2D context here.
 
+import { DEFAULT_PERF_FG_RGB, rgbaFromHex } from './perf_overlay_model';
+
 export interface FrameGraphPoint {
   x: number;
   y: number;
@@ -87,8 +89,7 @@ export function paintFrameTimeGraph(ctx: CanvasRenderingContext2D, o: PaintFrame
   ctx.stroke();
 }
 
+/** Accent color + alpha, falling back to the default gold when the hex is bad. */
 function withAlpha(hex: string, alpha: number): string {
-  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
-  const [r, g, b] = m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [255, 215, 106];
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  return rgbaFromHex(hex, alpha, DEFAULT_PERF_FG_RGB);
 }
