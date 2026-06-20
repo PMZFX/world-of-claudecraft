@@ -219,7 +219,7 @@ export class Api {
     }
   }
 
-  // ── Non-custodial wallet linking (Reown / Solana) ──────────────────────────
+  // ── Non-custodial Solana wallet linking ───────────────────────────────────
   // Step 1: ask the server for the exact message to sign for this address.
   async walletLinkChallenge(address: string): Promise<{ nonce: string; message: string }> {
     return this.post('/api/wallet/link/challenge', { address });

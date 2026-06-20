@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  setWalletDisplayAvailable,
   setWocBalance,
   verifiedWocBalance,
+  walletDisplayAvailable,
   wocBalance,
   wocBalanceVerified,
 } from '../src/ui/wallet_balance';
@@ -30,5 +32,13 @@ describe('wallet balance UI state', () => {
     expect(wocBalance()).toBeNull();
     expect(wocBalanceVerified()).toBe(false);
     expect(verifiedWocBalance()).toBeNull();
+  });
+
+  it('tracks whether a wallet display surface can be toggled', () => {
+    setWalletDisplayAvailable(false);
+    expect(walletDisplayAvailable()).toBe(false);
+
+    setWalletDisplayAvailable(true);
+    expect(walletDisplayAvailable()).toBe(true);
   });
 });

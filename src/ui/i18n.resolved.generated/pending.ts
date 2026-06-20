@@ -9,31 +9,17 @@
 // Reproducibility is checked by tests/i18n_resolved_equivalence.test.ts.
 
 export const pending: Record<string, readonly string[]> = {
-  "es": [
-    "hudChrome.options.footstepSounds"
-  ],
-  "es_ES": [
-    "hudChrome.options.footstepSounds"
-  ],
-  "fr_FR": [
-    "hudChrome.options.footstepSounds"
-  ],
-  "fr_CA": [
-    "hudChrome.options.footstepSounds"
-  ],
+  "es": [],
+  "es_ES": [],
+  "fr_FR": [],
+  "fr_CA": [],
   "en_CA": [],
-  "it_IT": [
-    "hudChrome.options.footstepSounds"
-  ],
-  "de_DE": [
-    "hudChrome.options.footstepSounds"
-  ],
+  "it_IT": [],
+  "de_DE": [],
   "zh_CN": [],
   "zh_TW": [],
   "ko_KR": [],
   "ja_JP": [],
-  "pt_BR": [
-    "hudChrome.options.footstepSounds"
-  ],
+  "pt_BR": [],
   "ru_RU": []
 };

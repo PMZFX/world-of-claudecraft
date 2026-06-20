@@ -228,7 +228,12 @@ export const pt_BR: EnTranslations = {
     "options": {
       "clickMoveLeft": "Clique esquerdo",
       "clickMoveRight": "Clique direito",
-      "footstepSounds": "Footstep Sounds"
+      "footstepSounds": "Sons de passos",
+      "showWalletOnCharacterScreen": "Mostrar carteira na tela de personagens",
+      "showWalletOnPlayerCard": "Mostrar carteira no cartão de jogador"
+    },
+    "playerCard": {
+      "showWalletBadge": "Mostrar selo da carteira"
     },
     "talents": {
       "defaultBuildName": "Build {n}"
@@ -429,6 +434,10 @@ export const pt_BR: EnTranslations = {
     "signOut": "Desconectar",
     "signOutTitle": "Desconectar o app da carteira neste navegador",
     "signOutAria": "Desconectar o app da carteira neste navegador",
+    "hide": "Ocultar",
+    "hideTitle": "Ocultar a linha da carteira nesta tela",
+    "hideAria": "Ocultar a linha da carteira nesta tela",
+    "hiddenNotice": "Linha da carteira oculta. Reative no jogo em Opções > Interface.",
     "linkedTitle": "Carteira verificada para sua conta. Clique para gerenciar o app da carteira.",
     "linkedDisconnectedTitle": "A carteira continua verificada para sua conta. Reconecte para gerenciar o app da carteira.",
     "linkedDisconnectedAria": "A carteira continua verificada para sua conta. Reconecte para gerenciar o app da carteira.",

@@ -13,11 +13,9 @@ COPY scripts ./scripts
 COPY public ./public
 # Public client config is inlined into the bundle at build time (Vite reads
 # VITE_* from the environment). Empty defaults keep optional UI disabled:
-# Turnstile widget off, wallet UI hidden. Passed through from compose build args.
+# Turnstile widget off. Passed through from compose build args.
 ARG VITE_TURNSTILE_SITEKEY=""
-ARG VITE_REOWN_PROJECT_ID=""
 RUN VITE_TURNSTILE_SITEKEY="$VITE_TURNSTILE_SITEKEY" \
-    VITE_REOWN_PROJECT_ID="$VITE_REOWN_PROJECT_ID" \
     npm run build && cp -a dist/media ./media-build && rm -rf dist/media && npm run build:server
 
 FROM node:22-alpine

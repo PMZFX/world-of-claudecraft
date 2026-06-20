@@ -102,6 +102,11 @@ export const hudChromeStrings = {
     clickMoveRight: "Right Click",
     // Audio panel toggle for the per-footfall step clips (off by default).
     footstepSounds: "Footstep Sounds",
+    showWalletOnCharacterScreen: "Show Wallet on Character Screen",
+    showWalletOnPlayerCard: "Show Wallet on Player Card",
+  },
+  playerCard: {
+    showWalletBadge: "Show wallet badge",
   },
   // Default name pre-filled into the Save-Build-As dialog, e.g. "Build 3".
   talents: {

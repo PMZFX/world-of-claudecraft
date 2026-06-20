@@ -228,7 +228,12 @@ export const ja_JP: EnTranslations = {
     "options": {
       "clickMoveLeft": "左クリック",
       "clickMoveRight": "右クリック",
-      "footstepSounds": "足音"
+      "footstepSounds": "足音",
+      "showWalletOnCharacterScreen": "キャラクター画面にウォレットを表示",
+      "showWalletOnPlayerCard": "プレイヤーカードにウォレットを表示"
+    },
+    "playerCard": {
+      "showWalletBadge": "ウォレットバッジを表示"
     },
     "talents": {
       "defaultBuildName": "ビルド {n}"
@@ -429,6 +434,10 @@ export const ja_JP: EnTranslations = {
     "signOut": "接続解除",
     "signOutTitle": "このブラウザでウォレットアプリの接続を解除",
     "signOutAria": "このブラウザでウォレットアプリの接続を解除",
+    "hide": "非表示",
+    "hideTitle": "この画面でウォレット行を非表示にする",
+    "hideAria": "この画面でウォレット行を非表示にする",
+    "hiddenNotice": "ウォレット行を非表示にしました。ゲーム内のオプション > インターフェイスから再度有効にできます。",
     "linkedTitle": "ウォレットはアカウントで認証済みです。クリックしてウォレットアプリを管理します。",
     "linkedDisconnectedTitle": "ウォレットはアカウントで認証されたままです。ウォレットアプリを管理するには再接続してください。",
     "linkedDisconnectedAria": "ウォレットはアカウントで認証されたままです。ウォレットアプリを管理するには再接続してください。",

@@ -228,7 +228,12 @@ export const zh_CN: EnTranslations = {
     "options": {
       "clickMoveLeft": "左键",
       "clickMoveRight": "右键",
-      "footstepSounds": "脚步声"
+      "footstepSounds": "脚步声",
+      "showWalletOnCharacterScreen": "在角色界面显示钱包",
+      "showWalletOnPlayerCard": "在玩家卡片显示钱包"
+    },
+    "playerCard": {
+      "showWalletBadge": "显示钱包徽章"
     },
     "talents": {
       "defaultBuildName": "配置 {n}"
@@ -429,6 +434,10 @@ export const zh_CN: EnTranslations = {
     "signOut": "断开连接",
     "signOutTitle": "在此浏览器中断开钱包应用",
     "signOutAria": "在此浏览器中断开钱包应用",
+    "hide": "隐藏",
+    "hideTitle": "在此界面隐藏钱包行",
+    "hideAria": "在此界面隐藏钱包行",
+    "hiddenNotice": "钱包行已隐藏。可在游戏内的“选项 > 界面”中重新启用。",
     "linkedTitle": "钱包已为你的账号验证。点击管理钱包应用。",
     "linkedDisconnectedTitle": "钱包仍为你的账号保持验证。重新连接以管理钱包应用。",
     "linkedDisconnectedAria": "钱包仍为你的账号保持验证。重新连接以管理钱包应用。",

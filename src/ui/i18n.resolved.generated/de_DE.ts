@@ -228,7 +228,12 @@ export const de_DE: EnTranslations = {
     "options": {
       "clickMoveLeft": "Linksklick",
       "clickMoveRight": "Rechtsklick",
-      "footstepSounds": "Footstep Sounds"
+      "footstepSounds": "Schrittgeräusche",
+      "showWalletOnCharacterScreen": "Wallet auf dem Charakterbildschirm anzeigen",
+      "showWalletOnPlayerCard": "Wallet auf der Spielerkarte anzeigen"
+    },
+    "playerCard": {
+      "showWalletBadge": "Wallet-Abzeichen anzeigen"
     },
     "talents": {
       "defaultBuildName": "Build {n}"
@@ -429,6 +434,10 @@ export const de_DE: EnTranslations = {
     "signOut": "Abmelden",
     "signOutTitle": "Wallet-App in diesem Browser trennen",
     "signOutAria": "Wallet-App in diesem Browser trennen",
+    "hide": "Ausblenden",
+    "hideTitle": "Wallet-Zeile auf diesem Bildschirm ausblenden",
+    "hideAria": "Wallet-Zeile auf diesem Bildschirm ausblenden",
+    "hiddenNotice": "Wallet-Zeile ausgeblendet. Aktiviere sie im Spiel unter Optionen > Oberfläche wieder.",
     "linkedTitle": "Wallet für Euer Konto verifiziert. Klicken, um die Wallet-App zu verwalten.",
     "linkedDisconnectedTitle": "Das Wallet bleibt für Euer Konto verifiziert. Verbindet Euch erneut, um die Wallet-App zu verwalten.",
     "linkedDisconnectedAria": "Das Wallet bleibt für Euer Konto verifiziert. Verbindet Euch erneut, um die Wallet-App zu verwalten.",

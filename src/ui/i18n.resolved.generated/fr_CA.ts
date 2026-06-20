@@ -228,7 +228,12 @@ export const fr_CA: EnTranslations = {
     "options": {
       "clickMoveLeft": "Clic gauche",
       "clickMoveRight": "Clic droit",
-      "footstepSounds": "Footstep Sounds"
+      "footstepSounds": "Sons de pas",
+      "showWalletOnCharacterScreen": "Afficher le portefeuille sur l’écran des personnages",
+      "showWalletOnPlayerCard": "Afficher le portefeuille sur la carte de joueur"
+    },
+    "playerCard": {
+      "showWalletBadge": "Afficher l’insigne de portefeuille"
     },
     "talents": {
       "defaultBuildName": "Configuration {n}"
@@ -429,6 +434,10 @@ export const fr_CA: EnTranslations = {
     "signOut": "Déconnecter",
     "signOutTitle": "Déconnecter l'appli de portefeuille sur ce navigateur",
     "signOutAria": "Déconnecter l'appli de portefeuille sur ce navigateur",
+    "hide": "Masquer",
+    "hideTitle": "Masquer la ligne de portefeuille sur cet écran",
+    "hideAria": "Masquer la ligne de portefeuille sur cet écran",
+    "hiddenNotice": "Ligne de portefeuille masquée. Réactivez-la en jeu depuis Options > Interface.",
     "linkedTitle": "Portefeuille vérifié pour votre compte. Cliquez pour gérer l'appli de portefeuille.",
     "linkedDisconnectedTitle": "Le portefeuille reste vérifié pour votre compte. Reconnectez-vous pour gérer l'appli de portefeuille.",
     "linkedDisconnectedAria": "Le portefeuille reste vérifié pour votre compte. Reconnectez-vous pour gérer l'appli de portefeuille.",

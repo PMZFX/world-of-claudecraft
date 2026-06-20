@@ -116,6 +116,13 @@ export const BOOL_SETTINGS = {
   // off by default: show a small frames-per-second readout in the corner for
   // players tuning their graphics settings.
   showFps: { def: false },
+  // on by default: show the linked/connected wallet row on the character
+  // selection screen. This is only a local display preference; verification and
+  // holder perks remain active when the row is hidden.
+  showWalletOnCharacterScreen: { def: true },
+  // on by default: include verified wallet holder/balance details in newly
+  // rendered player cards. The player-card modal can toggle this per device.
+  showWalletOnPlayerCard: { def: true },
   // off by default: invert the vertical axis of mouselook (push mouse forward
   // to look down), the classic flight-sim preference.
   invertLookY: { def: false },

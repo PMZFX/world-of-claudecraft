@@ -10,9 +10,10 @@
 let enabled = false;
 let balance: number | null = null;
 let verified = false;
+let displayAvailable = false;
 let listener: (() => void) | null = null;
 
-/** Whether the wallet feature is configured (VITE_REOWN_PROJECT_ID set). */
+/** Whether the wallet feature is enabled in this client build. */
 export function walletUiEnabled(): boolean {
   return enabled;
 }
@@ -32,6 +33,11 @@ export function verifiedWocBalance(): number | null {
   return wocBalanceVerified() ? balance : null;
 }
 
+/** Whether any wallet is connected in this browser or linked to the account. */
+export function walletDisplayAvailable(): boolean {
+  return displayAvailable;
+}
+
 export function setWalletUiEnabled(value: boolean): void {
   if (enabled === value) return;
   enabled = value;
@@ -43,6 +49,12 @@ export function setWocBalance(value: number | null, isVerified = false): void {
   if (balance === value && verified === nextVerified) return;
   balance = value;
   verified = nextVerified;
+  listener?.();
+}
+
+export function setWalletDisplayAvailable(value: boolean): void {
+  if (displayAvailable === value) return;
+  displayAvailable = value;
   listener?.();
 }
 

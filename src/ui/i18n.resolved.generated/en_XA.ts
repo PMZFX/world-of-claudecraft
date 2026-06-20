@@ -228,7 +228,12 @@ export const en_XA: EnTranslations = {
     "options": {
       "clickMoveLeft": "[Ļéƒţ Çļíçķ]",
       "clickMoveRight": "[Ŕíĝĥţ Çļíçķ]",
-      "footstepSounds": "[Ƒóóţšţéþ Šóúñðš]"
+      "footstepSounds": "[Ƒóóţšţéþ Šóúñðš]",
+      "showWalletOnCharacterScreen": "[Šĥóŵ Ŵáļļéţ óñ Çĥáŕáçţéŕ Šçŕééñ]",
+      "showWalletOnPlayerCard": "[Šĥóŵ Ŵáļļéţ óñ Þļáýéŕ Çáŕð]"
+    },
+    "playerCard": {
+      "showWalletBadge": "[Šĥóŵ ŵáļļéţ ƀáðĝé]"
     },
     "talents": {
       "defaultBuildName": "[Ɓúíļð {n}]"
@@ -429,6 +434,10 @@ export const en_XA: EnTranslations = {
     "signOut": "[Ðíšçóññéçţ]",
     "signOutTitle": "[Ðíšçóññéçţ ţĥé ŵáļļéţ áþþ óñ ţĥíš ƀŕóŵšéŕ]",
     "signOutAria": "[Ðíšçóññéçţ ţĥé ŵáļļéţ áþþ óñ ţĥíš ƀŕóŵšéŕ]",
+    "hide": "[Ĥíðé]",
+    "hideTitle": "[Ĥíðé ŵáļļéţ ŕóŵ óñ ţĥíš šçŕééñ]",
+    "hideAria": "[Ĥíðé ŵáļļéţ ŕóŵ óñ ţĥíš šçŕééñ]",
+    "hiddenNotice": "[Ŵáļļéţ ŕóŵ ĥíððéñ. Ŕé-éñáƀļé íţ íñ-ĝáɱé ƒŕóɱ Óþţíóñš > Íñţéŕƒáçé.]",
     "linkedTitle": "[Ŵáļļéţ ʋéŕíƒíéð ƒóŕ ýóúŕ áççóúñţ. Çļíçķ ţó ɱáñáĝé ţĥé ŵáļļéţ áþþ.]",
     "linkedDisconnectedTitle": "[Ŵáļļéţ ŕéɱáíñš ʋéŕíƒíéð ƒóŕ ýóúŕ áççóúñţ. Ŕéçóññéçţ ţó ɱáñáĝé ţĥé ŵáļļéţ áþþ.]",
     "linkedDisconnectedAria": "[Ŵáļļéţ ŕéɱáíñš ʋéŕíƒíéð ƒóŕ ýóúŕ áççóúñţ. Ŕéçóññéçţ ţó ɱáñáĝé ţĥé ŵáļļéţ áþþ.]",

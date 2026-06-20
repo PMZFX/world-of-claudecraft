@@ -1136,6 +1136,11 @@
   #player-card-modal .pc-poses { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
   #player-card-modal .pc-pose { min-width: 84px; padding: 5px 12px; font-size: 12px; opacity: 0.72; }
   #player-card-modal .pc-pose.sel { opacity: 1; border-color: var(--gold); color: var(--gold); }
+  #player-card-modal .pc-options { display: flex; justify-content: center; margin: 0 0 10px; }
+  #player-card-modal .pc-wallet-toggle { min-width: 210px; display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; }
+  #player-card-modal .pc-wallet-toggle.off { opacity: 0.78; }
+  #player-card-modal .pc-toggle-state { color: var(--gold); font-weight: 700; }
+  #player-card-modal .pc-wallet-toggle.off .pc-toggle-state { color: #9b8b62; }
   #player-card-modal .pc-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
   #player-card-modal .pc-actions .btn { min-width: 110px; }
   #player-card-modal .pc-actions .cd-ok { background: linear-gradient(#8a6a26, #5a4413 55%, #473409); color: #ffe6a8; }
@@ -1148,6 +1153,7 @@
     color: #c8b888; text-align: center; }
   @media (pointer: coarse) {
     #player-card-modal .pc-pose,
+    #player-card-modal .pc-wallet-toggle,
     #player-card-modal .pc-actions .btn {
       min-height: 40px;
       box-sizing: border-box;
@@ -2112,6 +2118,7 @@
     padding-top: 12px;
     border-top: 1px solid rgba(199, 148, 26, 0.18);
   }
+  .cs-wallet[hidden] { display: none; }
   .cs-wallet-label {
     font-family: var(--font-heading);
     color: var(--gold-dim);
@@ -2191,12 +2198,99 @@
   #btn-wallet-signout:hover,
   #btn-wallet-signout:focus-visible { color: var(--color-text-error); border-color: var(--color-text-error); }
   .wallet-mini[hidden] { display: none; }
+  .cs-wallet-hidden-note {
+    margin-top: 12px;
+    min-height: 34px;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(199, 148, 26, 0.28);
+    background: rgba(18, 14, 8, 0.64);
+    color: var(--gold-dim);
+    font-size: 12px;
+    line-height: 1.35;
+    text-align: right;
+  }
+  .cs-wallet-hidden-note[hidden] { display: none; }
+
+  .wallet-picker-backdrop {
+    z-index: 340;
+  }
+  .wallet-picker-modal {
+    width: min(420px, 100%);
+    max-height: calc(100vh - 48px);
+    box-sizing: border-box;
+    padding: 18px;
+    overflow: auto;
+  }
+  .wallet-picker-help,
+  .wallet-picker-empty {
+    margin: 8px 0 12px;
+    color: var(--color-text-muted);
+    font-size: 12.5px;
+    line-height: 1.45;
+  }
+  .wallet-picker-list {
+    display: grid;
+    gap: 8px;
+  }
+  .wallet-picker-option {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border-default);
+    background: rgba(11, 11, 18, 0.72);
+    color: var(--color-text-light);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--transition-speed) var(--transition-ease),
+                box-shadow var(--transition-speed) var(--transition-ease),
+                background var(--transition-speed) var(--transition-ease);
+  }
+  .wallet-picker-option:hover,
+  .wallet-picker-option:focus-visible {
+    border-color: var(--gold);
+    background: rgba(29, 24, 14, 0.86);
+    box-shadow: 0 0 12px rgba(199, 148, 26, 0.28);
+    outline: none;
+  }
+  .wallet-picker-option.selected {
+    border-color: var(--color-text-success);
+    box-shadow: inset 0 0 0 1px rgba(92, 214, 126, 0.2);
+  }
+  .wallet-picker-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .wallet-picker-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .wallet-picker-badge {
+    color: var(--color-text-success);
+    font-size: 11px;
+    white-space: nowrap;
+  }
 
   @media (max-width: 720px) {
     .cs-wallet { align-items: flex-start; flex-direction: column; }
     .cs-wallet-main { align-items: flex-start; width: 100%; }
     .cs-wallet-actions { justify-content: flex-start; }
     .cs-wallet-help { max-width: 100%; text-align: left; }
+    .cs-wallet-hidden-note { text-align: left; }
   }
 
   /* Footer donate link keeps the social-link shape but warms up on hover. */
@@ -5295,6 +5389,7 @@
     font-size: 16px;
   }
   body.mobile-touch #player-card-modal .pc-pose,
+  body.mobile-touch #player-card-modal .pc-wallet-toggle,
   body.mobile-touch #player-card-modal .pc-actions .btn {
     min-height: 40px;
     box-sizing: border-box;
@@ -7438,10 +7533,15 @@
                       <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                       <span data-i18n="wallet.signOut">Disconnect</span>
                     </button>
+                    <button type="button" class="wallet-mini" id="btn-wallet-hide" data-i18n-title="wallet.hideTitle" data-i18n-aria="wallet.hideAria" title="Hide wallet row on this screen" aria-label="Hide wallet row on this screen">
+                      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path d="M3 3l18 18"></path></svg>
+                      <span data-i18n="wallet.hide">Hide</span>
+                    </button>
                   </div>
                   <div class="cs-wallet-help" id="wallet-help" data-i18n="wallet.helpDisconnected">Verify a Solana wallet to enable holder flair and player-card badges. No transaction or SOL required.</div>
                 </div>
               </div>
+              <div class="cs-wallet-hidden-note" id="wallet-hidden-note" role="status" aria-live="polite" hidden></div>
             </div>
           </header>
           <div class="cs-body">

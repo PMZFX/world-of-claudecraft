@@ -228,7 +228,12 @@ export const zh_TW: EnTranslations = {
     "options": {
       "clickMoveLeft": "左鍵",
       "clickMoveRight": "右鍵",
-      "footstepSounds": "腳步聲"
+      "footstepSounds": "腳步聲",
+      "showWalletOnCharacterScreen": "在角色畫面顯示錢包",
+      "showWalletOnPlayerCard": "在玩家卡片顯示錢包"
+    },
+    "playerCard": {
+      "showWalletBadge": "顯示錢包徽章"
     },
     "talents": {
       "defaultBuildName": "配置 {n}"
@@ -429,6 +434,10 @@ export const zh_TW: EnTranslations = {
     "signOut": "斷開連線",
     "signOutTitle": "在此瀏覽器中斷開錢包應用程式",
     "signOutAria": "在此瀏覽器中斷開錢包應用程式",
+    "hide": "隱藏",
+    "hideTitle": "在此畫面隱藏錢包列",
+    "hideAria": "在此畫面隱藏錢包列",
+    "hiddenNotice": "錢包列已隱藏。可在遊戲內的「選項 > 介面」中重新啟用。",
     "linkedTitle": "錢包已為你的帳號驗證。點擊以管理錢包應用程式。",
     "linkedDisconnectedTitle": "錢包仍為你的帳號保持驗證。重新連線以管理錢包應用程式。",
     "linkedDisconnectedAria": "錢包仍為你的帳號保持驗證。重新連線以管理錢包應用程式。",

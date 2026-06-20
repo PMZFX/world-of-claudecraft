@@ -12,11 +12,12 @@ import { sfx } from './game/sfx';
 import { activePvpOpponentIds, handlePickedEntity, hoverCursorKind, isAttackableEntity } from './game/interactions';
 import { clickMoveShouldCancel, clickMoveShouldWalk, clickMoveStep, distance2d, latencyAdjustedStopDistance, stepAngleToward } from './game/click_move';
 import { Api, ClientWorld, CharacterSummary, type ReleaseEntry } from './net/online';
-import { setWocBalance, setWalletUiEnabled } from './ui/wallet_balance';
+import { setWalletDisplayAvailable, setWocBalance, setWalletUiEnabled } from './ui/wallet_balance';
 import { absolutePublishedCardUrl, setCardUploader, setReferralProvider, setStandingProvider } from './ui/player_card_share';
-// The wallet module (Reown AppKit + @solana/web3.js, ~1MB) is loaded lazily via
-// dynamic import() in the wallet controller below, so it stays out of the main
-// entry chunk and only loads when the feature is enabled + used.
+// The wallet module is loaded lazily via dynamic import() in the wallet
+// controller below, so it stays out of the main entry chunk and only loads when
+// the feature is enabled + used.
+import type { WalletOption } from './net/wallet';
 import type { IWorld, LeaderboardEntry } from './world_api';
 import { findPlayerPath, resolvePlayerDestination } from './sim/pathfind';
 import { pathCrossesFence } from './sim/colliders';
@@ -775,6 +776,15 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
     if (key === 'showFps') {
       fpsEnabled = settings.set('showFps', !!value);
       fpsOverlay.style.display = fpsEnabled ? 'block' : 'none';
+      return;
+    }
+    if (key === 'showWalletOnCharacterScreen') {
+      settings.set('showWalletOnCharacterScreen', !!value);
+      syncWalletCharacterScreenVisibility();
+      return;
+    }
+    if (key === 'showWalletOnPlayerCard') {
+      settings.set('showWalletOnPlayerCard', !!value);
       return;
     }
     if (key === 'invertLookY') {
@@ -2870,11 +2880,11 @@ function wireHomepageMusicToggle(): void {
   });
 }
 
-// ── Non-custodial Solana wallet linking (Reown) ─────────────────────────────
-// The header button connects a wallet (AppKit) and, once the player is logged
-// in, binds it to their account by signing a server-issued challenge. Wallet
-// connection persists in the browser (AppKit/localStorage); the account↔wallet
-// link is the durable, server-verified artifact.
+// ── Non-custodial Solana wallet linking ─────────────────────────────────────
+// The character-select wallet row connects a Wallet Standard Solana wallet and,
+// once the player is logged in, binds it to their account by signing a
+// server-issued challenge. The account↔wallet link is the durable,
+// server-verified artifact.
 let linkedWalletPubkey: string | null = null;
 let linkedWocBalance: number | null = null;
 let connectedWocBalance: number | null = null;
@@ -2883,21 +2893,191 @@ let walletVerifyInProgress = false;
 let walletVerifyTimeout: number | null = null;
 let walletVerifyModalUnsubscribe: (() => void) | null = null;
 let walletFlowStatus: 'connect' | 'sign' | 'verify' | null = null;
+let walletHiddenNoticeTimeout: number | null = null;
 
-// Feature flag: the wallet UI is shown only when a Reown project id is set.
-// Read straight from env here (no module load) so an unconfigured deploy never
-// shows a dead button and never downloads the wallet chunk.
-const WALLET_ENABLED = String(import.meta.env.VITE_REOWN_PROJECT_ID ?? '').trim().length > 0;
+// Feature flag: Wallet Standard support needs no project id. Keep an escape
+// hatch for deploys that want to hide the wallet UI entirely.
+const WALLET_ENABLED = String(import.meta.env.VITE_WALLET_DISABLED ?? '').trim() !== '1';
+
+function walletCharacterScreenVisible(): boolean {
+  try {
+    return new Settings().get('showWalletOnCharacterScreen');
+  } catch {
+    return true;
+  }
+}
+
+function syncWalletCharacterScreenVisibility(): void {
+  const walletRow = document.querySelector<HTMLElement>('.cs-wallet');
+  if (!walletRow) return;
+  walletRow.hidden = !walletCharacterScreenVisible();
+}
+
+function showWalletHiddenNotice(): void {
+  const note = document.getElementById('wallet-hidden-note');
+  if (!note) return;
+  if (walletHiddenNoticeTimeout !== null) {
+    window.clearTimeout(walletHiddenNoticeTimeout);
+    walletHiddenNoticeTimeout = null;
+  }
+  note.textContent = t('wallet.hiddenNotice');
+  note.hidden = false;
+  walletHiddenNoticeTimeout = window.setTimeout(() => {
+    note.hidden = true;
+    note.textContent = '';
+    walletHiddenNoticeTimeout = null;
+  }, 8000);
+}
+
+function hideWalletCharacterScreenRow(): void {
+  new Settings().set('showWalletOnCharacterScreen', false);
+  syncWalletCharacterScreenVisibility();
+  showWalletHiddenNotice();
+}
 
 // Lazily load the heavy wallet module the first time it's needed, then cache it.
 let walletMod: typeof import('./net/wallet') | null = null;
 function loadWallet(): Promise<typeof import('./net/wallet')> {
-  return walletMod ? Promise.resolve(walletMod) : import('./net/wallet').then((m) => (walletMod = m));
+  return walletMod ? Promise.resolve(walletMod) : import('./net/wallet').then((m) => {
+    walletMod = m;
+    walletMod.setWalletPicker(showWalletPicker);
+    return walletMod;
+  });
 }
 
 const shortenAddress = (a: string): string => `${a.slice(0, 4)}…${a.slice(-4)}`;
 const formatWoc = (n: number): string => formatNumber(n, { maximumFractionDigits: 2 });
 const walletBalanceText = (n: number): string => t('wallet.balanceAmount', { amount: formatWoc(n) });
+let walletPickerModal: HTMLDivElement | null = null;
+let walletPickerResolve: ((id: string | null) => void) | null = null;
+let walletPickerReturnFocus: HTMLElement | null = null;
+
+function walletPickerFocusable(root: HTMLElement): HTMLElement[] {
+  return Array.from(root.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+    .filter((el) => !el.hasAttribute('disabled') && !el.getAttribute('aria-hidden') && (el.offsetParent !== null || el === document.activeElement));
+}
+
+function closeWalletPicker(id: string | null): void {
+  const modal = walletPickerModal;
+  const resolve = walletPickerResolve;
+  walletPickerModal = null;
+  walletPickerResolve = null;
+  if (modal) modal.remove();
+  const returnFocus = walletPickerReturnFocus;
+  walletPickerReturnFocus = null;
+  if (returnFocus?.isConnected) returnFocus.focus();
+  if (resolve) resolve(id);
+}
+
+function showWalletPicker(wallets: readonly WalletOption[], selectedId: string | null): Promise<string | null> {
+  if (walletPickerResolve) closeWalletPicker(null);
+  return new Promise((resolve) => {
+    walletPickerResolve = resolve;
+    walletPickerReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const back = document.createElement('div');
+    back.className = 'modal-backdrop wallet-picker-backdrop';
+    back.id = 'wallet-picker-modal';
+
+    const panel = document.createElement('div');
+    panel.className = 'panel wallet-picker-modal';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-labelledby', 'wallet-picker-title');
+    panel.setAttribute('aria-describedby', 'wallet-picker-help');
+
+    const titleRow = document.createElement('div');
+    titleRow.className = 'panel-title';
+    const title = document.createElement('span');
+    title.id = 'wallet-picker-title';
+    title.textContent = t('wallet.connectTitle');
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'x-btn wallet-picker-close';
+    closeBtn.setAttribute('aria-label', t('skinEvent.close'));
+    closeBtn.textContent = '×';
+    titleRow.append(title, closeBtn);
+
+    const help = document.createElement('p');
+    help.className = 'wallet-picker-help';
+    help.id = 'wallet-picker-help';
+    help.textContent = t('wallet.flowConnect');
+
+    const list = document.createElement('div');
+    list.className = 'wallet-picker-list';
+
+    if (wallets.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'wallet-picker-empty';
+      empty.textContent = t('wallet.helpDisconnected');
+      list.appendChild(empty);
+    } else {
+      for (const option of wallets) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'wallet-picker-option';
+        button.classList.toggle('selected', option.id === selectedId);
+        button.setAttribute('aria-label', option.name);
+        button.addEventListener('click', () => closeWalletPicker(option.id));
+
+        const icon = document.createElement('img');
+        icon.className = 'wallet-picker-icon';
+        icon.src = option.icon;
+        icon.alt = '';
+        icon.decoding = 'async';
+
+        const text = document.createElement('span');
+        text.className = 'wallet-picker-name';
+        text.textContent = option.name;
+
+        button.append(icon, text);
+        if (option.connected) {
+          const badge = document.createElement('span');
+          badge.className = 'wallet-picker-badge';
+          badge.textContent = t('wallet.appConnected');
+          button.appendChild(badge);
+        }
+        list.appendChild(button);
+      }
+    }
+
+    panel.append(titleRow, help, list);
+    back.appendChild(panel);
+    document.body.appendChild(back);
+    walletPickerModal = back;
+
+    const close = () => closeWalletPicker(null);
+    closeBtn.addEventListener('click', close);
+    back.addEventListener('click', (e) => {
+      if (e.target === back) close();
+    });
+    back.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        close();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusable = walletPickerFocusable(back);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+
+    const initialFocus = back.querySelector<HTMLElement>('.wallet-picker-option.selected')
+      ?? back.querySelector<HTMLElement>('.wallet-picker-option')
+      ?? closeBtn;
+    initialFocus.focus();
+  });
+}
 
 function walletAddressLabel(address: string, linked: boolean, balance: number | null): string {
   const short = shortenAddress(address);
@@ -2979,6 +3159,7 @@ function setWalletFlowStatus(status: typeof walletFlowStatus): void {
 }
 
 function updateWalletButton(): void {
+  syncWalletCharacterScreenVisibility();
   // currentWallet is sync; before the module loads, treat as disconnected.
   const { address, isConnected } = walletMod ? walletMod.currentWallet() : { address: null, isConnected: false };
   const connected = isConnected && !!address;
@@ -2990,6 +3171,7 @@ function updateWalletButton(): void {
   // Mirror the balance into the HUD store so the bag footer stays in sync. Only
   // a balance for the linked wallet may drive verified holder claims.
   setWocBalance(verifiedBalance ?? previewBalance, verifiedBalance !== null);
+  setWalletDisplayAvailable(connected || linkedWalletPubkey !== null);
   const btn = document.getElementById('btn-wallet');
   const label = document.getElementById('wallet-label');
   if (!btn || !label) return;
@@ -3203,22 +3385,18 @@ async function startWalletVerifyFlow(forcePicker = false): Promise<void> {
   setWalletFlowStatus('connect');
   clearWalletVerifyTimeout();
   clearWalletVerifyModalWatcher();
-  walletVerifyModalUnsubscribe = wallet.onWalletModalChange((open) => {
-    if (!walletVerifyPending || open) return;
-    window.setTimeout(() => {
-      if (!walletVerifyPending || wallet.isWalletModalOpen() || wallet.currentWallet().address) return;
-      cancelWalletVerifyPending();
-    }, 250);
-  });
   walletVerifyTimeout = window.setTimeout(() => {
     if (!walletVerifyPending) return;
     cancelWalletVerifyPending();
   }, 120_000);
   try {
     await wallet.openWalletModal();
+    const connected = wallet.currentWallet();
+    if (walletVerifyPending && connected.address) await completeWalletVerifyFlow(connected.address);
   } catch (err) {
-    console.error('[wallet] open modal failed', err);
     cancelWalletVerifyPending();
+    if (wallet.isWalletSelectionCancelled(err)) return;
+    console.error('[wallet] open modal failed', err);
     flashWalletError(t('wallet.verifyFailed'));
   }
 }
@@ -3261,21 +3439,23 @@ async function switchWallet(): Promise<void> {
 
 function wireWallet(): void {
   setWalletUiEnabled(WALLET_ENABLED);
+  syncWalletCharacterScreenVisibility();
   const btn = document.getElementById('btn-wallet');
   if (!btn) return;
-  // Feature-gate: with no project id configured, remove the wallet row entirely
-  // (no dead button) and never download the wallet chunk.
+  // Feature-gate: when explicitly disabled, remove the wallet row entirely and
+  // never download the wallet chunk.
   if (!WALLET_ENABLED) {
     document.querySelector('.cs-wallet')?.remove();
     return;
   }
   // These async actions are fire-and-forget from the click, so attach a .catch:
-  // an AppKit open/disconnect rejection must surface, not vanish silently.
+  // a wallet connect/disconnect rejection must surface, not vanish silently.
   const onErr = (what: string) => (e: unknown) => console.error(`[wallet] ${what} failed`, e);
   btn.addEventListener('click', () => { onWalletButtonClick().catch(onErr('action')); });
   document.getElementById('btn-wallet-switch')?.addEventListener('click', () => { switchWallet().catch(onErr('switch')); });
   document.getElementById('btn-wallet-unlink')?.addEventListener('click', () => { unlinkVerifiedWallet().catch(onErr('unlink')); });
   document.getElementById('btn-wallet-signout')?.addEventListener('click', () => { signOutWallet().catch(onErr('disconnect')); });
+  document.getElementById('btn-wallet-hide')?.addEventListener('click', () => { hideWalletCharacterScreenRow(); });
   // Load the wallet chunk (separate async bundle), then subscribe to changes and
   // init so a persisted connection is reflected on the character screen.
   loadWallet().then((wallet) => {

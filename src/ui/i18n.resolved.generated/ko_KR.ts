@@ -228,7 +228,12 @@ export const ko_KR: EnTranslations = {
     "options": {
       "clickMoveLeft": "왼쪽 클릭",
       "clickMoveRight": "오른쪽 클릭",
-      "footstepSounds": "발소리"
+      "footstepSounds": "발소리",
+      "showWalletOnCharacterScreen": "캐릭터 화면에 지갑 표시",
+      "showWalletOnPlayerCard": "플레이어 카드에 지갑 표시"
+    },
+    "playerCard": {
+      "showWalletBadge": "지갑 배지 표시"
     },
     "talents": {
       "defaultBuildName": "빌드 {n}"
@@ -429,6 +434,10 @@ export const ko_KR: EnTranslations = {
     "signOut": "연결 끊기",
     "signOutTitle": "이 브라우저에서 지갑 앱 연결 끊기",
     "signOutAria": "이 브라우저에서 지갑 앱 연결 끊기",
+    "hide": "숨기기",
+    "hideTitle": "이 화면에서 지갑 줄 숨기기",
+    "hideAria": "이 화면에서 지갑 줄 숨기기",
+    "hiddenNotice": "지갑 줄이 숨겨졌습니다. 게임 내 옵션 > 인터페이스에서 다시 켤 수 있습니다.",
     "linkedTitle": "계정에 지갑이 인증되었습니다. 클릭해 지갑 앱을 관리하세요.",
     "linkedDisconnectedTitle": "지갑은 계정에 계속 인증되어 있습니다. 지갑 앱을 관리하려면 다시 연결하세요.",
     "linkedDisconnectedAria": "지갑은 계정에 계속 인증되어 있습니다. 지갑 앱을 관리하려면 다시 연결하세요.",

@@ -26,7 +26,6 @@ services:
       args:
         # Build-time public client config inlined into the bundle (see .env.example).
         VITE_TURNSTILE_SITEKEY: ${VITE_TURNSTILE_SITEKEY:-}
-        VITE_REOWN_PROJECT_ID: ${VITE_REOWN_PROJECT_ID:-}
     container_name: eastbrook-game
     restart: unless-stopped
     depends_on:

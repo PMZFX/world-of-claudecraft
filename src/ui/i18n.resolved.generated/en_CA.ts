@@ -228,7 +228,12 @@ export const en_CA: EnTranslations = {
     "options": {
       "clickMoveLeft": "Left Click",
       "clickMoveRight": "Right Click",
-      "footstepSounds": "Footstep Sounds"
+      "footstepSounds": "Footstep Sounds",
+      "showWalletOnCharacterScreen": "Show Wallet on Character Screen",
+      "showWalletOnPlayerCard": "Show Wallet on Player Card"
+    },
+    "playerCard": {
+      "showWalletBadge": "Show wallet badge"
     },
     "talents": {
       "defaultBuildName": "Build {n}"
@@ -429,6 +434,10 @@ export const en_CA: EnTranslations = {
     "signOut": "Disconnect",
     "signOutTitle": "Disconnect the wallet app on this browser",
     "signOutAria": "Disconnect the wallet app on this browser",
+    "hide": "Hide",
+    "hideTitle": "Hide wallet row on this screen",
+    "hideAria": "Hide wallet row on this screen",
+    "hiddenNotice": "Wallet row hidden. Re-enable it in-game from Options > Interface.",
     "linkedTitle": "Wallet verified for your account. Click to manage the wallet app.",
     "linkedDisconnectedTitle": "Wallet remains verified for your account. Reconnect to manage the wallet app.",
     "linkedDisconnectedAria": "Wallet remains verified for your account. Reconnect to manage the wallet app.",
