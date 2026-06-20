@@ -8397,6 +8397,7 @@ export class Hud {
   private renderInterface(): void {
     const body = this.settingsViewShell(t('hud.options.interface'));
     this.languageSelect(body);
+    this.settingSlider(body, t('hudChrome.options.uiScale'), 'uiScale');
     this.settingSlider(body, t('hud.options.hudOpacity'), 'hudOpacity');
     this.settingSlider(body, t('hud.options.tooltipScale'), 'tooltipScale');
     this.settingSlider(body, t('hud.options.fctScale'), 'fctScale');
@@ -8408,6 +8409,7 @@ export class Hud {
     this.settingBoolToggle(body, t('hud.options.reduceMotion'), 'reduceMotion');
     this.settingBoolToggle(body, t('hudChrome.options.showWalletOnCharacterScreen'), 'showWalletOnCharacterScreen');
     this.settingBoolToggle(body, t('hudChrome.options.showWalletOnPlayerCard'), 'showWalletOnPlayerCard');
+    this.settingBoolToggle(body, t('hudChrome.options.highContrastBackground'), 'landingHighContrast');
     this.settingBoolToggle(body, t('hud.options.invertLookY'), 'invertLookY');
 
     // On/off toggle for chat timestamps.

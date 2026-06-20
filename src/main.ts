@@ -4,6 +4,7 @@ import { Input } from './game/input';
 import { Keybinds } from './game/keybinds';
 import { Settings, GameSettings, SETTING_RANGES, normalizeClickMoveButton } from './game/settings';
 import { MobileControls, PHONE_TOUCH_QUERY, isPhoneTouchDevice } from './game/mobile_controls';
+import { shouldUseStaticBackdrop } from './game/landing_backdrop';
 import { Hud } from './ui/hud';
 import { PerfOverlay } from './ui/perf_overlay';
 import { PerfOverlayConfigStore, type PerfOverlayConfig } from './ui/perf_overlay_config';
@@ -822,6 +823,13 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
       sfx.setFootstepsEnabled(settings.set('footstepSfx', !!value));
       return;
     }
+    if (key === 'landingHighContrast') {
+      // Mirror of the start-screen toggle; keeps the persisted preference in sync
+      // and re-applies the backdrop (the landing page is hidden in-game, but the
+      // setting still takes effect next time the start screen is shown / reloaded).
+      applyLandingBackdrop(settings.set('landingHighContrast', !!value));
+      return;
+    }
     const v = settings.set(key as keyof typeof SETTING_RANGES, value as number);
     switch (key) {
       case 'cameraSpeed': input.setCameraSpeed(v); break;
@@ -849,6 +857,7 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
       case 'chatOpacity': document.documentElement.style.setProperty('--chat-opacity', String(v)); break;
       case 'fctScale': document.documentElement.style.setProperty('--fct-scale', String(v)); break;
       case 'hudOpacity': document.documentElement.style.setProperty('--hud-opacity', String(v)); break;
+      case 'uiScale': document.documentElement.style.setProperty('--ui-scale', String(v)); break;
     }
   }
   // apply persisted settings to the freshly-built subsystems
@@ -3443,6 +3452,59 @@ function wireWallet(): void {
   updateWalletButton();
 }
 
+// ---- Landing-page cinematic backdrop ------------------------------------
+// Decides per-visit whether the start screen shows the looping trailer video or
+// a static, dimmed, high-contrast poster — and crucially NEVER fetches the
+// 5.7 MB mp4 in the static case (the <video> ships with no source/autoplay; we
+// attach the source only when we choose the video path). Called at boot, when the
+// footer toggle flips, and when the in-game mirror setting changes.
+let landingTrailerWired = false;
+function applyLandingBackdrop(highContrast: boolean): void {
+  const backdrop = document.getElementById('start-screen-backdrop');
+  const video = document.getElementById('bg-home') as HTMLVideoElement | null;
+  if (!backdrop) return;
+
+  const saveData = !!(navigator as Navigator & { connection?: { saveData?: boolean } })
+    .connection?.saveData;
+  const reducedMotion = typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const useStatic = shouldUseStaticBackdrop({
+    phone: isPhoneTouchDevice(),
+    saveData,
+    reducedMotion,
+    highContrast,
+  });
+
+  backdrop.classList.toggle('backdrop-static', useStatic);
+
+  if (!video) return;
+  if (useStatic) {
+    // Keep the poster only; tear down any playing trailer and release the buffer.
+    backdrop.classList.remove('trailer-ready', 'trailer-playing');
+    if (video.src) {
+      video.pause();
+      video.removeAttribute('src');
+      video.load(); // drop the decoded video so the poster shows + memory frees
+    }
+    return;
+  }
+
+  // Video path: attach the source lazily and play. Reveal classes flip on the
+  // first painted frame so the poster cross-fades into live motion.
+  const src = video.dataset.trailerSrc;
+  if (src && !video.src) {
+    video.src = src;
+    if (!landingTrailerWired) {
+      landingTrailerWired = true;
+      video.addEventListener('playing', () => {
+        backdrop.classList.add('trailer-ready', 'trailer-playing');
+      });
+    }
+    video.load();
+  }
+  video.play().catch(() => { /* autoplay blocked: poster stays, no error surfaced */ });
+}
+
 function wireStartScreens(): void {
   // Initial page translation and stats load. Lazy locale flip: a stored non-en locale is now
   // a real chunk fetch, and the homepage IS the first paint (there is no loading screen to sit
@@ -4252,6 +4314,24 @@ function wireStartScreens(): void {
   };
 
   initBackgroundEmbers();
+
+  // Landing backdrop: read the persisted high-contrast preference and decide
+  // trailer-vs-static (also forced static on phones / Save-Data / reduced-motion).
+  // Uses a throwaway Settings read so it works before the game's settings object
+  // exists; the footer toggle persists changes through the same store.
+  const landingSettings = new Settings();
+  const contrastToggle = document.getElementById('landing-contrast-toggle') as HTMLButtonElement | null;
+  const syncContrastToggle = (on: boolean): void => {
+    if (contrastToggle) contrastToggle.setAttribute('aria-pressed', String(on));
+  };
+  syncContrastToggle(landingSettings.get('landingHighContrast'));
+  applyLandingBackdrop(landingSettings.get('landingHighContrast'));
+  contrastToggle?.addEventListener('click', () => {
+    const next = !landingSettings.get('landingHighContrast');
+    landingSettings.set('landingHighContrast', next);
+    syncContrastToggle(next);
+    applyLandingBackdrop(next);
+  });
 
   // Initialize 3D character preview once assets are ready
   assetsReady().then(() => {

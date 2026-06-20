@@ -482,7 +482,7 @@
     margin: 1px auto 0; border-radius: 2px; overflow: hidden; }
   .np-castfill { height: 100%; background: linear-gradient(#ffe27a, #d99a18); border-radius: 1px; transition: width 0.05s linear; }
   .np-castbar.channel .np-castfill { background: linear-gradient(#7ad0ff, #2f7fd6); }
-  .np-castlabel { position: absolute; inset: 0; font-size: 8px; line-height: 8px; font-weight: bold;
+  .np-castlabel { position: absolute; inset: 0; font-size: 9px; line-height: 9px; font-weight: bold;
     color: #fff; text-shadow: 1px 1px 1px #000; letter-spacing: 0.2px; }
   /* threat plate: this mob is aggroed on me — red bar + soft glow */
   .nameplate.np-threat .np-hpbar { border-color: #ff5a4a; box-shadow: 0 0 6px #ff3b2e99; }
@@ -598,7 +598,7 @@
   .bar { position: relative; height: 15px; background: #1a1a1a; border: 1px solid #000; margin-top: 3px; border-radius: 2px; overflow: hidden; }
   .bar-fill { position: absolute; inset: 0; width: 100%; transform-origin: left;
     background-image: linear-gradient(rgba(255,255,255,0.25), rgba(255,255,255,0.02) 45%, rgba(0,0,0,0.15)); }
-  .bar-text { position: absolute; inset: 0; text-align: center; font-size: 10px; line-height: 15px; color: #fff; text-shadow: 1px 1px 1px #000; font-weight: bold; }
+  .bar-text { position: absolute; inset: 0; text-align: center; font-size: 11px; line-height: 15px; color: #fff; text-shadow: 1px 1px 1px #000; font-weight: bold; }
   .hp .bar-fill { background-color: var(--color-hp); }
   .mana .bar-fill { background-color: var(--color-mana); }
   .rage .bar-fill { background-color: var(--color-rage); }
@@ -641,7 +641,7 @@
     position: relative; cursor: default; background-color: #10141c;
     background-size: cover; background-position: center; background-repeat: no-repeat; }
   .buff.debuff { border-color: var(--color-debuff); }
-  .buff .dur { position: absolute; bottom: -13px; left: 0; right: 0; text-align: center; font-size: 9px; color: #eee; text-shadow: 1px 1px 1px #000; }
+  .buff .dur { position: absolute; bottom: -13px; left: 0; right: 0; text-align: center; font-size: 10px; color: #eee; text-shadow: 1px 1px 1px #000; }
 
   /* ---------- cast bar ---------- */
   #castbar { position: absolute; left: 50%; transform: translateX(-50%); bottom: 200px; width: 300px;
@@ -660,7 +660,7 @@
   #swingbar .fill { height: 100%; width: 0%; background: linear-gradient(#ffcf7a, #d97b1e 60%, #8a4a10);
     box-shadow: inset 0 1px 0 #fff4; transition: width 60ms linear; }
   #swingbar.ready .fill { background: linear-gradient(#d8e8ff, #8fb6e6 60%, #5b86b8); }
-  #swingbar .label { position: absolute; inset: 0; text-align: center; font-size: 9px; line-height: 12px;
+  #swingbar .label { position: absolute; inset: 0; text-align: center; font-size: 10px; line-height: 12px;
     color: #fff; text-shadow: 1px 1px 1px #000; font-family: var(--title-font); letter-spacing: .5px; }
 
   /* ---------- bottom cluster ---------- */
@@ -673,7 +673,7 @@
   #xpbar.rested { outline-color: #2b6fd0; box-shadow: 0 0 6px #4a9eff55; }
   #xpbar .ticks { position: absolute; inset: 0; display: flex; }
   #xpbar .ticks i { flex: 1; border-right: 1px solid #00000055; }
-  #xpbar .label { position: absolute; inset: 0; font-size: 9px; color: #fff; text-align: center; line-height: 10px; text-shadow: 1px 1px 1px #000; opacity: 0; transition: opacity .15s; }
+  #xpbar .label { position: absolute; inset: 0; font-size: 10px; color: #fff; text-align: center; line-height: 10px; text-shadow: 1px 1px 1px #000; opacity: 0; transition: opacity .15s; }
   #xpbar:hover .label { opacity: 1; }
   /* Post-cap overflow bar (Max-Level XP Overflow): gold/prestige tint. */
   #xpbar.overflow { outline-color: #b8902a; box-shadow: 0 0 6px #f5c84355; }
@@ -706,7 +706,7 @@
   .action-btn:active { transform: translateY(1px); }
   .action-btn.used { border-color: var(--color-border-focus); box-shadow: 0 0 10px #ffd100aa, inset 0 0 0 1px #ffd10077, inset 0 1px 0 #ffffff28; }
   .action-btn.empty { background: #0d0d13; cursor: default; box-shadow: inset 0 0 10px #000; }
-  .action-btn .keybind { position: absolute; top: 1px; right: 3px; font-size: 9px; color: #ddd; font-family: var(--ui-font); }
+  .action-btn .keybind { position: absolute; top: 1px; right: 3px; font-size: 10px; color: #ddd; font-family: var(--ui-font); }
   .action-btn .item-count { position: absolute; right: 3px; bottom: 1px; min-width: 10px; text-align: right;
     font-size: 10px; color: #fff; font-family: var(--ui-font); font-weight: bold; text-shadow: 1px 1px 2px #000; }
   .action-btn .cdtext { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
@@ -743,7 +743,7 @@
   /* talent button glows while unspent talent points are available */
   .micro-btn.has-points, .mobile-btn.has-points { border-color: var(--gold); color: #fff; animation: tal-pulse 1.6s ease-in-out infinite; }
   @keyframes tal-pulse { 0%, 100% { box-shadow: 0 0 5px #ffd10066; } 50% { box-shadow: 0 0 12px #ffd100dd; } }
-  .micro-btn .keybind { position: absolute; bottom: -1px; right: 2px; font-size: 8px; color: #998; }
+  .micro-btn .keybind { position: absolute; bottom: -1px; right: 2px; font-size: 9px; color: #998; }
   /* music button: a bigger note with a small diagonal slash when audio is off */
   #mm-music .ui-icon { width: 22px; height: 22px; }
   .micro-btn.mm-muted::after {
@@ -1627,6 +1627,17 @@
       rgba(8, 8, 13, var(--chat-opacity, 0.95)) 100%); }
   /* HUD Opacity (--hud-opacity) — fades frames/windows as a whole. */
   .panel, .window { opacity: var(--hud-opacity, 1); }
+  /* Global UI Scale (--ui-scale, uiScale setting) — the "everything's too small"
+     remedy. zoom scales the whole HUD layer; we divide the fixed overlay's box by
+     the same factor so it still maps exactly to the viewport and edge-anchored
+     frames (action bar, unit/target frames) keep their corners instead of being
+     pushed off-screen. Default 1 leaves the box identical to the base #ui rule. */
+  #ui {
+    zoom: var(--ui-scale, 1);
+    width: calc(var(--app-vw) / var(--ui-scale, 1));
+    height: calc(var(--app-vh) / var(--ui-scale, 1));
+    max-width: none;
+  }
   /* Compact Chat — shorter chat frame for a smaller footprint. */
   body.compact-chat #chatlog-frame { height: 120px; }
   /* High-Contrast Text — thicker dark outline behind HUD labels. */
@@ -2406,7 +2417,34 @@
   }
 
   /* Footer donate link keeps the social-link shape but warms up on hover. */
-  .footer-lang-row { display: flex; justify-content: center; }
+  .footer-lang-row { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; }
+  /* Landing accessibility toggle: cinematic trailer vs static high-contrast
+     backdrop. Sits beside the language picker (the page's preferences area).
+     ≥40px tall tap target, aria-pressed reflects state. */
+  .landing-contrast-toggle {
+    min-height: 40px;
+    padding: 0 14px;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--color-text-light, #e8dcc0);
+    background: rgba(21, 21, 31, 0.7);
+    border: 1px solid var(--color-border-default, #4e3d1d);
+    border-radius: var(--radius-sm, 6px);
+    cursor: var(--cursor-point, pointer);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .landing-contrast-toggle:hover,
+  .landing-contrast-toggle:focus-visible {
+    border-color: var(--color-primary, #ffd100);
+    color: #fff;
+  }
+  .landing-contrast-toggle[aria-pressed="true"] {
+    background: rgba(255, 209, 0, 0.16);
+    border-color: var(--color-primary, #ffd100);
+    color: var(--color-primary, #ffd100);
+  }
   .social-link.donate:hover,
   .social-link.donate:focus-visible { color: #ff9db3; border-color: #ff6b8b; box-shadow: 0 0 10px rgba(255, 107, 139, 0.35); }
 
@@ -2555,7 +2593,7 @@
     max-width: none;
     background: none;
     border: none;
-    font-size: 12.5px;
+    font-size: 14px;
     text-align: center;
   }
 
@@ -2574,7 +2612,7 @@
   .stats-label {
     font-family: var(--font-heading);
     color: var(--color-text-muted);
-    font-size: 10px;
+    font-size: 11.5px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -2898,7 +2936,7 @@
   }
   .news-tag {
     font-family: var(--font-sans);
-    font-size: 11px;
+    font-size: 12px;
     color: var(--color-text-muted, #b9ac82);
     font-variant-numeric: tabular-nums;
   }
@@ -2914,13 +2952,13 @@
   }
   .news-date {
     font-family: var(--font-sans);
-    font-size: 11px;
+    font-size: 12px;
     color: var(--color-text-muted, #b9ac82);
   }
   .news-body {
     font-family: var(--font-sans);
-    font-size: 13px;
-    line-height: 1.55;
+    font-size: 14.5px;
+    line-height: 1.6;
     color: var(--color-text-light);
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -4118,11 +4156,22 @@
     inset: 0;
     pointer-events: none;
     /* three stacked layers: top + bottom darkening for header/CTA legibility,
-       an edge vignette, and a brand-tinted wash to keep the palette cohesive. */
+       an edge vignette, and a brand-tinted wash to keep the palette cohesive.
+       Bumped from the original (0.46/0.58 top/bottom) so white/gold type clears
+       4.5:1 contrast over the brightest trailer frames — an accessibility fix. */
     background:
-      linear-gradient(180deg, rgba(4, 4, 8, 0.46) 0%, rgba(4, 4, 8, 0.06) 30%, rgba(4, 4, 8, 0.08) 60%, rgba(4, 4, 8, 0.58) 100%),
-      radial-gradient(130% 100% at 50% 42%, transparent 52%, rgba(4, 4, 8, 0.34) 100%),
+      linear-gradient(180deg, rgba(4, 4, 8, 0.62) 0%, rgba(4, 4, 8, 0.18) 30%, rgba(4, 4, 8, 0.2) 60%, rgba(4, 4, 8, 0.7) 100%),
+      radial-gradient(130% 100% at 50% 42%, transparent 46%, rgba(4, 4, 8, 0.46) 100%),
       linear-gradient(180deg, rgba(20, 17, 8, 0.08), rgba(8, 10, 18, 0.12));
+  }
+  /* High-contrast / static backdrop mode (landingHighContrast setting, or forced
+     for phones / Save-Data / reduced-motion). The trailer is hidden by JS; the
+     poster is dimmed hard and the scrim goes near-solid so type is unmissable. */
+  #start-screen-backdrop.backdrop-static .bg-home { opacity: 0.4; }
+  #start-screen-backdrop.backdrop-static .bg-trailer-scrim {
+    background:
+      linear-gradient(180deg, rgba(4, 4, 8, 0.8) 0%, rgba(4, 4, 8, 0.62) 50%, rgba(4, 4, 8, 0.86) 100%),
+      radial-gradient(130% 100% at 50% 42%, rgba(4, 4, 8, 0.3) 30%, rgba(4, 4, 8, 0.62) 100%);
   }
   @keyframes trailer-drift {
     0%   { transform: scale(1.04) translate3d(0, 0, 0); }
@@ -7493,9 +7542,11 @@
     <!-- Keep the backdrop here at the top level so it spans the entire screen behind content -->
     <div id="start-screen-backdrop" aria-hidden="true">
       <!-- Looping cinematic background video; poster = static key-art for instant paint + fallback. -->
-      <video id="bg-home" class="bg-trailer bg-home" autoplay loop muted playsinline preload="auto" poster="/home-bg.png" aria-hidden="true">
-        <source src="/home-bg.mp4" type="video/mp4" />
-      </video>
+      <!-- The poster (static key-art) paints instantly. The 5.7 MB looping trailer
+           is NOT eagerly fetched: no autoplay/preload/source here — main.ts attaches
+           the source and plays only on capable devices (see applyLandingBackdrop).
+           Phones / Save-Data / reduced-motion / high-contrast keep the poster only. -->
+      <video id="bg-home" class="bg-trailer bg-home" loop muted playsinline preload="none" poster="/home-bg.png" aria-hidden="true" data-trailer-src="/home-bg.mp4"></video>
       <div class="bg-trailer-scrim"></div>
       <div class="portal-ring"></div>
       <div class="portal-ring-reverse"></div>
@@ -7989,6 +8040,7 @@
           </select>
           <span id="lang-select-status" class="visually-hidden" role="status" aria-live="polite"></span>
         </div>
+        <button type="button" id="landing-contrast-toggle" class="landing-contrast-toggle" aria-pressed="false" data-i18n="hudChrome.landing.highContrast" data-i18n-aria="hudChrome.landing.highContrastAria" aria-label="Toggle high-contrast background">High Contrast</button>
       </div>
       </div>
     </footer>

@@ -225,6 +225,19 @@ describe('Interface & Comfort settings pack', () => {
     expect(s.get('invertLookY')).toBe(false);
     expect(s.get('frostedPanels')).toBe(false);
   });
+
+  it('adds a global UI Scale (default 1, clamped to bounds) and a landing high-contrast toggle', () => {
+    const s = new Settings();
+    expect(s.get('uiScale')).toBe(1);
+    expect(s.get('landingHighContrast')).toBe(false);
+    expect(s.set('uiScale', 5)).toBe(SETTING_RANGES.uiScale.max);
+    expect(s.set('uiScale', 0)).toBe(SETTING_RANGES.uiScale.min);
+    s.set('landingHighContrast', true);
+    expect(new Settings().get('landingHighContrast')).toBe(true);
+    s.reset();
+    expect(s.get('uiScale')).toBe(1);
+    expect(s.get('landingHighContrast')).toBe(false);
+  });
 });
 
 describe('click-to-move mouse button setting', () => {

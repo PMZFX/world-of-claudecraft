@@ -274,11 +274,16 @@ describe('client HTML shell', () => {
     expect(html).toContain('@media (orientation: landscape) {\n    body.mobile-touch .play-console {\n      width: 100%;\n      max-width: 460px;');
   });
 
-  it('ships a looping cinematic backdrop with a poster fallback', () => {
+  it('ships a looping cinematic backdrop with a poster fallback, lazy-loaded for perf', () => {
     expect(html).toContain('id="bg-home"');
     expect(html).toContain('poster="/home-bg.png"');
-    expect(html).toContain('<source src="/home-bg.mp4" type="video/mp4"');
-    expect(html).toContain('autoplay loop muted playsinline');
+    // The 5.7MB mp4 is NOT eagerly fetched: no <source>/autoplay/preload in the
+    // static markup. main.ts attaches data-trailer-src only on capable devices;
+    // phones / Save-Data / reduced-motion / high-contrast keep the poster only.
+    expect(html).toContain('data-trailer-src="/home-bg.mp4"');
+    expect(html).toContain('preload="none"');
+    expect(html).not.toContain('<source src="/home-bg.mp4"');
+    expect(mainTs).toContain('applyLandingBackdrop');
     // View transitions still honour reduced-motion.
     expect(mainTs).toContain("prefers-reduced-motion: reduce");
   });
