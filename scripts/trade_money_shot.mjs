@@ -65,12 +65,14 @@ const res = await page.evaluate(() => {
     threeFields: !!(g && s && c),
     legacyField: !!document.querySelector('#trade-copper'),
     g: g?.value, s: s?.value, c: c?.value,
+    coins: document.querySelectorAll('.trade-coins .coin.g, .trade-coins .coin.s, .trade-coins .coin.c').length,
   };
 });
 check(res.open, 'trade window is open');
 check(res.threeFields, 'trade money has three gold/silver/copper fields');
 check(!res.legacyField, 'the old single #trade-copper field is gone');
 check(res.g === '5' && res.s === '32' && res.c === '45', `53245c seeds 5g 32s 45c (got ${res.g}g ${res.s}s ${res.c}c)`);
+check(res.coins === 3, `each money field shows a gold/silver/copper coin glyph (got ${res.coins}/3)`);
 
 await sleep(400);
 const win = await page.$('#trade-window');

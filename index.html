@@ -4341,7 +4341,10 @@
   .trade-empty { color: var(--color-text-muted); font-size: 11px; padding: 4px; }
   .trade-money { margin-top: 6px; font-size: 12px; }
   .trade-money-label { display: block; margin-bottom: 4px; }
-  .trade-coins { display: flex; gap: 6px; align-items: center; }
+  .trade-coins { display: flex; gap: 4px; align-items: center; }
+  /* The coin disc sits between its input and the g/s/c tag; flex gap handles spacing, so drop the disc's own margins here. The tag hugs the disc (no preceding gap). */
+  .trade-coins .coin { margin: 0; }
+  .trade-coins .coin + .mkt-coin-tag { margin-left: -2px; }
   .trade-money input.coininput { width: 52px; }
   .trade-money input { width: 80px; background: #0d0d14; color: #ffd100; border: 1px solid var(--border); border-radius: 3px; padding: 3px 6px; user-select: text; }
   .trade-money .mkt-coin-tag { margin-right: 2px; }

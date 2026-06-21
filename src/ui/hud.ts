@@ -5166,9 +5166,9 @@ export class Hud {
     const g = Math.floor(suggested / 10000), s = Math.floor((suggested % 10000) / 100), c = suggested % 100;
     form.innerHTML = qtyRow
       + `<div class="mkt-price-row"><label>${esc(t('itemUi.market.priceEach'))}</label>`
-      + `<input class="coininput" id="mkt-g" type="number" min="0" value="${g}" aria-label="${esc(t('itemUi.money.gold'))}"><span class="mkt-coin-tag">${esc(t('itemUi.money.goldShort'))}</span>`
-      + `<input class="coininput" id="mkt-s" type="number" min="0" max="99" value="${s}" aria-label="${esc(t('itemUi.money.silver'))}"><span class="mkt-coin-tag">${esc(t('itemUi.money.silverShort'))}</span>`
-      + `<input class="coininput" id="mkt-c" type="number" min="0" max="99" value="${c}" aria-label="${esc(t('itemUi.money.copper'))}"><span class="mkt-coin-tag">${esc(t('itemUi.money.copperShort'))}</span></div>`;
+      + `<input class="coininput" id="mkt-g" type="number" min="0" value="${g}" aria-label="${esc(t('itemUi.money.gold'))}"><span class="coin g" aria-hidden="true"></span><span class="mkt-coin-tag">${esc(t('itemUi.money.goldShort'))}</span>`
+      + `<input class="coininput" id="mkt-s" type="number" min="0" max="99" value="${s}" aria-label="${esc(t('itemUi.money.silver'))}"><span class="coin s" aria-hidden="true"></span><span class="mkt-coin-tag">${esc(t('itemUi.money.silverShort'))}</span>`
+      + `<input class="coininput" id="mkt-c" type="number" min="0" max="99" value="${c}" aria-label="${esc(t('itemUi.money.copper'))}"><span class="coin c" aria-hidden="true"></span><span class="mkt-coin-tag">${esc(t('itemUi.money.copperShort'))}</span></div>`;
     body.appendChild(form);
 
     const listBtn = document.createElement('button');
@@ -8000,9 +8000,9 @@ export class Hud {
           <div class="trade-items">${info.myOffer.items.map((s) => itemRow(s, true)).join('') || `<div class="trade-empty">${esc(t('hud.trade.emptyMine'))}</div>`}</div>
           <div class="trade-money"><span class="trade-money-label">${esc(t('hud.trade.money'))}:</span>
             <span class="trade-coins">
-              <input class="coininput" id="trade-g" type="number" min="0" value="${Math.floor(this.stagedTrade.copper / 10000)}" aria-label="${esc(t('itemUi.money.gold'))}"><span class="mkt-coin-tag">${esc(t('itemUi.money.goldShort'))}</span>
-              <input class="coininput" id="trade-s" type="number" min="0" max="99" value="${Math.floor((this.stagedTrade.copper % 10000) / 100)}" aria-label="${esc(t('itemUi.money.silver'))}"><span class="mkt-coin-tag">${esc(t('itemUi.money.silverShort'))}</span>
-              <input class="coininput" id="trade-c" type="number" min="0" max="99" value="${this.stagedTrade.copper % 100}" aria-label="${esc(t('itemUi.money.copper'))}"><span class="mkt-coin-tag">${esc(t('itemUi.money.copperShort'))}</span>
+              <input class="coininput" id="trade-g" type="number" min="0" value="${Math.floor(this.stagedTrade.copper / 10000)}" aria-label="${esc(t('itemUi.money.gold'))}"><span class="coin g" aria-hidden="true"></span><span class="mkt-coin-tag">${esc(t('itemUi.money.goldShort'))}</span>
+              <input class="coininput" id="trade-s" type="number" min="0" max="99" value="${Math.floor((this.stagedTrade.copper % 10000) / 100)}" aria-label="${esc(t('itemUi.money.silver'))}"><span class="coin s" aria-hidden="true"></span><span class="mkt-coin-tag">${esc(t('itemUi.money.silverShort'))}</span>
+              <input class="coininput" id="trade-c" type="number" min="0" max="99" value="${this.stagedTrade.copper % 100}" aria-label="${esc(t('itemUi.money.copper'))}"><span class="coin c" aria-hidden="true"></span><span class="mkt-coin-tag">${esc(t('itemUi.money.copperShort'))}</span>
             </span>
           </div>
         </div>
