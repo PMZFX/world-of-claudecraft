@@ -788,6 +788,19 @@
   .report-error { min-height: 16px; color: #ff7a5e; font-size: 12px; margin-top: 6px; }
   .report-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
 
+  /* ---------- bug report (options sub-view) ---------- */
+  .bug-info { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px;
+    background: #101018; border: 1px solid #4a3d1d; border-radius: 4px; padding: 8px; }
+  .bug-info-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+  .bug-info-label { color: #c9b27a; }
+  .bug-info-val { color: #e8d8a8; text-align: right; overflow-wrap: anywhere; }
+  .bug-label { display: block; color: #c9b27a; font-size: 12px; margin: 8px 0 4px; }
+  .bug-desc { width: 100%; height: 90px; resize: none; background: #101018;
+    border: 1px solid #4a3d1d; border-radius: 4px; color: #e8d8a8; padding: 6px; font-size: 16px; }
+  .bug-shot { margin-top: 8px; }
+  .bug-shot-img { display: block; width: 100%; max-width: 100%; margin-top: 6px;
+    border: 1px solid #4a3d1d; border-radius: 4px; }
+
   /* ---------- quest tracker ---------- */
   #quest-tracker { position: absolute; right: 14px; top: 262px; width: 240px; font-size: 12px;
     color: var(--gold); text-shadow: 1px 1px 2px #000; pointer-events: none; }

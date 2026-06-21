@@ -334,6 +334,23 @@ export const ja_JP: EnTranslations = {
         "many": "Who：{realm}に{count}人のプレイヤーがオンラインです。",
         "other": "Who：{realm}に{count}人のプレイヤーがオンラインです。"
       }
+    },
+    "bugReport": {
+      "menuButton": "バグを報告",
+      "realm": "サーバー",
+      "character": "キャラクター",
+      "position": "座標",
+      "unknown": "不明",
+      "description": "何が起きましたか？",
+      "descriptionPlaceholder": "バグの内容を記入してください：何をして、何を期待し、実際に何が起きたか。",
+      "includeScreenshot": "スクリーンショットを添付",
+      "screenshotAlt": "このバグ報告に添付された現在の画面のスクリーンショット",
+      "submit": "報告を送信",
+      "submitted": "バグ報告を送信しました。ありがとうございます！",
+      "describeFirst": "送信する前にバグの内容を記入してください。",
+      "tooLarge": "報告のサイズが大きすぎて送信できません。スクリーンショットを外して再試行してください。",
+      "rateLimited": "最近、報告を複数回送信しています。しばらく待ってから送信してください。",
+      "failed": "バグ報告を送信できませんでした。もう一度お試しください。"
     }
   },
   "skinEvent": {

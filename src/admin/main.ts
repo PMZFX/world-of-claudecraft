@@ -3,11 +3,11 @@ import { barChart, chartPanel } from './charts';
 import { escapeHtml, fmtBytes, fmtDate, fmtDuration } from './format';
 import { classLabel, t, localizeAdminError, ensureAdminLocaleLoaded, adminLanguage } from './i18n';
 import {
-  renderAccountDetail, renderAccountsTable, renderBlockedIps, renderCharactersTable, renderChatFilter,
+  renderAccountDetail, renderAccountsTable, renderBlockedIps, renderBugReportsTable, renderCharactersTable, renderChatFilter,
   renderModerationDetail, renderModerationQueue, renderOnlineTable, renderPager, renderProviderUsage,
 } from './tables';
 import type {
-  AccountDetail, AccountRow, Activity, BlockedIpsData, CharacterRow, ChatFilterData, LivePlayer,
+  AccountDetail, AccountRow, Activity, BlockedIpsData, BugReportRow, CharacterRow, ChatFilterData, LivePlayer,
   ModerationAccountDetail, ModerationQueueRow, Overview, Paginated,
 } from './types';
 
@@ -32,7 +32,7 @@ const accountsState: TableState = { page: 1, search: '', sort: 'id', dir: 'desc'
 const charactersState: TableState = { page: 1, search: '', sort: 'level', dir: 'desc' };
 let liveTimer: number | null = null;
 let activityTimer: number | null = null;
-type AdminPage = 'overview' | 'usage' | 'moderation' | 'chat-filter' | 'blocked-ips';
+type AdminPage = 'overview' | 'usage' | 'moderation' | 'chat-filter' | 'blocked-ips' | 'bug-reports';
 let activePage: AdminPage = 'overview';
 // Re-fetched when returning to the Moderation tab: its blocked-IP badges can be
 // changed from the Blocked IPs tab and would otherwise show stale.
@@ -93,6 +93,16 @@ function showPage(page: AdminPage): void {
   }
   if (page === 'chat-filter') void refreshChatFilter();
   if (page === 'blocked-ips') void refreshBlockedIps();
+  if (page === 'bug-reports') void refreshBugReports();
+}
+
+async function refreshBugReports(): Promise<void> {
+  try {
+    const data = await apiGet<{ rows: BugReportRow[] }>('/admin/api/bug-reports');
+    $('bug-reports').innerHTML = renderBugReportsTable(data.rows);
+  } catch (err) {
+    if (!handleAuthFailure(err)) $('bug-reports').innerHTML = `<div class="empty">${t('bugReports.loadFailed')}</div>`;
+  }
 }
 
 async function refreshChatFilter(): Promise<void> {
@@ -537,7 +547,7 @@ function wireEvents(): void {
   $('admin-tabs').addEventListener('click', (e) => {
     const tab = (e.target as HTMLElement).closest<HTMLButtonElement>('.admin-tab');
     const page = tab?.dataset.adminPage;
-    if (page === 'overview' || page === 'usage' || page === 'moderation' || page === 'chat-filter' || page === 'blocked-ips') showPage(page);
+    if (page === 'overview' || page === 'usage' || page === 'moderation' || page === 'chat-filter' || page === 'blocked-ips' || page === 'bug-reports') showPage(page);
   });
 
   wireChatFilterEvents();

@@ -334,6 +334,23 @@ export const zh_CN: EnTranslations = {
         "many": "查询：{realm}上有{count}名玩家在线。",
         "other": "查询：{realm}上有{count}名玩家在线。"
       }
+    },
+    "bugReport": {
+      "menuButton": "报告错误",
+      "realm": "服务器",
+      "character": "角色",
+      "position": "坐标",
+      "unknown": "未知",
+      "description": "出了什么问题？",
+      "descriptionPlaceholder": "描述这个错误：你做了什么、预期会发生什么、实际发生了什么。",
+      "includeScreenshot": "包含截图",
+      "screenshotAlt": "附加到此错误报告的当前画面截图",
+      "submit": "发送报告",
+      "submitted": "错误报告已发送。谢谢！",
+      "describeFirst": "请先描述错误再发送。",
+      "tooLarge": "该报告过大，无法发送。请去掉截图后重试。",
+      "rateLimited": "你最近已发送多份报告。请稍后再发送。",
+      "failed": "无法发送错误报告。请重试。"
     }
   },
   "skinEvent": {

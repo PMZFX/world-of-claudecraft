@@ -117,6 +117,22 @@ export interface ReportHooks {
   submitByName?(targetName: string, reason: string, details: string): Promise<void>;
 }
 
+export interface BugReportPayload {
+  description: string;
+  screenshot: string | null;
+  meta: unknown;
+}
+
+export interface BugReportHooks {
+  // Submit a captured bug report to the server. Resolves on success, rejects with
+  // a server error message the hud maps via localizeBugReportError.
+  submit(payload: BugReportPayload): Promise<void>;
+  // Grab a JPEG data URL of the current frame, or null if capture failed/unavailable.
+  capture(): string | null;
+  // Auto-collected context (build, userAgent, viewport, zone, level/class, camera).
+  collectMeta(): unknown;
+}
+
 const $ = <T extends HTMLElement = HTMLElement>(sel: string): T => document.querySelector(sel) as T;
 const esc = (value: unknown): string => String(value ?? '')
   .replace(/&/g, '&amp;')
@@ -372,10 +388,11 @@ export class Hud {
   private suppressNextActionClick = false;
   private optionsHooks: OptionsHooks | null = null;
   private reportHooks: ReportHooks | null = null;
+  private bugReportHooks: BugReportHooks | null = null;
   // Soft swear terms from the server (online only), masked in chat when the
   // player's "Filter Profanity" setting is on. Fed by main.ts from ClientWorld.
   private profanityWords: string[] = [];
-  private optionsView: 'main' | 'keybinds' | 'graphics' | 'audio' | 'interface' | 'performance' = 'main';
+  private optionsView: 'main' | 'keybinds' | 'graphics' | 'audio' | 'interface' | 'performance' | 'bugreport' = 'main';
   // The Options > Performance panel, lazily built and reused (it caches the live
   // position-slider handles so a drag-to-move can update them in place).
   private perfSettings: PerfOverlaySettingsPanel | null = null;
@@ -8285,6 +8302,12 @@ export class Hud {
     this.reportHooks = hooks;
   }
 
+  // Only wired online (main.ts), so its presence is what gates the "Report a Bug"
+  // option — the offline browser world has no server to receive reports.
+  attachBugReporting(hooks: BugReportHooks): void {
+    this.bugReportHooks = hooks;
+  }
+
   get optionsOpen(): boolean {
     return $('#options-menu').style.display === 'block';
   }
@@ -8326,6 +8349,7 @@ export class Hud {
     if (this.optionsView === 'audio') { this.renderAudio(); return; }
     if (this.optionsView === 'interface') { this.renderInterface(); return; }
     if (this.optionsView === 'performance') { this.renderPerformance(); return; }
+    if (this.optionsView === 'bugreport') { this.renderBugReport(); return; }
     const el = $('#options-menu');
     el.innerHTML = `<div class="panel-title"><span>${esc(t('hud.options.gameMenu'))}</span><button type="button" class="x-btn" data-close aria-label="${esc(t('hud.options.returnToGame'))}">${svgIcon('close')}</button></div>`;
     const list = document.createElement('div');
@@ -8337,12 +8361,14 @@ export class Hud {
       b.addEventListener('click', () => { audio.click(); onClick(); });
       list.appendChild(b);
     };
-    const goto = (view: 'keybinds' | 'graphics' | 'audio' | 'interface' | 'performance') => { this.optionsView = view; this.keybindNote = ''; this.renderOptions(); };
+    const goto = (view: 'keybinds' | 'graphics' | 'audio' | 'interface' | 'performance' | 'bugreport') => { this.optionsView = view; this.keybindNote = ''; this.renderOptions(); };
     add(t('hud.options.keyBindings'), () => goto('keybinds'));
     add(t('hud.options.graphics'), () => goto('graphics'));
     add(t('hud.options.interface'), () => goto('interface'));
     add(t('hud.options.audio'), () => goto('audio'));
     add(t('hudChrome.perf.title'), () => goto('performance'));
+    // Online-only: capturing realm/character/position needs an authoritative server.
+    if (this.bugReportHooks) add(t('hudChrome.bugReport.menuButton'), () => goto('bugreport'));
     add(t('hud.options.logout'), () => this.optionsHooks?.logout());
     add(t('hud.options.returnToGame'), () => this.closeOptions());
     el.appendChild(list);
@@ -8504,6 +8530,124 @@ export class Hud {
     back.addEventListener('click', () => { audio.click(); this.optionsView = 'main'; this.renderOptions(); });
     el.append(reset, back);
     el.querySelector('[data-close]')?.addEventListener('click', () => this.closeOptions());
+  }
+
+  private renderBugReport(): void {
+    const hooks = this.bugReportHooks;
+    if (!hooks) { this.optionsView = 'main'; this.renderOptions(); return; }
+    const body = this.settingsViewShell(t('hudChrome.bugReport.menuButton'));
+    const p = this.sim.player;
+    const realm = this.sim.realm || t('hudChrome.bugReport.unknown');
+    const coords = `${formatNumber(p.pos.x, { maximumFractionDigits: 0, useGrouping: false })}, ` +
+      `${formatNumber(p.pos.y, { maximumFractionDigits: 0, useGrouping: false })}, ` +
+      `${formatNumber(p.pos.z, { maximumFractionDigits: 0, useGrouping: false })}`;
+
+    const info = document.createElement('div');
+    info.className = 'bug-info';
+    const row = (label: string, value: string): string =>
+      `<div class="bug-info-row"><span class="bug-info-label">${esc(label)}</span><span class="bug-info-val">${esc(value)}</span></div>`;
+    info.innerHTML =
+      row(t('hudChrome.bugReport.realm'), realm) +
+      row(t('hudChrome.bugReport.character'), p.name) +
+      row(t('hudChrome.bugReport.position'), coords);
+    body.appendChild(info);
+
+    // Capture once when the form opens so the screenshot reflects what the player
+    // saw, not a later frame. null when capture is unavailable/failed.
+    const shot = hooks.capture();
+
+    const descLabel = document.createElement('label');
+    descLabel.className = 'bug-label';
+    descLabel.setAttribute('for', 'bug-desc');
+    descLabel.textContent = t('hudChrome.bugReport.description');
+    const desc = document.createElement('textarea');
+    desc.id = 'bug-desc';
+    desc.className = 'bug-desc';
+    desc.maxLength = 2000;
+    desc.setAttribute('placeholder', t('hudChrome.bugReport.descriptionPlaceholder'));
+    desc.setAttribute('aria-describedby', 'bug-error');
+    body.append(descLabel, desc);
+
+    let includeShot = shot !== null;
+    if (shot) {
+      const shotWrap = document.createElement('div');
+      shotWrap.className = 'bug-shot';
+      const img = document.createElement('img');
+      img.className = 'bug-shot-img';
+      img.src = shot;
+      img.alt = t('hudChrome.bugReport.screenshotAlt');
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'btn set-toggle';
+      const syncToggle = () => {
+        toggle.textContent = includeShot ? t('hud.options.on') : t('hud.options.off');
+        toggle.classList.toggle('off', !includeShot);
+        toggle.setAttribute('aria-pressed', String(includeShot));
+        toggle.setAttribute('aria-label', t('hudChrome.bugReport.includeScreenshot'));
+        img.style.display = includeShot ? '' : 'none';
+      };
+      toggle.addEventListener('click', () => { audio.click(); includeShot = !includeShot; syncToggle(); });
+      syncToggle();
+      const toggleRow = document.createElement('div');
+      toggleRow.className = 'set-row';
+      const name = document.createElement('span');
+      name.className = 'set-name';
+      name.textContent = t('hudChrome.bugReport.includeScreenshot');
+      toggleRow.append(name, toggle);
+      shotWrap.append(toggleRow, img);
+      body.appendChild(shotWrap);
+    }
+
+    const error = document.createElement('div');
+    error.className = 'report-error';
+    error.id = 'bug-error';
+    error.setAttribute('role', 'alert');
+    error.setAttribute('aria-live', 'polite');
+    body.appendChild(error);
+
+    const actions = document.createElement('div');
+    actions.className = 'report-actions';
+    const submit = document.createElement('button');
+    submit.className = 'btn';
+    submit.type = 'button';
+    submit.textContent = t('hudChrome.bugReport.submit');
+    const back = document.createElement('button');
+    back.className = 'btn';
+    back.type = 'button';
+    back.textContent = t('hud.options.back');
+    back.addEventListener('click', () => { audio.click(); this.optionsView = 'main'; this.renderOptions(); });
+    actions.append(submit, back);
+    body.appendChild(actions);
+
+    submit.addEventListener('click', () => {
+      const description = desc.value.trim();
+      if (!description) { error.textContent = t('hudChrome.bugReport.describeFirst'); return; }
+      submit.disabled = true;
+      error.textContent = '';
+      hooks.submit({ description, screenshot: includeShot ? shot : null, meta: hooks.collectMeta() })
+        .then(() => {
+          this.log(t('hudChrome.bugReport.submitted'), '#ffd100');
+          this.optionsView = 'main';
+          this.renderOptions();
+        })
+        .catch((err: unknown) => {
+          submit.disabled = false;
+          error.textContent = this.localizeBugReportError(err);
+        });
+    });
+
+    $('#options-menu').querySelector('[data-close]')?.addEventListener('click', () => this.closeOptions());
+  }
+
+  private localizeBugReportError(err: unknown): string {
+    const text = err instanceof Error ? err.message : '';
+    const keyByMessage: Record<string, TranslationKey> = {
+      'describe the bug': 'hudChrome.bugReport.describeFirst',
+      'bug report too large': 'hudChrome.bugReport.tooLarge',
+      'too many bug reports, try again later': 'hudChrome.bugReport.rateLimited',
+    };
+    const key = keyByMessage[text.toLowerCase()];
+    return key ? t(key) : t('hudChrome.bugReport.failed');
   }
 
   private renderGraphics(): void {

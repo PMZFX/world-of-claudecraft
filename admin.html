@@ -116,6 +116,9 @@
   .usage-section + .usage-section { margin-top: 14px; }
   .usage-section h4 { font-family: var(--title-font); color: var(--gold-dim); margin-bottom: 6px; font-size: 13px; }
   .empty { color: var(--text-dim); padding: 14px 8px; font-style: italic; }
+  .text-dim { color: var(--text-dim); }
+  .bug-thumb { display: block; width: 160px; height: auto; border: 1px solid #463a1c; border-radius: 3px; }
+  .bug-desc-cell { white-space: normal; max-width: 420px; }
   .badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px; border: 1px solid var(--gold-dim); color: var(--gold); }
   .badge.warn { border-color: #c98c36; color: #ffbf66; }
   .badge.bad { border-color: #b34a3a; color: #ff7a5e; }
@@ -255,6 +258,7 @@
       <button class="admin-tab" data-admin-page="moderation" data-i18n="nav.moderation">Moderation</button>
       <button class="admin-tab" data-admin-page="chat-filter" data-i18n="nav.chatFilter">Chat Filter</button>
       <button class="admin-tab" data-admin-page="blocked-ips" data-i18n="nav.blockedIps">Blocked IPs</button>
+      <button class="admin-tab" data-admin-page="bug-reports" data-i18n="nav.bugReports">Bug Reports</button>
     </nav>
 
     <main id="page-overview" class="admin-page active">
@@ -308,6 +312,13 @@
       <section class="panel">
         <div class="panel-title"><span data-i18n="blockedIps.title">Blocked IPs</span> <span class="hint" data-i18n="blockedIps.hint">connections from these addresses are refused</span></div>
         <div id="blocked-ips"></div>
+      </section>
+    </main>
+
+    <main id="page-bug-reports" class="admin-page">
+      <section class="panel">
+        <div class="panel-title"><span data-i18n="bugReports.title">Bug Reports</span> <span class="hint" data-i18n="bugReports.hint">newest first</span></div>
+        <div id="bug-reports"></div>
       </section>
     </main>
   </div>

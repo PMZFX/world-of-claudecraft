@@ -192,6 +192,17 @@ export class Api {
     await this.post('/api/reports', { reporterCharacterId, targetCharacterName, reason, details });
   }
 
+  async submitBugReport(payload: {
+    characterId: number;
+    characterName: string;
+    pos: { x: number; y: number; z: number };
+    description: string;
+    screenshot: string | null;
+    meta: unknown;
+  }): Promise<void> {
+    await this.post('/api/bug-reports', payload);
+  }
+
   async projectStats(): Promise<{ accounts_created: number; players_online: number; realm: string }> {
     return this.get('/api/project-stats');
   }

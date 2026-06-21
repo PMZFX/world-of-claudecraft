@@ -14,6 +14,7 @@ import { Sim } from '../src/sim/sim';
 import type { PlayerClass } from '../src/sim/types';
 import type { LeaderboardEntry } from '../src/world_api';
 import { cleanReportReason, createPlayerReport, createSuspiciousRegistrationReport } from './moderation_db';
+import { createBugReport, BugReportRateLimitError, BUG_DESCRIPTION_MAX, BUG_SCREENSHOT_MAX } from './bug_report_db';
 import { resolveReportTarget } from './report_target';
 import { bufferHandshakeMessages } from './ws_buffer';
 import {
@@ -542,6 +543,49 @@ async function handleApi(req: http.IncomingMessage, res: http.ServerResponse): P
         return json(res, 200, { ok: true, reportId: report.id });
       } catch (err) {
         return json(res, 400, { error: err instanceof Error ? err.message : 'could not submit report' });
+      }
+    }
+    if (req.method === 'POST' && url === '/api/bug-reports') {
+      const accountId = await bearerActiveAccount(req, res);
+      if (accountId === null) return;
+      // A downscaled screenshot data URL dominates the payload; allow ~1 MB
+      // (well above the 64 KB JSON default) and surface an oversize body as 413.
+      let body: any;
+      try {
+        body = await readBody(req, 1024 * 1024);
+      } catch (err) {
+        if (err instanceof Error && err.message === 'body too large') {
+          return json(res, 413, { error: 'bug report too large' });
+        }
+        return json(res, 400, { error: 'bad request' });
+      }
+      const description = typeof body.description === 'string' ? body.description.trim() : '';
+      if (!description) return json(res, 400, { error: 'describe the bug' });
+      const characterId = Number.isFinite(Number(body.characterId)) ? Number(body.characterId) : null;
+      let characterName = typeof body.characterName === 'string' ? body.characterName : '';
+      let resolvedCharacterId: number | null = null;
+      if (characterId !== null) {
+        const character = await getCharacter(accountId, characterId);
+        if (character) { resolvedCharacterId = character.id; characterName = character.name; }
+      }
+      const pos = body.pos && typeof body.pos === 'object' ? body.pos : {};
+      let screenshot = typeof body.screenshot === 'string' ? body.screenshot : null;
+      if (screenshot && screenshot.length > BUG_SCREENSHOT_MAX) screenshot = null;
+      try {
+        const report = await createBugReport({
+          accountId,
+          characterId: resolvedCharacterId,
+          characterName,
+          realm: REALM,
+          pos: { x: Number(pos.x), y: Number(pos.y), z: Number(pos.z) },
+          description: description.slice(0, BUG_DESCRIPTION_MAX),
+          screenshot,
+          meta: body.meta && typeof body.meta === 'object' ? body.meta : {},
+        });
+        return json(res, 200, { ok: true, reportId: report.id });
+      } catch (err) {
+        if (err instanceof BugReportRateLimitError) return json(res, 429, { error: err.message });
+        throw err;
       }
     }
     if (req.method === 'POST' && url === '/api/perf-report') {

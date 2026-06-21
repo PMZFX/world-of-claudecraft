@@ -36,6 +36,7 @@ import { buildMotes, MotesView } from './motes';
 import { buildBirds, BirdsView } from './birds';
 import { buildImpactSite, type ImpactSiteView } from './impact_site';
 import { shouldRenderStealthGhost } from './stealth';
+import { downscaleDims } from './screenshot';
 import { RenderBudgetGovernor, type RenderBudgetState } from './render_budget';
 import { t } from '../ui/i18n';
 import { tEntity } from '../ui/entity_i18n';
@@ -3207,6 +3208,31 @@ export class Renderer {
       activeViews: this.views.size,
       visibleViews,
     };
+  }
+
+  // Grab a JPEG screenshot of the live scene for a bug report. The main
+  // WebGLRenderer is created WITHOUT preserveDrawingBuffer (that costs memory on
+  // the hot path), so the colour buffer is valid only until control returns to
+  // the browser and it composites. We therefore render one fresh frame and read
+  // it back synchronously in the SAME call, before yielding, then downscale onto
+  // a 2D canvas and export JPEG to keep the payload small. Returns null on any
+  // failure (lost context, tainted canvas) so the caller can degrade gracefully.
+  captureScreenshot(maxEdge = 1280, quality = 0.7): string | null {
+    try {
+      if (this.post) this.post.render();
+      else this.webgl.render(this.scene, this.camera);
+      const gl = this.webgl.domElement;
+      const dims = downscaleDims(gl.width, gl.height, maxEdge);
+      const out = document.createElement('canvas');
+      out.width = dims.w;
+      out.height = dims.h;
+      const ctx = out.getContext('2d');
+      if (!ctx) return null;
+      ctx.drawImage(gl, 0, 0, dims.w, dims.h);
+      return out.toDataURL('image/jpeg', quality);
+    } catch {
+      return null;
+    }
   }
 
   // Forward-renderer point-light budget: every campfire/torch light exists,
