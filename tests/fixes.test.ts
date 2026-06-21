@@ -145,6 +145,10 @@ describe('collision & terrain', () => {
     expect(open.z).toBe(-40);
   });
 
+  it('keeps the Fenbridge south approach clear of generated rock blockers', () => {
+    expect(isBlocked(SEED, 2, 212, 0.5)).toBe(false);
+  });
+
   it('camera ghosts through village buildings (hidden instead of pulling in)', () => {
     const groundY = groundHeight(10, 4, SEED);
     const eyeY = groundY + 2;
@@ -558,7 +562,7 @@ describe('boss loot and encounter resets', () => {
     expect(mob.loot).toBeNull();
   });
 
-  it('poor and common corpse drops are randomly awarded among nearby party members', () => {
+  it('poor and common corpse drops open need-greed rolls among nearby party members', () => {
     const sim = makeSim();
     const a = sim.playerId;
     const b = sim.addPlayer('mage', 'Bert');
@@ -576,20 +580,16 @@ describe('boss loot and encounter resets', () => {
     sim.events.length = 0;
     sim.lootCorpse(mob.id, a);
 
-    const poorTotal =
-      sim.countItem('wolf_fang', a) +
-      sim.countItem('wolf_fang', b);
-    const commonTotal =
-      sim.countItem('raw_mirror_trout', a) +
-      sim.countItem('raw_mirror_trout', b);
-    expect(poorTotal).toBe(1);
-    expect(commonTotal).toBe(1);
-    expect(sim.events.some((e) => e.type === 'loot' && e.text.includes('wins Cracked Wolf Fang'))).toBe(true);
-    expect(sim.events.some((e) => e.type === 'loot' && e.text.includes('wins Raw Mirror Trout'))).toBe(true);
+    expect(sim.countItem('wolf_fang', a) + sim.countItem('wolf_fang', b)).toBe(0);
+    expect(sim.countItem('raw_mirror_trout', a) + sim.countItem('raw_mirror_trout', b)).toBe(0);
+    const prompts = sim.events.filter((e) => e.type === 'lootRoll');
+    expect(prompts).toHaveLength(4);
+    expect(prompts.filter((e) => e.itemId === 'wolf_fang')).toHaveLength(2);
+    expect(prompts.filter((e) => e.itemId === 'raw_mirror_trout')).toHaveLength(2);
     expect(mob.loot).toBeNull();
   });
 
-  it('uncommon and better corpse drops are rolled among nearby party members', () => {
+  it('uncommon and better corpse drops open need-greed rolls among nearby party members', () => {
     const sim = makeSim();
     const a = sim.playerId;
     const b = sim.addPlayer('mage', 'Bert');
@@ -607,12 +607,214 @@ describe('boss loot and encounter resets', () => {
     sim.events.length = 0;
     sim.lootCorpse(mob.id, a);
 
-    const total =
-      sim.countItem('greyjaw_hide_boots', a) +
-      sim.countItem('greyjaw_hide_boots', b);
-    expect(total).toBe(1);
-    expect(sim.events.some((e) => e.type === 'loot' && e.text.includes('wins Greyjaw Hide Boots'))).toBe(true);
+    expect(sim.countItem('greyjaw_hide_boots', a) + sim.countItem('greyjaw_hide_boots', b)).toBe(0);
+    const prompts = sim.events.filter((e) => e.type === 'lootRoll');
+    expect(prompts).toHaveLength(2);
+    expect(prompts.every((e) => e.itemId === 'greyjaw_hide_boots')).toBe(true);
     expect(mob.loot).toBeNull();
+  });
+
+  it('opens a need-greed roll instead of auto-awarding grouped item drops', () => {
+    const sim = makeSim();
+    const a = sim.playerId;
+    const b = sim.addPlayer('mage', 'Bert');
+    sim.partyInvite(b, a);
+    sim.partyAccept(b);
+    teleportTo(sim, 20, 20, a);
+    teleportTo(sim, 21, 20, b);
+    const mob = createMob(990102, MOBS.forest_wolf, 2, { x: 20, y: 0, z: 22 });
+    mob.dead = true;
+    mob.lootable = true;
+    mob.tappedById = a;
+    mob.loot = { copper: 0, items: [{ itemId: 'greyjaw_hide_boots', count: 1 }] };
+    sim.entities.set(mob.id, mob);
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, a);
+
+    expect(sim.countItem('greyjaw_hide_boots', a)).toBe(0);
+    expect(sim.countItem('greyjaw_hide_boots', b)).toBe(0);
+    const prompts = sim.events.filter((e) => e.type === 'lootRoll');
+    expect(prompts).toHaveLength(2);
+    expect(prompts.every((e) => e.itemId === 'greyjaw_hide_boots')).toBe(true);
+    expect(mob.loot).toBeNull();
+  });
+
+  it('awards need over greed regardless of the greed roll number', () => {
+    const sim = makeSim();
+    const a = sim.playerId;
+    const b = sim.addPlayer('mage', 'Bert');
+    sim.partyInvite(b, a);
+    sim.partyAccept(b);
+    teleportTo(sim, 20, 20, a);
+    teleportTo(sim, 21, 20, b);
+    const mob = createMob(990103, MOBS.forest_wolf, 2, { x: 20, y: 0, z: 22 });
+    mob.dead = true;
+    mob.lootable = true;
+    mob.tappedById = a;
+    mob.loot = { copper: 0, items: [{ itemId: 'greyjaw_hide_boots', count: 1 }] };
+    sim.entities.set(mob.id, mob);
+
+    const rng = (sim as any).rng;
+    const realInt = rng.int.bind(rng);
+    const rolls = [1, 100];
+    rng.int = (min: number, max: number) => (min === 1 && max === 100 ? rolls.shift()! : realInt(min, max));
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, a);
+    const rollId = sim.events.find((e) => e.type === 'lootRoll')!.rollId;
+    sim.submitLootRoll(rollId, 'need', a);
+    sim.submitLootRoll(rollId, 'greed', b);
+
+    expect(sim.countItem('greyjaw_hide_boots', a)).toBe(1);
+    expect(sim.countItem('greyjaw_hide_boots', b)).toBe(0);
+    expect(sim.events.some((e) => e.type === 'loot' && e.text.includes('wins Greyjaw Hide Boots'))).toBe(true);
+  });
+
+  it('excludes players who pass on a need-greed roll', () => {
+    const sim = makeSim();
+    const a = sim.playerId;
+    const b = sim.addPlayer('mage', 'Bert');
+    sim.partyInvite(b, a);
+    sim.partyAccept(b);
+    teleportTo(sim, 20, 20, a);
+    teleportTo(sim, 21, 20, b);
+    const mob = createMob(990104, MOBS.forest_wolf, 2, { x: 20, y: 0, z: 22 });
+    mob.dead = true;
+    mob.lootable = true;
+    mob.tappedById = a;
+    mob.loot = { copper: 0, items: [{ itemId: 'greyjaw_hide_boots', count: 1 }] };
+    sim.entities.set(mob.id, mob);
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, a);
+    const rollId = sim.events.find((e) => e.type === 'lootRoll')!.rollId;
+    sim.submitLootRoll(rollId, 'pass', a);
+    sim.submitLootRoll(rollId, 'greed', b);
+
+    expect(sim.countItem('greyjaw_hide_boots', a)).toBe(0);
+    expect(sim.countItem('greyjaw_hide_boots', b)).toBe(1);
+  });
+
+  it('treats unanswered need-greed rolls as pass at timeout', () => {
+    const sim = makeSim();
+    const a = sim.playerId;
+    const b = sim.addPlayer('mage', 'Bert');
+    sim.partyInvite(b, a);
+    sim.partyAccept(b);
+    teleportTo(sim, 20, 20, a);
+    teleportTo(sim, 21, 20, b);
+    const mob = createMob(990105, MOBS.forest_wolf, 2, { x: 20, y: 0, z: 22 });
+    mob.dead = true;
+    mob.lootable = true;
+    mob.tappedById = a;
+    mob.loot = { copper: 0, items: [{ itemId: 'greyjaw_hide_boots', count: 1 }] };
+    sim.entities.set(mob.id, mob);
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, a);
+    const events: SimEvent[] = [];
+    for (let i = 0; i < 31 * 20; i++) events.push(...sim.tick());
+
+    expect(sim.countItem('greyjaw_hide_boots', a)).toBe(0);
+    expect(sim.countItem('greyjaw_hide_boots', b)).toBe(0);
+    expect(events.some((e) => e.type === 'loot' && e.text === 'Everyone passed on Greyjaw Hide Boots.')).toBe(true);
+  });
+
+  it('returns all-passed need-greed loot to the corpse as open loot', () => {
+    const sim = makeSim();
+    const a = sim.playerId;
+    const b = sim.addPlayer('mage', 'Bert');
+    sim.partyInvite(b, a);
+    sim.partyAccept(b);
+    teleportTo(sim, 20, 20, a);
+    teleportTo(sim, 21, 20, b);
+    const mob = createMob(990106, MOBS.forest_wolf, 2, { x: 20, y: 0, z: 22 });
+    mob.dead = true;
+    mob.lootable = true;
+    mob.tappedById = a;
+    mob.loot = { copper: 0, items: [{ itemId: 'greyjaw_hide_boots', count: 1 }] };
+    sim.entities.set(mob.id, mob);
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, a);
+    const rollId = sim.events.find((e) => e.type === 'lootRoll')!.rollId;
+    sim.submitLootRoll(rollId, 'pass', a);
+    sim.submitLootRoll(rollId, 'pass', b);
+
+    expect(sim.countItem('greyjaw_hide_boots', a)).toBe(0);
+    expect(sim.countItem('greyjaw_hide_boots', b)).toBe(0);
+    expect(mob.lootable).toBe(true);
+    expect(mob.loot?.items).toEqual([{ itemId: 'greyjaw_hide_boots', count: 1, openToAll: true }]);
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, b);
+
+    expect(sim.countItem('greyjaw_hide_boots', b)).toBe(1);
+    expect(mob.loot).toBeNull();
+    expect(sim.events.some((e) => e.type === 'lootRoll')).toBe(false);
+  });
+
+  it('lets any player loot an all-passed need-greed item without starting another roll', () => {
+    const sim = makeSim();
+    const a = sim.playerId;
+    const b = sim.addPlayer('mage', 'Bert');
+    const c = sim.addPlayer('rogue', 'Cyra');
+    sim.partyInvite(b, a);
+    sim.partyAccept(b);
+    teleportTo(sim, 20, 20, a);
+    teleportTo(sim, 21, 20, b);
+    teleportTo(sim, 22, 20, c);
+    const mob = createMob(990107, MOBS.forest_wolf, 2, { x: 20, y: 0, z: 22 });
+    mob.dead = true;
+    mob.lootable = true;
+    mob.tappedById = a;
+    mob.loot = { copper: 0, items: [{ itemId: 'greyjaw_hide_boots', count: 1 }] };
+    sim.entities.set(mob.id, mob);
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, a);
+    const rollId = sim.events.find((e) => e.type === 'lootRoll')!.rollId;
+    sim.submitLootRoll(rollId, 'pass', a);
+    sim.submitLootRoll(rollId, 'pass', b);
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, c);
+
+    expect(sim.countItem('greyjaw_hide_boots', c)).toBe(1);
+    expect(sim.countItem('greyjaw_hide_boots', a)).toBe(0);
+    expect(sim.countItem('greyjaw_hide_boots', b)).toBe(0);
+    expect(sim.events.some((e) => e.type === 'error' && e.text.includes("permission"))).toBe(false);
+    expect(sim.events.some((e) => e.type === 'lootRoll')).toBe(false);
+  });
+
+  it('returns timed-out need-greed loot to the corpse for whoever loots next', () => {
+    const sim = makeSim();
+    const a = sim.playerId;
+    const b = sim.addPlayer('mage', 'Bert');
+    sim.partyInvite(b, a);
+    sim.partyAccept(b);
+    teleportTo(sim, 20, 20, a);
+    teleportTo(sim, 21, 20, b);
+    const mob = createMob(990108, MOBS.forest_wolf, 2, { x: 20, y: 0, z: 22 });
+    mob.dead = true;
+    mob.lootable = true;
+    mob.tappedById = a;
+    mob.loot = { copper: 0, items: [{ itemId: 'greyjaw_hide_boots', count: 1 }] };
+    sim.entities.set(mob.id, mob);
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, a);
+    for (let i = 0; i < 31 * 20; i++) sim.tick();
+
+    expect(mob.loot?.items).toEqual([{ itemId: 'greyjaw_hide_boots', count: 1, openToAll: true }]);
+
+    sim.events.length = 0;
+    sim.lootCorpse(mob.id, a);
+
+    expect(sim.countItem('greyjaw_hide_boots', a)).toBe(1);
+    expect(mob.loot).toBeNull();
+    expect(sim.events.some((e) => e.type === 'lootRoll')).toBe(false);
   });
 
   it('quest drops stay on the corpse as personal loot for every eligible nearby party member', () => {

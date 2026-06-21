@@ -303,6 +303,40 @@ export const zh_TW: EnTranslations = {
     "playerCard": {
       "showWalletBadge": "顯示錢包徽章"
     },
+    "statInfo": {
+      "fromYour": "來自你的 {value} 點{stat}：",
+      "desc": {
+        "str": "提升你的攻擊強度，使你的武器攻擊更具威力。",
+        "agi": "磨練你的反應與準度，提升多項戰鬥屬性。",
+        "sta": "強化你的體魄，提高你的最大生命值，並加快你休息時的生命值恢復速度。",
+        "int": "擴大施法者的法力池，並提升其造成法術暴擊的機率。",
+        "spi": "加快施法者在脫離戰鬥休息時的法力恢復速度。",
+        "armor": "減緩受到的物理打擊。對等級較低的攻擊者減免效果更佳，上限為 75%。",
+        "attackPower": "強化你的武器攻擊。每 14 點攻擊強度可增加 1 點每秒傷害。",
+        "dps": "你的預估武器每秒傷害，由武器的傷害與速度結合你的攻擊強度計算而來。",
+        "critChance": "你的攻擊造成暴擊並施加雙倍傷害的機率。",
+        "dodge": "你完全閃躲受到的近戰攻擊、不受任何傷害的機率。"
+      },
+      "effects": {
+        "attackPower": "+{value} 攻擊強度",
+        "rangedAttackPower": "+{value} 遠程攻擊強度",
+        "critPct": "+{value}% 暴擊",
+        "dodgePct": "+{value}% 閃躲",
+        "armor": "+{value} 護甲",
+        "maxHealth": "+{value} 最大生命值",
+        "maxMana": "+{value} 最大法力值",
+        "spellCritPct": "+{value}% 法術暴擊",
+        "healthRegen": "休息時每 5 秒約恢復 {value} 點生命值",
+        "manaRegen": "休息時每 5 秒約恢復 {value} 點法力",
+        "damageReduction": "對等級 {level} 攻擊者的傷害減免：{value}%",
+        "dpsFromAp": "為你的攻擊增加 {value} 點每秒傷害"
+      },
+      "notes": {
+        "minorForClass": "對你的職業助益甚微。",
+        "baseChance": "包含所有冒險者共享的 5% 基礎機率。",
+        "dpsApprox": "此為估計值，不計入暴擊與技能傷害。"
+      }
+    },
     "talents": {
       "defaultBuildName": "配置 {n}"
     },
@@ -334,6 +368,49 @@ export const zh_TW: EnTranslations = {
         "many": "查詢：{realm} 上有 {count} 名玩家在線上。",
         "other": "查詢：{realm} 上有 {count} 名玩家在線上。"
       }
+    },
+    "account": {
+      "title": "帳號",
+      "loggedOutPrompt": "登入以管理您的帳號。",
+      "memberSince": "註冊於 {date}",
+      "sectionSettings": "帳號設定",
+      "sectionWallet": "$WOC 錢包",
+      "sectionCharacters": "角色",
+      "sectionDanger": "危險區域",
+      "changePassword": "變更密碼",
+      "currentPassword": "目前密碼",
+      "newPassword": "新密碼",
+      "confirmNewPassword": "確認新密碼",
+      "savePassword": "更新密碼",
+      "passwordChanged": "密碼已更新。其他裝置已登出。",
+      "errCurrentRequired": "請輸入目前密碼。",
+      "errPasswordShort": "新密碼至少需要 6 個字元。",
+      "errPasswordLong": "新密碼最多只能包含 128 個字元。",
+      "errPasswordUnchanged": "新密碼必須與目前密碼不同。",
+      "errPasswordConfirm": "兩次輸入的新密碼不一致。",
+      "emailLabel": "電子郵件（選填）",
+      "emailHint": "僅用於帳號復原。我們絕不寄送行銷郵件。",
+      "saveEmail": "儲存電子郵件",
+      "emailSaved": "電子郵件已儲存。",
+      "errEmailInvalid": "請輸入有效的電子郵件地址。",
+      "errCurrentPassword": "目前密碼不正確。",
+      "errUsernameMatch": "該使用者名稱與您的帳號不符。",
+      "errPasswordIncorrect": "密碼不正確。",
+      "errCharactersOnline": "請先登出所有角色再進行停用。",
+      "deactivatedLocked": "此帳號已停用。請聯絡管理員以還原。",
+      "charactersSummary": "管理您的角色並進入遊戲世界。",
+      "charactersCount": "角色：{count}",
+      "goToCharacters": "查看角色",
+      "walletSummary": "驗證 Solana 錢包以在玩家卡片上顯示持有者標誌。",
+      "manageWallet": "管理錢包",
+      "deactivate": "停用帳號",
+      "deactivateWarning": "停用將鎖定您的帳號並在所有裝置上登出。請聯絡管理員以還原。請重新輸入使用者名稱和密碼以確認。",
+      "confirmUsername": "輸入您的使用者名稱以確認",
+      "confirmPassword": "密碼",
+      "deactivateConfirm": "停用我的帳號",
+      "deactivated": "您的帳號已停用。",
+      "logOut": "登出",
+      "logOutSummary": "登出目前的裝置。"
     }
   },
   "skinEvent": {
@@ -378,6 +455,8 @@ export const zh_TW: EnTranslations = {
     "news": "最新消息",
     "download": "下載客戶端",
     "loginRegister": "登入/註冊",
+    "account": "帳號",
+    "logout": "登出",
     "donate": "捐贈"
   },
   "stats": {
@@ -571,36 +650,36 @@ export const zh_TW: EnTranslations = {
         "flavor": "市場會感到你的動作：供應量的 1%。"
       },
       "tidelord": {
-        "name": "Tidelord",
-        "flavor": "The tide answers your call: 2% of supply."
+        "name": "潮汐領主",
+        "flavor": "潮汐回應你的召喚：供應量的 2%。"
       },
       "stormcaller": {
-        "name": "Stormcaller",
-        "flavor": "Storms gather at your name: 3% of supply."
+        "name": "喚雷者",
+        "flavor": "風暴因你的名字而聚集：供應量的 3%。"
       },
       "krakencrown": {
-        "name": "Krakencrown",
-        "flavor": "Crowned by the deep: 4% of supply."
+        "name": "海淵冠冕",
+        "flavor": "深海為你加冕：供應量的 4%。"
       },
       "titanforged": {
-        "name": "Titanforged",
-        "flavor": "Forged among titans: 5% of supply."
+        "name": "泰坦鑄成",
+        "flavor": "在泰坦之間鍛造而成：供應量的 5%。"
       },
       "starhoard": {
-        "name": "Starhoard",
-        "flavor": "A hoard that bends starlight: 6% of supply."
+        "name": "星藏者",
+        "flavor": "能彎折星光的寶藏：供應量的 6%。"
       },
       "voidwarden": {
-        "name": "Voidwarden",
-        "flavor": "Keeper at the void's edge: 7% of supply."
+        "name": "虛空守望者",
+        "flavor": "守在虛空邊緣：供應量的 7%。"
       },
       "realmshaper": {
-        "name": "Realmshaper",
-        "flavor": "You reshape the realm: 8% of supply."
+        "name": "塑界者",
+        "flavor": "你重塑著領域：供應量的 8%。"
       },
       "worldforger": {
-        "name": "Worldforger",
-        "flavor": "Forging a world of your own: 9% of supply."
+        "name": "鑄世者",
+        "flavor": "鍛造屬於你的世界：供應量的 9%。"
       },
       "worldbearer": {
         "name": "承世者",
@@ -1609,6 +1688,8 @@ export const zh_TW: EnTranslations = {
       "title": "法術書",
       "classSubtitle": "{className}技能",
       "close": "關閉法術書",
+      "resetBar": "重置動作列",
+      "resetBarAria": "將目前的動作列重置為預設技能",
       "trainableAtLevel": "{level} 級可訓練",
       "learnAtLevel": "你將在 {level} 級學會此技能。",
       "knownAbilityAria": "{name}，等級 {rank}。{summary}",
@@ -1921,6 +2002,16 @@ export const zh_TW: EnTranslations = {
     "loot": {
       "takeAll": "全部拾取",
       "close": "關閉戰利品"
+    },
+    "lootRoll": {
+      "title": "為戰利品擲骰",
+      "need": "需求",
+      "greed": "貪婪",
+      "pass": "放棄",
+      "needAria": "需求 {item}",
+      "greedAria": "貪婪 {item}",
+      "passAria": "放棄 {item}",
+      "everyonePassed": "所有人都放棄了 {item}。"
     }
   },
   "entities": {

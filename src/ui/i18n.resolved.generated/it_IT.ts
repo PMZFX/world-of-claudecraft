@@ -303,6 +303,40 @@ export const it_IT: EnTranslations = {
     "playerCard": {
       "showWalletBadge": "Mostra distintivo portafoglio"
     },
+    "statInfo": {
+      "fromYour": "Dai tuoi {value} punti {stat}:",
+      "desc": {
+        "str": "Aumenta la tua potenza d'attacco, così i colpi della tua arma sono più potenti.",
+        "agi": "Affina i tuoi riflessi e la tua mira, migliorando diverse delle tue statistiche di combattimento.",
+        "sta": "Irrobustisce il tuo corpo, aumentando la tua salute massima e la velocità con cui recuperi salute mentre riposi.",
+        "int": "Amplia la riserva di mana di un incantatore e migliora la sua probabilità di mettere a segno un colpo critico magico.",
+        "spi": "Accelera la velocità con cui il mana di un incantatore si rigenera mentre riposa, fuori dal combattimento.",
+        "armor": "Attutisce i colpi fisici in arrivo. La riduzione è maggiore contro avversari di livello inferiore ed è limitata al 75%.",
+        "attackPower": "Potenzia gli attacchi della tua arma. Ogni 14 punti di potenza d'attacco aggiungono 1 punto di danni al secondo.",
+        "dps": "I danni al secondo stimati della tua arma, combinando i danni e la velocità della tua arma con la tua potenza d'attacco.",
+        "critChance": "La tua probabilità che un attacco colpisca in modo critico, infliggendo danni doppi.",
+        "dodge": "La tua probabilità di evitare completamente un attacco in mischia in arrivo, senza subire danni."
+      },
+      "effects": {
+        "attackPower": "+{value} Potenza d'attacco",
+        "rangedAttackPower": "+{value} Potenza d'attacco a distanza",
+        "critPct": "+{value}% Colpo critico",
+        "dodgePct": "+{value}% Schivata",
+        "armor": "+{value} Armatura",
+        "maxHealth": "+{value} Salute massima",
+        "maxMana": "+{value} Mana massimo",
+        "spellCritPct": "+{value}% Colpo critico magico",
+        "healthRegen": "Circa {value} salute ogni 5 sec mentre riposi",
+        "manaRegen": "Circa {value} mana ogni 5 sec mentre riposi",
+        "damageReduction": "Riduzione dei danni contro un avversario di livello {level}: {value}%",
+        "dpsFromAp": "Aggiunge {value} danni al secondo ai tuoi attacchi"
+      },
+      "notes": {
+        "minorForClass": "Di scarso beneficio per la tua classe.",
+        "baseChance": "Include una probabilità di base del 5% condivisa da tutti gli avventurieri.",
+        "dpsApprox": "Una stima, esclude i colpi critici e i danni delle abilità."
+      }
+    },
     "talents": {
       "defaultBuildName": "Build {n}"
     },
@@ -334,6 +368,49 @@ export const it_IT: EnTranslations = {
         "many": "Chi: {count} giocatori online su {realm}.",
         "other": "Chi: {count} giocatori online su {realm}."
       }
+    },
+    "account": {
+      "title": "Account",
+      "loggedOutPrompt": "Accedi per gestire il tuo account.",
+      "memberSince": "Membro dal {date}",
+      "sectionSettings": "Impostazioni account",
+      "sectionWallet": "Portafoglio $WOC",
+      "sectionCharacters": "Personaggi",
+      "sectionDanger": "Zona pericolosa",
+      "changePassword": "Cambia password",
+      "currentPassword": "Password attuale",
+      "newPassword": "Nuova password",
+      "confirmNewPassword": "Conferma la nuova password",
+      "savePassword": "Aggiorna password",
+      "passwordChanged": "Password aggiornata. Gli altri dispositivi sono stati disconnessi.",
+      "errCurrentRequired": "Inserisci la tua password attuale.",
+      "errPasswordShort": "La nuova password deve avere almeno 6 caratteri.",
+      "errPasswordLong": "La nuova password deve avere al massimo 128 caratteri.",
+      "errPasswordUnchanged": "La nuova password deve essere diversa da quella attuale.",
+      "errPasswordConfirm": "Le nuove password non corrispondono.",
+      "emailLabel": "Email (facoltativa)",
+      "emailHint": "Usata solo per il recupero dell'account. Non inviamo mai email promozionali.",
+      "saveEmail": "Salva email",
+      "emailSaved": "Email salvata.",
+      "errEmailInvalid": "Inserisci un indirizzo email valido.",
+      "errCurrentPassword": "La tua password attuale non è corretta.",
+      "errUsernameMatch": "Questo nome utente non corrisponde al tuo account.",
+      "errPasswordIncorrect": "La tua password non è corretta.",
+      "errCharactersOnline": "Disconnetti tutti i tuoi personaggi prima di disattivare.",
+      "deactivatedLocked": "Questo account è stato disattivato. Contatta un admin per ripristinarlo.",
+      "charactersSummary": "Gestisci i tuoi personaggi ed entra nel mondo.",
+      "charactersCount": "Personaggi: {count}",
+      "goToCharacters": "Visualizza personaggi",
+      "walletSummary": "Verifica un portafoglio Solana per mostrare il distintivo da titolare sulla tua scheda giocatore.",
+      "manageWallet": "Gestisci portafoglio",
+      "deactivate": "Disattiva account",
+      "deactivateWarning": "La disattivazione blocca il tuo account e ti disconnette ovunque. Contatta un admin per ripristinarlo. Conferma reinserendo nome utente e password.",
+      "confirmUsername": "Digita il tuo nome utente per confermare",
+      "confirmPassword": "Password",
+      "deactivateConfirm": "Disattiva il mio account",
+      "deactivated": "Il tuo account è stato disattivato.",
+      "logOut": "Esci",
+      "logOutSummary": "Disconnettiti da questo dispositivo."
     }
   },
   "skinEvent": {
@@ -378,6 +455,8 @@ export const it_IT: EnTranslations = {
     "news": "Novità",
     "download": "Scarica",
     "loginRegister": "Accedi/Registrati",
+    "account": "Account",
+    "logout": "Esci",
     "donate": "Dona"
   },
   "stats": {
@@ -571,36 +650,36 @@ export const it_IT: EnTranslations = {
         "flavor": "I mercati sentono ogni tuo movimento: l'1% dell'offerta."
       },
       "tidelord": {
-        "name": "Tidelord",
-        "flavor": "The tide answers your call: 2% of supply."
+        "name": "Signore delle maree",
+        "flavor": "La marea risponde al tuo richiamo: il 2% dell'offerta."
       },
       "stormcaller": {
-        "name": "Stormcaller",
-        "flavor": "Storms gather at your name: 3% of supply."
+        "name": "Evocatore di tempeste",
+        "flavor": "Le tempeste si radunano nel tuo nome: il 3% dell'offerta."
       },
       "krakencrown": {
-        "name": "Krakencrown",
-        "flavor": "Crowned by the deep: 4% of supply."
+        "name": "Corona del kraken",
+        "flavor": "Incoronato dagli abissi: il 4% dell'offerta."
       },
       "titanforged": {
-        "name": "Titanforged",
-        "flavor": "Forged among titans: 5% of supply."
+        "name": "Forgiato tra i titani",
+        "flavor": "Forgiato tra i titani: il 5% dell'offerta."
       },
       "starhoard": {
-        "name": "Starhoard",
-        "flavor": "A hoard that bends starlight: 6% of supply."
+        "name": "Tesoro stellare",
+        "flavor": "Un tesoro che piega la luce delle stelle: il 6% dell'offerta."
       },
       "voidwarden": {
-        "name": "Voidwarden",
-        "flavor": "Keeper at the void's edge: 7% of supply."
+        "name": "Guardiano del vuoto",
+        "flavor": "Custode sull'orlo del vuoto: il 7% dell'offerta."
       },
       "realmshaper": {
-        "name": "Realmshaper",
-        "flavor": "You reshape the realm: 8% of supply."
+        "name": "Plasmatore del reame",
+        "flavor": "Ridai forma al reame: l'8% dell'offerta."
       },
       "worldforger": {
-        "name": "Worldforger",
-        "flavor": "Forging a world of your own: 9% of supply."
+        "name": "Forgiatore di mondi",
+        "flavor": "Forgi un mondo tutto tuo: il 9% dell'offerta."
       },
       "worldbearer": {
         "name": "Portamondi",
@@ -1609,6 +1688,8 @@ export const it_IT: EnTranslations = {
       "title": "Libro degli incantesimi",
       "classSubtitle": "Abilità di {className}",
       "close": "Chiudi libro degli incantesimi",
+      "resetBar": "Ripristina barra",
+      "resetBarAria": "Ripristina la barra azioni attuale alle abilità predefinite",
       "trainableAtLevel": "Addestrabile al livello {level}",
       "learnAtLevel": "Lo imparerai al livello {level}.",
       "knownAbilityAria": "{name}, grado {rank}. {summary}",
@@ -1921,6 +2002,16 @@ export const it_IT: EnTranslations = {
     "loot": {
       "takeAll": "Prendi tutto",
       "close": "Chiudi bottino"
+    },
+    "lootRoll": {
+      "title": "Tiro per bottino",
+      "need": "Bisogno",
+      "greed": "Brama",
+      "pass": "Passa",
+      "needAria": "Bisogno per {item}",
+      "greedAria": "Brama per {item}",
+      "passAria": "Passa su {item}",
+      "everyonePassed": "Tutti hanno passato su {item}."
     }
   },
   "entities": {

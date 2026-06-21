@@ -303,6 +303,40 @@ export const fr_CA: EnTranslations = {
     "playerCard": {
       "showWalletBadge": "Afficher l’insigne de portefeuille"
     },
+    "statInfo": {
+      "fromYour": "Grâce à vos {value} en {stat} :",
+      "desc": {
+        "str": "Augmente votre puissance d'attaque, vos coups d'arme frappent donc plus fort.",
+        "agi": "Aiguise vos réflexes et votre précision, ce qui améliore plusieurs de vos statistiques de combat.",
+        "sta": "Endurcit votre corps, augmente vos points de vie maximum et la vitesse à laquelle vous récupérez des points de vie au repos.",
+        "int": "Augmente la réserve de mana d'un lanceur de sorts et améliore ses chances de porter un coup critique avec un sort.",
+        "spi": "Accélère la vitesse à laquelle le mana d'un lanceur de sorts se régénère au repos, hors combat.",
+        "armor": "Atténue les coups physiques reçus. La réduction est plus importante contre les attaquants de niveau inférieur et est plafonnée à 75 %.",
+        "attackPower": "Renforce vos attaques d'arme. Chaque tranche de 14 de puissance d'attaque ajoute 1 dégât par seconde.",
+        "dps": "Vos dégâts par seconde estimés à l'arme, combinant les dégâts et la vitesse de votre arme avec votre puissance d'attaque.",
+        "critChance": "Vos chances de porter un coup critique avec une attaque, infligeant le double des dégâts.",
+        "dodge": "Vos chances d'éviter complètement une attaque de mêlée, sans subir aucun dégât."
+      },
+      "effects": {
+        "attackPower": "+{value} Puissance d'attaque",
+        "rangedAttackPower": "+{value} Puissance d'attaque à distance",
+        "critPct": "+{value} % de chances de coup critique",
+        "dodgePct": "+{value} % d'esquive",
+        "armor": "+{value} Armure",
+        "maxHealth": "+{value} Points de vie maximum",
+        "maxMana": "+{value} Mana maximum",
+        "spellCritPct": "+{value} % de chances de coup critique des sorts",
+        "healthRegen": "Environ {value} points de vie toutes les 5 sec au repos",
+        "manaRegen": "Environ {value} mana toutes les 5 sec au repos",
+        "damageReduction": "Réduction des dégâts contre un attaquant de niveau {level} : {value} %",
+        "dpsFromAp": "Ajoute {value} dégâts par seconde à vos attaques"
+      },
+      "notes": {
+        "minorForClass": "De peu d'utilité pour votre classe.",
+        "baseChance": "Inclut 5 % de chances de base communes à tous les aventuriers.",
+        "dpsApprox": "Une estimation, elle exclut les coups critiques et les dégâts des capacités."
+      }
+    },
     "talents": {
       "defaultBuildName": "Configuration {n}"
     },
@@ -334,6 +368,49 @@ export const fr_CA: EnTranslations = {
         "many": "Qui : {count} joueurs en ligne sur {realm}.",
         "other": "Qui : {count} joueurs en ligne sur {realm}."
       }
+    },
+    "account": {
+      "title": "Compte",
+      "loggedOutPrompt": "Connectez-vous pour gérer votre compte.",
+      "memberSince": "Membre depuis {date}",
+      "sectionSettings": "Paramètres du compte",
+      "sectionWallet": "Portefeuille $WOC",
+      "sectionCharacters": "Personnages",
+      "sectionDanger": "Zone de danger",
+      "changePassword": "Changer le mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmNewPassword": "Confirmer le nouveau mot de passe",
+      "savePassword": "Mettre à jour le mot de passe",
+      "passwordChanged": "Mot de passe mis à jour. Les autres appareils ont été déconnectés.",
+      "errCurrentRequired": "Saisissez votre mot de passe actuel.",
+      "errPasswordShort": "Le nouveau mot de passe doit contenir au moins 6 caractères.",
+      "errPasswordLong": "Le nouveau mot de passe doit contenir au plus 128 caractères.",
+      "errPasswordUnchanged": "Le nouveau mot de passe doit être différent de l'actuel.",
+      "errPasswordConfirm": "Les nouveaux mots de passe ne correspondent pas.",
+      "emailLabel": "E-mail (facultatif)",
+      "emailHint": "Utilisé uniquement pour la récupération du compte. Nous n'envoyons jamais d'e-mail marketing.",
+      "saveEmail": "Enregistrer l'e-mail",
+      "emailSaved": "E-mail enregistré.",
+      "errEmailInvalid": "Saisissez une adresse e-mail valide.",
+      "errCurrentPassword": "Votre mot de passe actuel est incorrect.",
+      "errUsernameMatch": "Ce nom d'utilisateur ne correspond pas à votre compte.",
+      "errPasswordIncorrect": "Votre mot de passe est incorrect.",
+      "errCharactersOnline": "Déconnectez tous vos personnages avant la désactivation.",
+      "deactivatedLocked": "Ce compte a été désactivé. Contactez un admin pour le rétablir.",
+      "charactersSummary": "Gérez vos personnages et entrez dans le monde.",
+      "charactersCount": "Personnages : {count}",
+      "goToCharacters": "Voir les personnages",
+      "walletSummary": "Vérifiez un portefeuille Solana pour afficher l'apparat de détenteur sur votre carte de joueur.",
+      "manageWallet": "Gérer le portefeuille",
+      "deactivate": "Désactiver le compte",
+      "deactivateWarning": "La désactivation verrouille votre compte et vous déconnecte partout. Contactez un admin pour le rétablir. Confirmez en saisissant de nouveau votre nom d'utilisateur et votre mot de passe.",
+      "confirmUsername": "Saisissez votre nom d'utilisateur pour confirmer",
+      "confirmPassword": "Mot de passe",
+      "deactivateConfirm": "Désactiver mon compte",
+      "deactivated": "Votre compte a été désactivé.",
+      "logOut": "Se déconnecter",
+      "logOutSummary": "Déconnectez-vous de cet appareil."
     }
   },
   "skinEvent": {
@@ -378,6 +455,8 @@ export const fr_CA: EnTranslations = {
     "news": "Actualités",
     "download": "Télécharger",
     "loginRegister": "Se connecter/S'enregistrer",
+    "account": "Compte",
+    "logout": "Déconnexion",
     "donate": "Faire un don"
   },
   "stats": {
@@ -571,36 +650,36 @@ export const fr_CA: EnTranslations = {
         "flavor": "Les marchés sentent chacun de vos mouvements: 1 % de l'offre."
       },
       "tidelord": {
-        "name": "Tidelord",
-        "flavor": "The tide answers your call: 2% of supply."
+        "name": "Seigneur des marées",
+        "flavor": "La marée répond à votre appel: 2 % de l'offre."
       },
       "stormcaller": {
-        "name": "Stormcaller",
-        "flavor": "Storms gather at your name: 3% of supply."
+        "name": "Invocateur de tempêtes",
+        "flavor": "Les tempêtes se rassemblent à votre nom: 3 % de l'offre."
       },
       "krakencrown": {
-        "name": "Krakencrown",
-        "flavor": "Crowned by the deep: 4% of supply."
+        "name": "Couronne du kraken",
+        "flavor": "Couronné par les profondeurs: 4 % de l'offre."
       },
       "titanforged": {
-        "name": "Titanforged",
-        "flavor": "Forged among titans: 5% of supply."
+        "name": "Forgé parmi les titans",
+        "flavor": "Forgé parmi les titans: 5 % de l'offre."
       },
       "starhoard": {
-        "name": "Starhoard",
-        "flavor": "A hoard that bends starlight: 6% of supply."
+        "name": "Trésor d'étoiles",
+        "flavor": "Un trésor qui courbe la lumière des étoiles: 6 % de l'offre."
       },
       "voidwarden": {
-        "name": "Voidwarden",
-        "flavor": "Keeper at the void's edge: 7% of supply."
+        "name": "Gardien du vide",
+        "flavor": "Gardien au bord du vide: 7 % de l'offre."
       },
       "realmshaper": {
-        "name": "Realmshaper",
-        "flavor": "You reshape the realm: 8% of supply."
+        "name": "Façonneur de royaume",
+        "flavor": "Vous remodelez le royaume: 8 % de l'offre."
       },
       "worldforger": {
-        "name": "Worldforger",
-        "flavor": "Forging a world of your own: 9% of supply."
+        "name": "Forgeur de monde",
+        "flavor": "Vous forgez votre propre monde: 9 % de l'offre."
       },
       "worldbearer": {
         "name": "Porte-monde",
@@ -1609,6 +1688,8 @@ export const fr_CA: EnTranslations = {
       "title": "Grimoire",
       "classSubtitle": "Techniques de {className}",
       "close": "Fermer le grimoire",
+      "resetBar": "Réinitialiser la barre",
+      "resetBarAria": "Réinitialise la barre d'action actuelle avec ses techniques par défaut",
       "trainableAtLevel": "Entraînable au niveau {level}",
       "learnAtLevel": "Vous apprendrez ceci au niveau {level}.",
       "knownAbilityAria": "{name}, rang {rank}. {summary}",
@@ -1921,6 +2002,16 @@ export const fr_CA: EnTranslations = {
     "loot": {
       "takeAll": "Tout prendre",
       "close": "Fermer le butin"
+    },
+    "lootRoll": {
+      "title": "Jet de butin",
+      "need": "Besoin",
+      "greed": "Cupidité",
+      "pass": "Passer",
+      "needAria": "Besoin pour {item}",
+      "greedAria": "Cupidité pour {item}",
+      "passAria": "Passer pour {item}",
+      "everyonePassed": "Tout le monde a passé pour {item}."
     }
   },
   "entities": {

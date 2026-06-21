@@ -303,6 +303,40 @@ export const en_CA: EnTranslations = {
     "playerCard": {
       "showWalletBadge": "Show wallet badge"
     },
+    "statInfo": {
+      "fromYour": "From your {value} {stat}:",
+      "desc": {
+        "str": "Increases your attack power, so your weapon strikes land harder.",
+        "agi": "Sharpens your reflexes and aim, improving several of your combat stats.",
+        "sta": "Toughens your body, raising your maximum health and how quickly you recover health while resting.",
+        "int": "Expands a spellcaster's mana pool and improves their chance to land a spell critical strike.",
+        "spi": "Quickens how fast a spellcaster's mana returns while resting, out of combat.",
+        "armor": "Softens incoming physical blows. The reduction is greater against lower-level attackers and is capped at 75%.",
+        "attackPower": "Powers your weapon attacks. Every 14 attack power adds 1 damage per second.",
+        "dps": "Your estimated weapon damage per second, combining your weapon's damage and speed with your attack power.",
+        "critChance": "Your chance for an attack to strike critically, dealing double damage.",
+        "dodge": "Your chance to completely avoid an incoming melee attack, taking no damage."
+      },
+      "effects": {
+        "attackPower": "+{value} Attack Power",
+        "rangedAttackPower": "+{value} Ranged Attack Power",
+        "critPct": "+{value}% Critical Strike",
+        "dodgePct": "+{value}% Dodge",
+        "armor": "+{value} Armour",
+        "maxHealth": "+{value} Maximum Health",
+        "maxMana": "+{value} Maximum Mana",
+        "spellCritPct": "+{value}% Spell Critical Strike",
+        "healthRegen": "About {value} health every 5 sec while resting",
+        "manaRegen": "About {value} mana every 5 sec while resting",
+        "damageReduction": "Damage reduction against a level {level} attacker: {value}%",
+        "dpsFromAp": "Adds {value} damage per second to your attacks"
+      },
+      "notes": {
+        "minorForClass": "Of little benefit to your class.",
+        "baseChance": "Includes a 5% base chance shared by all adventurers.",
+        "dpsApprox": "An estimate, it excludes critical strikes and ability damage."
+      }
+    },
     "talents": {
       "defaultBuildName": "Build {n}"
     },
@@ -334,6 +368,49 @@ export const en_CA: EnTranslations = {
         "many": "Who: {count} players online on {realm}.",
         "other": "Who: {count} players online on {realm}."
       }
+    },
+    "account": {
+      "title": "Account",
+      "loggedOutPrompt": "Log in to manage your account.",
+      "memberSince": "Member since {date}",
+      "sectionSettings": "Account Settings",
+      "sectionWallet": "$WOC Wallet",
+      "sectionCharacters": "Characters",
+      "sectionDanger": "Danger Zone",
+      "changePassword": "Change Password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmNewPassword": "Confirm new password",
+      "savePassword": "Update Password",
+      "passwordChanged": "Password updated. Other devices have been signed out.",
+      "errCurrentRequired": "Enter your current password.",
+      "errPasswordShort": "New password must be at least 6 characters.",
+      "errPasswordLong": "New password must be at most 128 characters.",
+      "errPasswordUnchanged": "New password must be different from the current one.",
+      "errPasswordConfirm": "New passwords do not match.",
+      "emailLabel": "Email (optional)",
+      "emailHint": "Used only for account recovery. We never send marketing email.",
+      "saveEmail": "Save Email",
+      "emailSaved": "Email saved.",
+      "errEmailInvalid": "Enter a valid email address.",
+      "errCurrentPassword": "Your current password is incorrect.",
+      "errUsernameMatch": "That username does not match your account.",
+      "errPasswordIncorrect": "Your password is incorrect.",
+      "errCharactersOnline": "Log out all of your characters before deactivating.",
+      "deactivatedLocked": "This account has been deactivated. Contact an admin to restore it.",
+      "charactersSummary": "Manage your characters and enter the world.",
+      "charactersCount": "Characters: {count}",
+      "goToCharacters": "View Characters",
+      "walletSummary": "Verify a Solana wallet to show holder flair on your player card.",
+      "manageWallet": "Manage Wallet",
+      "deactivate": "Deactivate Account",
+      "deactivateWarning": "Deactivation locks your account and signs you out everywhere. Contact an admin to restore it. Confirm by re-entering your username and password.",
+      "confirmUsername": "Type your username to confirm",
+      "confirmPassword": "Password",
+      "deactivateConfirm": "Deactivate My Account",
+      "deactivated": "Your account has been deactivated.",
+      "logOut": "Log Out",
+      "logOutSummary": "Sign out of this device."
     }
   },
   "skinEvent": {
@@ -378,6 +455,8 @@ export const en_CA: EnTranslations = {
     "news": "News",
     "download": "Download",
     "loginRegister": "Login/Register",
+    "account": "Account",
+    "logout": "Logout",
     "donate": "Donate"
   },
   "stats": {
@@ -1609,6 +1688,8 @@ export const en_CA: EnTranslations = {
       "title": "Spellbook",
       "classSubtitle": "{className} abilities",
       "close": "Close spellbook",
+      "resetBar": "Reset bar",
+      "resetBarAria": "Reset the current action bar to its default abilities",
       "trainableAtLevel": "Trainable at level {level}",
       "learnAtLevel": "You will learn this at level {level}.",
       "knownAbilityAria": "{name}, rank {rank}. {summary}",
@@ -1921,6 +2002,16 @@ export const en_CA: EnTranslations = {
     "loot": {
       "takeAll": "Take All",
       "close": "Close loot"
+    },
+    "lootRoll": {
+      "title": "Roll for loot",
+      "need": "Need",
+      "greed": "Greed",
+      "pass": "Pass",
+      "needAria": "Need for {item}",
+      "greedAria": "Greed for {item}",
+      "passAria": "Pass on {item}",
+      "everyonePassed": "Everyone passed on {item}."
     }
   },
   "entities": {

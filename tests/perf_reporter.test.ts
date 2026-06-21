@@ -326,7 +326,7 @@ describe('perf reporter payload', () => {
 
     expect(body.releaseVersion).toBe('0.9.0');
     expect(body.buildId).toBe('testbuild');
-    expect(body.graphicsPreset).toBe('low');
+    expect(body.graphicsPreset).toBe('ultra');
     expect(body.graphicsConfigVersion).toBe(14);
     expect(body.gfxTier).toBe('high');
     expect(body.autoGovernor).toBe(true);

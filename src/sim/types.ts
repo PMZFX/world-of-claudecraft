@@ -165,6 +165,8 @@ export interface InvSlot {
 export interface LootSlot extends InvSlot {
   // Quest corpse loot can be personal: each listed player can take one copy.
   personalFor?: number[];
+  // Need/greed loot that everyone passed on becomes free-for-all corpse loot.
+  openToAll?: boolean;
 }
 
 export interface CorpseLoot {
@@ -173,7 +175,8 @@ export interface CorpseLoot {
 }
 
 export type CurrencyLootStrategy = 'looter-takes-all' | 'fair-split';
-export type ItemLootStrategy = 'looter-takes-all' | 'random';
+export type LootRollChoice = 'need' | 'greed' | 'pass';
+export type ItemLootStrategy = 'looter-takes-all' | 'need-greed';
 
 export interface LootStrategies {
   currency: CurrencyLootStrategy;
@@ -183,8 +186,8 @@ export interface LootStrategies {
 
 export const DEFAULT_PARTY_LOOT_STRATEGIES: LootStrategies = {
   currency: 'fair-split',
-  commonItems: 'random',
-  premiumItems: 'random',
+  commonItems: 'need-greed',
+  premiumItems: 'need-greed',
 };
 
 export interface LootEntry {
@@ -789,6 +792,7 @@ export interface Entity {
   templateId: string; // mob/npc template id, or class for player
   name: string;
   level: number;
+  guild: string;
   pos: Vec3;
   prevPos: Vec3; // for render interpolation
   facing: number; // radians, 0 = +Z
@@ -933,6 +937,7 @@ export type SimEvent = { pid?: number } & (
   | { type: 'milestoneUnlocked'; milestoneId: string }
   | { type: 'learnAbility'; abilityId: string; rank: number }
   | { type: 'loot'; text: string }
+  | { type: 'lootRoll'; rollId: number; itemId: string; itemName: string; quality: ItemDef['quality']; expiresAt: number }
   | { type: 'error'; text: string; reason?: ErrorReason }
   | { type: 'questAccepted'; questId: string }
   | { type: 'questProgress'; questId: string; text: string }

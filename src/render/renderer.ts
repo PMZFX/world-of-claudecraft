@@ -46,6 +46,7 @@ import { comboPipsFor, COMBO_PIP_MAX } from './nameplate_combo';
 import { stepCameraOcclusion, type CameraOcclusionState } from './camera_collision';
 import { castBarState } from './cast_bar';
 import { isMobThreateningViewer } from './nameplate_threat';
+import { FRIENDLY, isFriendlyPet, isOwnedPetHostile, mobNameColor } from './reaction';
 
 const NAMEPLATE_RANGE = 55;
 const NAMEPLATE_RANGE_SQ = NAMEPLATE_RANGE * NAMEPLATE_RANGE;
@@ -362,6 +363,7 @@ interface EntityView {
   clickTarget: THREE.Object3D;
   nameplate: HTMLDivElement;
   nameEl: HTMLDivElement;
+  guildEl: HTMLDivElement; // <Guild> tag under the name (players only)
   hpBar: HTMLDivElement;
   hpFill: HTMLDivElement;
   emoteEl: HTMLDivElement;
@@ -2486,12 +2488,16 @@ export class Renderer {
     const nameEl = document.createElement('div');
     nameEl.className = 'np-name';
     nameEl.textContent = e.kind === 'object' ? objectDisplayName(e) : e.name;
+    // guild tag under the name (players in a guild); hidden until set
+    const guildEl = document.createElement('div');
+    guildEl.className = 'np-guild';
+    guildEl.style.display = 'none';
     const hpBar = document.createElement('div');
     hpBar.className = 'np-hpbar';
     const hpFill = document.createElement('div');
     hpFill.className = 'np-hpfill';
     hpBar.appendChild(hpFill);
-    // overhead cast bar — hidden until the entity starts casting/channeling
+    // overhead cast bar: hidden until the entity starts casting/channeling
     const castBar = document.createElement('div');
     castBar.className = 'np-castbar';
     castBar.style.display = 'none';
@@ -2500,7 +2506,7 @@ export class Renderer {
     const castLabel = document.createElement('div');
     castLabel.className = 'np-castlabel';
     castBar.append(castFill, castLabel);
-    np.append(emoteEl, raidMark, comboRow, marker, tierEl, nameEl, hpBar, castBar);
+    np.append(emoteEl, raidMark, comboRow, marker, tierEl, nameEl, guildEl, hpBar, castBar);
     this.nameplateLayer.appendChild(np);
 
     // object views gate their own casters; character shadows live in visual
@@ -2508,7 +2514,7 @@ export class Renderer {
     if (!visual) collectCasters(group, objectCasters);
     this.views.set(e.id, {
       group, visual, visualKey: visual ? visualKeyFor(e) : null, visualPoolKey, sheepVisual: null, bearVisual: null, catVisual: null, travelVisual: null, height, clickTarget,
-      nameplate: np, nameEl, hpBar, hpFill, emoteEl, emoteIconEl, emoteLabelEl, markerEl: marker, raidMarkEl: raidMark, comboRow, comboPips, castBar, castFill, castLabel, tierEl, sparkle, objectMesh, objectPoolKey, portal,
+      nameplate: np, nameEl, guildEl, hpBar, hpFill, emoteEl, emoteIconEl, emoteLabelEl, markerEl: marker, raidMarkEl: raidMark, comboRow, comboPips, castBar, castFill, castLabel, tierEl, sparkle, objectMesh, objectPoolKey, portal,
       nameplateDisplay: 'none', nameplateTransform: '', nameplateSig: '', nameplateHpWidth: '', comboSig: '', tierValue: 0,
       objectCasters, shadowOn: true, isFar: false, lastOverheadEmoteKey: null,
       lastX: e.pos.x, lastZ: e.pos.z, skin: e.skin, liveScale: e.scale,
@@ -2563,7 +2569,18 @@ export class Renderer {
   }
 
   private isHostileSelectionTarget(target: Entity): boolean {
-    if (target.kind === 'mob') return target.hostile;
+    // A controlled pet inherits its owner's reaction (a player's pet is hostile
+    // only in PvP), so route mobs through the owner-aware helper; everything
+    // else falls back to the player-vs-player verdict.
+    if (target.kind === 'mob') {
+      return target.ownerId !== null
+        ? isOwnedPetHostile(target, this.sim.entities, (p) => this.isHostilePlayer(p))
+        : target.hostile;
+    }
+    return this.isHostilePlayer(target);
+  }
+
+  private isHostilePlayer(target: Entity): boolean {
     if (target.kind !== 'player' || target.dead || target.id === this.sim.playerId) return false;
     if (this.sim.duelInfo?.state === 'active' && this.sim.duelInfo.otherPid === target.id) return true;
     const match = this.sim.arenaInfo?.match;
@@ -3434,11 +3451,13 @@ export class Renderer {
         const objName = objectDisplayName(e);
         this.setNameplateStatic(v, `object|${objName}`, objName, '#c084ff', 'none', '', 'np-marker', '1');
       } else if (e.kind === 'player') {
-        // other players: friendly blue with an hp bar
+        // other players: friendly blue with an hp bar; <Guild> tag under the name.
+        // Self has no overhead nameplate, so its guild line stays hidden too.
         const opacity = e.auras.some((a) => a.kind === 'stealth') ? '0.55' : '1';
         const nameDisplay = isSelf ? 'none' : '';
         const hpDisplay = e.dead || isSelf ? 'none' : '';
-        this.setNameplateStatic(v, `player|${e.name}|${nameDisplay}|${hpDisplay}|${opacity}`, e.name, '#7fb8ff', hpDisplay, '', 'np-marker', opacity);
+        const guild = isSelf ? '' : e.guild;
+        this.setNameplateStatic(v, `player|${e.name}|${guild}|${nameDisplay}|${hpDisplay}|${opacity}`, e.name, '#7fb8ff', hpDisplay, '', 'np-marker', opacity, '', guild);
         v.nameEl.style.display = nameDisplay;
         // $WOC holder-tier flair, shown on OTHER players (own nameplate is hidden).
         this.setNameplateTier(v, isSelf ? 0 : (e.holderTier ?? 0));
@@ -3458,13 +3477,16 @@ export class Renderer {
           else if (st === 'active' && quest.turnInNpcId === e.templateId && !marker) { marker = '?'; cls = 'active'; }
         }
         const markerClass = cls ? `np-marker ${cls}` : 'np-marker';
-        this.setNameplateStatic(v, `npc|${npcName}|${marker}|${markerClass}`, npcName, '#9fdc7f', 'none', marker, markerClass, '1');
+        this.setNameplateStatic(v, `npc|${npcName}|${marker}|${markerClass}`, npcName, FRIENDLY, 'none', marker, markerClass, '1');
       } else {
         const diff = e.level - p.level;
         const template = MOBS[e.templateId];
         const elite = !!template?.elite;
         const boss = !!template?.boss;
-        const color = e.dead ? '#999' : diff >= 3 ? '#ff4444' : diff >= 1 ? '#ffaa33' : diff >= -2 ? '#ffe97a' : diff >= -5 ? '#7fdc4f' : '#9d9d9d';
+        // A friendly controlled pet reads as friendly green; wild mobs keep the
+        // classic level-difference ("con") color.
+        const friendlyPet = isFriendlyPet(e, this.sim.entities, (pl) => this.isHostilePlayer(pl));
+        const color = mobNameColor(diff, e.dead, friendlyPet);
         const mobName = e.ownerId !== null ? e.name : mobDisplayName(e.templateId);
         const name = e.dead ? t('worldContent.corpseName', { name: mobName }) : `[${e.level}${elite ? '+' : ''}] ${mobName}`;
         const hpDisplay = e.dead ? 'none' : '';
@@ -3491,6 +3513,7 @@ export class Renderer {
     markerClass: string,
     opacity: string,
     frame = '',
+    guild = '',
   ): void {
     if (sig === v.nameplateSig) return;
     v.nameplateSig = sig;
@@ -3502,6 +3525,13 @@ export class Renderer {
     v.markerEl.textContent = marker;
     v.markerEl.className = markerClass;
     v.nameplate.style.opacity = opacity;
+    // guild tag rides in the sig (players only); empty for every other kind
+    if (guild) {
+      v.guildEl.textContent = `<${guild}>`;
+      v.guildEl.style.display = '';
+    } else {
+      v.guildEl.style.display = 'none';
+    }
   }
 
   // Show/hide the $WOC holder-tier badge on a player's nameplate. Cheap-diffed

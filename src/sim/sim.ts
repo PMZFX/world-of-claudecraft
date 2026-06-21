@@ -27,10 +27,10 @@ import {
 import { groundHeight, WATER_LEVEL } from './world';
 import type { AccountCosmetics, LeaderboardEntry } from '../world_api';
 import {
-  AbilityDef, AbilityEffect, Aura, AuraKind, CAST_PUSHBACK_SEC, CHANNEL_PUSHBACK_FRACTION, CONSUME_DURATION,
+  AbilityDef, AbilityEffect, Aura, AuraKind, CAST_PUSHBACK_SEC, CHANNEL_PUSHBACK_FRACTION, CONSUME_DURATION, ItemDef,
   DEFAULT_PARTY_LOOT_STRATEGIES,
   CONSUME_TICKS, CrowdControlDrCategory, DT, Entity, EquipSlot, FISHING_CAST_ID, FISHING_CAST_TIME, GCD,
-  CurrencyLootStrategy, INTERACT_RANGE, InvSlot, ItemLootStrategy, LootEntry, LootSlot, LootStrategies, MELEE_RANGE, MAX_LEVEL, MobFamily, MobTemplate,
+  CurrencyLootStrategy, INTERACT_RANGE, InvSlot, ItemLootStrategy, LootEntry, LootRollChoice, LootSlot, LootStrategies, MELEE_RANGE, MAX_LEVEL, MobFamily, MobTemplate,
   MoveInput, OverheadEmoteId, PetMode, PlayerClass, QuestProgress, QuestState, RUN_SPEED, SimConfig, SimEvent, TURN_SPEED, Vec3,
   angleTo, armorReduction, dist2d, emptyMoveInput, isConsuming, meleeMissChance, mobXpValue, normAngle,
   rageFromDealing, rageFromTaking, spellHitChance, xpForLevel,
@@ -253,6 +253,7 @@ const DEMON_HEAL_MANA_COST = 55;
 const DEMON_HEAL_DURATION = 5;
 const DEMON_HEAL_TICK = 1;
 const TAMED_TARGET_RESPAWN_SECONDS = 60;
+const LOOT_ROLL_TIMEOUT = 30;
 const FRIENDLY_NPC_REJECTED_AURA_KINDS: ReadonlySet<AuraKind> = new Set([
   'dot', 'slow', 'stun', 'root', 'incapacitate', 'polymorph', 'attackspeed', 'sunder', 'spellvuln', 'vulnerability', 'tongues', 'cost_tax', 'critvuln',
 ]);
@@ -266,6 +267,17 @@ export interface Party {
   leader: number; // pid
   members: number[]; // pids
   lootStrategies: LootStrategies;
+}
+
+interface PendingLootRoll {
+  id: number;
+  mobId: number;
+  itemId: string;
+  itemName: string;
+  quality: ItemDef['quality'];
+  candidates: number[];
+  choices: Map<number, { choice: LootRollChoice; roll: number | null }>;
+  expiresAt: number;
 }
 
 export interface TradeSession {
@@ -687,6 +699,8 @@ export class Sim {
   partyByPid = new Map<number, number>(); // pid -> party id
   partyInvites = new Map<number, { fromPid: number; expires: number }>(); // invitee pid -> invite
   nextPartyId = 1;
+  private nextLootRollId = 1;
+  private pendingLootRolls = new Map<number, PendingLootRoll>();
   // raid/target markers: partyId -> (enemy entityId -> markerId 0..7). A
   // cosmetic, party-scoped overlay — never read by tick()/obs/persistence.
   partyMarkers = new Map<number, Map<number, number>>();
@@ -1061,6 +1075,14 @@ export class Sim {
 
   changeSkin(skin: number, catalog: SkinCatalog = 'class'): void {
     this.setPlayerSkin(this.primaryId, skin, catalog);
+  }
+
+  /** Set a player's guild name (online only) so it rides the entity wire and
+   *  shows under their nameplate. Guilds live in the server social DB, not the
+   *  Sim, so this is a passive display field. Offline/headless leave it ''. */
+  setPlayerGuild(pid: number, guild: string): void {
+    const e = this.entities.get(pid);
+    if (e) e.guild = guild;
   }
 
   /** Cosmetic skin-select event: rolls a rarity rank (once) and emits the
@@ -1623,6 +1645,7 @@ export class Sim {
     this.updateDuels();
     this.updateArena();
     this.updateTradesAndInvites();
+    this.updateLootRolls();
     this.updateInstances();
     this.updateMarket();
     this.emitDueDelayedEvents();
@@ -1645,6 +1668,12 @@ export class Sim {
       else pending.push(delayed);
     }
     this.delayedEvents = pending;
+  }
+
+  private updateLootRolls(): void {
+    for (const roll of [...this.pendingLootRolls.values()]) {
+      if (roll.expiresAt <= this.time) this.resolveLootRoll(roll);
+    }
   }
 
   private *playerEntities(): Iterable<Entity> {
@@ -4389,39 +4418,98 @@ export class Sim {
     mob.loot.copper = 0;
   }
 
-  private tryAwardItemByRandomRoll(itemId: string, mob: Entity): boolean {
-    if (this.effectiveItemLootStrategy(itemId, mob) !== 'random') return false;
+  private startNeedGreedRoll(itemId: string, mob: Entity): boolean {
+    if (this.effectiveItemLootStrategy(itemId, mob) !== 'need-greed') return false;
     const candidates = this.partyLootCandidatesForMob(mob);
     if (candidates.length <= 1) return false;
-    let winner = candidates[0];
-    let bestRoll = -1;
+    const def = ITEMS[itemId];
+    const itemName = def?.name ?? itemId;
+    const roll: PendingLootRoll = {
+      id: this.nextLootRollId++,
+      mobId: mob.id,
+      itemId,
+      itemName,
+      quality: def?.quality,
+      candidates: candidates.map((candidate) => candidate.entityId),
+      choices: new Map(),
+      expiresAt: this.time + LOOT_ROLL_TIMEOUT,
+    };
+    this.pendingLootRolls.set(roll.id, roll);
+    mob.corpseTimer = Math.max(mob.corpseTimer, LOOT_ROLL_TIMEOUT + 2);
     for (const candidate of candidates) {
-      const roll = this.rng.int(1, 100);
-      if (roll > bestRoll) {
-        bestRoll = roll;
-        winner = candidate;
-      }
+      this.emit({ type: 'lootRoll', rollId: roll.id, itemId, itemName, quality: roll.quality, expiresAt: roll.expiresAt, pid: candidate.entityId });
     }
-    const itemName = ITEMS[itemId]?.name ?? itemId;
-    for (const candidate of candidates) {
-      this.emit({ type: 'loot', text: `${winner.name} wins ${itemName} (${bestRoll})`, pid: candidate.entityId });
-    }
-    this.addItem(itemId, 1, winner.entityId);
     return true;
   }
 
   private awardSharedLootItem(itemId: string, mob: Entity, looter: PlayerMeta): void {
-    if (!this.tryAwardItemByRandomRoll(itemId, mob)) this.addItem(itemId, 1, looter.entityId);
+    if (!this.startNeedGreedRoll(itemId, mob)) this.addItem(itemId, 1, looter.entityId);
+  }
+
+  submitLootRoll(rollId: number, choice: LootRollChoice, pid?: number): void {
+    const r = this.resolve(pid);
+    if (!r) return;
+    const roll = this.pendingLootRolls.get(rollId);
+    if (!roll || !roll.candidates.includes(r.meta.entityId) || roll.choices.has(r.meta.entityId)) return;
+    roll.choices.set(r.meta.entityId, {
+      choice,
+      roll: choice === 'need' || choice === 'greed' ? this.rng.int(1, 100) : null,
+    });
+    if (roll.choices.size >= roll.candidates.length) this.resolveLootRoll(roll);
+  }
+
+  private resolveLootRoll(roll: PendingLootRoll): void {
+    if (!this.pendingLootRolls.delete(roll.id)) return;
+    const entries = roll.candidates
+      .map((pid) => ({ pid, result: roll.choices.get(pid) ?? { choice: 'pass' as const, roll: null } }))
+      .filter((entry) => entry.result.choice !== 'pass');
+    const needers = entries.filter((entry) => entry.result.choice === 'need');
+    const contenders = needers.length > 0 ? needers : entries.filter((entry) => entry.result.choice === 'greed');
+    if (contenders.length === 0) {
+      this.returnLootRollItemToCorpse(roll);
+      for (const pid of roll.candidates) this.emit({ type: 'loot', text: `Everyone passed on ${roll.itemName}.`, pid });
+      return;
+    }
+    let winner = contenders[0];
+    for (const contender of contenders.slice(1)) {
+      if ((contender.result.roll ?? 0) > (winner.result.roll ?? 0)) winner = contender;
+    }
+    const winnerMeta = this.players.get(winner.pid);
+    const winnerName = winnerMeta?.name ?? 'Unknown';
+    for (const pid of roll.candidates) {
+      this.emit({ type: 'loot', text: `${winnerName} wins ${roll.itemName} (${winner.result.roll ?? 0})`, pid });
+    }
+    this.addItem(roll.itemId, 1, winner.pid);
+  }
+
+  private returnLootRollItemToCorpse(roll: PendingLootRoll): void {
+    const mob = this.entities.get(roll.mobId);
+    if (!mob || !mob.dead) return;
+    if (!mob.loot) mob.loot = { copper: 0, items: [] };
+    const existing = mob.loot.items.find((slot) => slot.openToAll && slot.itemId === roll.itemId && !slot.personalFor);
+    if (existing) existing.count += 1;
+    else mob.loot.items.push({ itemId: roll.itemId, count: 1, openToAll: true });
+    mob.lootable = true;
   }
 
   private lootSlotVisibleTo(slot: LootSlot, pid: number): boolean {
-    return !slot.personalFor || slot.personalFor.includes(pid);
+    return slot.openToAll || !slot.personalFor || slot.personalFor.includes(pid);
+  }
+
+  private hasPendingLootRollForMob(mobId: number): boolean {
+    return [...this.pendingLootRolls.values()].some((roll) => roll.mobId === mobId);
   }
 
   private pruneCorpseLoot(mob: Entity): void {
     if (!mob.loot) return;
     mob.loot.items = mob.loot.items.filter((s) => s.count > 0 && (!s.personalFor || s.personalFor.length > 0));
     if (mob.loot.copper <= 0 && mob.loot.items.length === 0) {
+      if (this.hasPendingLootRollForMob(mob.id)) {
+        mob.loot = null;
+        mob.lootable = true;
+        mob.corpseTimer = Math.max(mob.corpseTimer, LOOT_ROLL_TIMEOUT + 2);
+        return;
+      }
       mob.loot = null;
       mob.lootable = false;
       mob.corpseTimer = Math.min(mob.corpseTimer, 4);
@@ -6551,7 +6639,8 @@ export class Sim {
       || mob.tappedById === meta.entityId
       || !!tapperParty?.members.includes(meta.entityId);
     const hasPersonalLoot = mob.loot.items.some((s) => s.personalFor?.includes(meta.entityId));
-    if (!hasSharedLootRights && !hasPersonalLoot) {
+    const hasOpenLoot = mob.loot.items.some((s) => s.openToAll && s.count > 0);
+    if (!hasSharedLootRights && !hasPersonalLoot && !hasOpenLoot) {
       this.error(meta.entityId, "You don't have permission to loot that.");
       return;
     }
@@ -6559,6 +6648,11 @@ export class Sim {
     if (hasSharedLootRights) this.distributeLootCopper(mob, meta);
     for (const s of [...mob.loot.items]) {
       if (!this.lootSlotVisibleTo(s, meta.entityId)) continue;
+      if (s.openToAll) {
+        for (let i = 0; i < s.count; i++) this.addItem(s.itemId, 1, meta.entityId);
+        s.count = 0;
+        continue;
+      }
       if (s.personalFor) {
         this.addItem(s.itemId, 1, meta.entityId);
         s.personalFor = s.personalFor.filter((id) => id !== meta.entityId);
@@ -9522,9 +9616,19 @@ export class Sim {
       const nb = ITEMS[b.itemId]?.name ?? b.itemId;
       return na.localeCompare(nb) || a.price - b.price;
     });
-    const listings = sorted.slice(0, MARKET_WIRE_LIMIT).map((l) => ({
+    // Always wire the seller their own listings first, then fill the rest of the
+    // wire budget with everyone else's. Without this, on a busy shared market a
+    // seller's goods can sort past MARKET_WIRE_LIMIT and never reach them — the
+    // SELL tab would then read "12/12" while only a handful of their listings
+    // are visible. MARKET_MAX_LISTINGS (12) ≪ MARKET_WIRE_LIMIT (120), so a
+    // seller's own goods always fit alongside a healthy slice of the market.
+    const isMine = (l: MarketListing) => !l.house && l.sellerKey === meta.name;
+    const mineSorted = sorted.filter(isMine);
+    const others = sorted.filter((l) => !isMine(l));
+    const wired = [...mineSorted, ...others.slice(0, Math.max(0, MARKET_WIRE_LIMIT - mineSorted.length))];
+    const listings = wired.map((l) => ({
       id: l.id, sellerName: l.sellerName, itemId: l.itemId, count: l.count,
-      price: l.price, mine: !l.house && l.sellerKey === meta.name, house: l.house,
+      price: l.price, mine: isMine(l), house: l.house,
     }));
     const col = this.marketCollections.get(meta.name);
     const myListingCount = this.marketListings.reduce((n, l) => n + (!l.house && l.sellerKey === meta.name ? 1 : 0), 0);

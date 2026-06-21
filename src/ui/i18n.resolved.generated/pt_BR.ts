@@ -303,6 +303,40 @@ export const pt_BR: EnTranslations = {
     "playerCard": {
       "showWalletBadge": "Mostrar selo da carteira"
     },
+    "statInfo": {
+      "fromYour": "Do seu {value} de {stat}:",
+      "desc": {
+        "str": "Aumenta seu poder de ataque, de modo que seus golpes com armas atinjam com mais força.",
+        "agi": "Aguça seus reflexos e sua mira, melhorando vários dos seus atributos de combate.",
+        "sta": "Enrijece seu corpo, aumentando sua vida máxima e a rapidez com que você recupera vida ao descansar.",
+        "int": "Amplia a reserva de mana de um conjurador e melhora sua chance de aplicar um acerto crítico com magias.",
+        "spi": "Acelera a rapidez com que a mana de um conjurador retorna ao descansar, fora de combate.",
+        "armor": "Suaviza os golpes físicos recebidos. A redução é maior contra atacantes de nível inferior e tem limite de 75%.",
+        "attackPower": "Potencializa seus ataques com armas. A cada 14 de poder de ataque, adiciona 1 de dano por segundo.",
+        "dps": "Seu dano por segundo estimado com armas, combinando o dano e a velocidade da sua arma com seu poder de ataque.",
+        "critChance": "Sua chance de um ataque atingir criticamente, causando dano dobrado.",
+        "dodge": "Sua chance de esquivar completamente de um ataque corpo a corpo recebido, sem sofrer dano."
+      },
+      "effects": {
+        "attackPower": "+{value} de Poder de ataque",
+        "rangedAttackPower": "+{value} de Poder de ataque a distância",
+        "critPct": "+{value}% de Acerto crítico",
+        "dodgePct": "+{value}% de Esquiva",
+        "armor": "+{value} de Armadura",
+        "maxHealth": "+{value} de Vida máxima",
+        "maxMana": "+{value} de Mana máxima",
+        "spellCritPct": "+{value}% de Acerto crítico com magias",
+        "healthRegen": "Cerca de {value} de vida a cada 5 seg ao descansar",
+        "manaRegen": "Cerca de {value} de mana a cada 5 seg ao descansar",
+        "damageReduction": "Redução de dano contra um atacante de nível {level}: {value}%",
+        "dpsFromAp": "Adiciona {value} de dano por segundo aos seus ataques"
+      },
+      "notes": {
+        "minorForClass": "De pouco benefício para a sua classe.",
+        "baseChance": "Inclui uma chance base de 5% compartilhada por todos os aventureiros.",
+        "dpsApprox": "Uma estimativa, que exclui acertos críticos e dano de habilidades."
+      }
+    },
     "talents": {
       "defaultBuildName": "Build {n}"
     },
@@ -334,6 +368,49 @@ export const pt_BR: EnTranslations = {
         "many": "Quem: {count} jogadores online em {realm}.",
         "other": "Quem: {count} jogadores online em {realm}."
       }
+    },
+    "account": {
+      "title": "Conta",
+      "loggedOutPrompt": "Entre para gerenciar sua conta.",
+      "memberSince": "Membro desde {date}",
+      "sectionSettings": "Configurações da conta",
+      "sectionWallet": "Carteira $WOC",
+      "sectionCharacters": "Personagens",
+      "sectionDanger": "Zona de perigo",
+      "changePassword": "Alterar senha",
+      "currentPassword": "Senha atual",
+      "newPassword": "Nova senha",
+      "confirmNewPassword": "Confirmar nova senha",
+      "savePassword": "Atualizar senha",
+      "passwordChanged": "Senha atualizada. Os outros dispositivos foram desconectados.",
+      "errCurrentRequired": "Digite sua senha atual.",
+      "errPasswordShort": "A nova senha deve ter pelo menos 6 caracteres.",
+      "errPasswordLong": "A nova senha deve ter no máximo 128 caracteres.",
+      "errPasswordUnchanged": "A nova senha deve ser diferente da atual.",
+      "errPasswordConfirm": "As novas senhas não coincidem.",
+      "emailLabel": "Email (opcional)",
+      "emailHint": "Usado apenas para recuperação de conta. Nunca enviamos email de marketing.",
+      "saveEmail": "Salvar email",
+      "emailSaved": "Email salvo.",
+      "errEmailInvalid": "Digite um endereço de email válido.",
+      "errCurrentPassword": "Sua senha atual está incorreta.",
+      "errUsernameMatch": "Esse nome de usuário não corresponde à sua conta.",
+      "errPasswordIncorrect": "Sua senha está incorreta.",
+      "errCharactersOnline": "Desconecte todos os seus personagens antes de desativar.",
+      "deactivatedLocked": "Esta conta foi desativada. Contate um administrador para restaurá-la.",
+      "charactersSummary": "Gerencie seus personagens e entre no mundo.",
+      "charactersCount": "Personagens: {count}",
+      "goToCharacters": "Ver personagens",
+      "walletSummary": "Verifique uma carteira Solana para exibir o destaque de titular no seu cartão de jogador.",
+      "manageWallet": "Gerenciar carteira",
+      "deactivate": "Desativar conta",
+      "deactivateWarning": "A desativação bloqueia sua conta e desconecta você em todos os lugares. Contate um administrador para restaurá-la. Confirme digitando novamente seu nome de usuário e senha.",
+      "confirmUsername": "Digite seu nome de usuário para confirmar",
+      "confirmPassword": "Senha",
+      "deactivateConfirm": "Desativar minha conta",
+      "deactivated": "Sua conta foi desativada.",
+      "logOut": "Sair",
+      "logOutSummary": "Sair deste dispositivo."
     }
   },
   "skinEvent": {
@@ -378,6 +455,8 @@ export const pt_BR: EnTranslations = {
     "news": "Notícias",
     "download": "Baixar",
     "loginRegister": "Entrar/Registrar",
+    "account": "Conta",
+    "logout": "Sair",
     "donate": "Doar"
   },
   "stats": {
@@ -571,36 +650,36 @@ export const pt_BR: EnTranslations = {
         "flavor": "Os mercados sentem seus movimentos: 1% do suprimento."
       },
       "tidelord": {
-        "name": "Tidelord",
-        "flavor": "The tide answers your call: 2% of supply."
+        "name": "Senhor das marés",
+        "flavor": "A maré responde ao seu chamado: 2% do suprimento."
       },
       "stormcaller": {
-        "name": "Stormcaller",
-        "flavor": "Storms gather at your name: 3% of supply."
+        "name": "Conjurador de tempestades",
+        "flavor": "As tempestades se reúnem ao seu nome: 3% do suprimento."
       },
       "krakencrown": {
-        "name": "Krakencrown",
-        "flavor": "Crowned by the deep: 4% of supply."
+        "name": "Coroa do kraken",
+        "flavor": "Coroado pelas profundezas: 4% do suprimento."
       },
       "titanforged": {
-        "name": "Titanforged",
-        "flavor": "Forged among titans: 5% of supply."
+        "name": "Forjado entre titãs",
+        "flavor": "Forjado entre titãs: 5% do suprimento."
       },
       "starhoard": {
-        "name": "Starhoard",
-        "flavor": "A hoard that bends starlight: 6% of supply."
+        "name": "Tesouro estelar",
+        "flavor": "Um tesouro que entorta a luz das estrelas: 6% do suprimento."
       },
       "voidwarden": {
-        "name": "Voidwarden",
-        "flavor": "Keeper at the void's edge: 7% of supply."
+        "name": "Guardião do vazio",
+        "flavor": "Vigia à beira do vazio: 7% do suprimento."
       },
       "realmshaper": {
-        "name": "Realmshaper",
-        "flavor": "You reshape the realm: 8% of supply."
+        "name": "Moldador do reino",
+        "flavor": "Você remodela o reino: 8% do suprimento."
       },
       "worldforger": {
-        "name": "Worldforger",
-        "flavor": "Forging a world of your own: 9% of supply."
+        "name": "Forjador de mundos",
+        "flavor": "Você forja um mundo só seu: 9% do suprimento."
       },
       "worldbearer": {
         "name": "Portador do mundo",
@@ -1609,6 +1688,8 @@ export const pt_BR: EnTranslations = {
       "title": "Livro de feitiços",
       "classSubtitle": "Habilidades de {className}",
       "close": "Fechar livro de feitiços",
+      "resetBar": "Redefinir barra",
+      "resetBarAria": "Redefinir a barra de ação atual para suas habilidades padrão",
       "trainableAtLevel": "Treinável no nível {level}",
       "learnAtLevel": "Você aprenderá isto no nível {level}.",
       "knownAbilityAria": "{name}, grau {rank}. {summary}",
@@ -1921,6 +2002,16 @@ export const pt_BR: EnTranslations = {
     "loot": {
       "takeAll": "Pegar tudo",
       "close": "Fechar saque"
+    },
+    "lootRoll": {
+      "title": "Rolagem de saque",
+      "need": "Necessidade",
+      "greed": "Ganância",
+      "pass": "Passar",
+      "needAria": "Necessidade por {item}",
+      "greedAria": "Ganância por {item}",
+      "passAria": "Passar em {item}",
+      "everyonePassed": "Todos passaram em {item}."
     }
   },
   "entities": {

@@ -303,6 +303,40 @@ export const ru_RU: EnTranslations = {
     "playerCard": {
       "showWalletBadge": "Показывать значок кошелька"
     },
+    "statInfo": {
+      "fromYour": "От вашей характеристики ({value} {stat}):",
+      "desc": {
+        "str": "Увеличивает силу атаки, благодаря чему удары вашим оружием бьют сильнее.",
+        "agi": "Обостряет реакцию и меткость, улучшая сразу несколько ваших боевых характеристик.",
+        "sta": "Закаляет ваше тело, повышая максимальное здоровье и скорость его восстановления во время отдыха.",
+        "int": "Увеличивает запас маны заклинателя и повышает его шанс нанести критический удар заклинанием.",
+        "spi": "Ускоряет восстановление маны заклинателя во время отдыха вне боя.",
+        "armor": "Смягчает входящие физические удары. Снижение урона тем больше, чем ниже уровень атакующего, и не превышает 75%.",
+        "attackPower": "Усиливает атаки вашим оружием. Каждые 14 ед. силы атаки добавляют 1 ед. урона в секунду.",
+        "dps": "Приблизительный урон вашего оружия в секунду с учетом урона и скорости оружия, а также вашей силы атаки.",
+        "critChance": "Ваш шанс нанести критический удар, наносящий двойной урон.",
+        "dodge": "Ваш шанс полностью уклониться от входящей атаки в ближнем бою, не получив урона."
+      },
+      "effects": {
+        "attackPower": "+{value} к силе атаки",
+        "rangedAttackPower": "+{value} к силе атаки в дальнем бою",
+        "critPct": "+{value}% к шансу критического удара",
+        "dodgePct": "+{value}% к уклонению",
+        "armor": "+{value} к броне",
+        "maxHealth": "+{value} к максимальному здоровью",
+        "maxMana": "+{value} к максимальному запасу маны",
+        "spellCritPct": "+{value}% к шансу критического удара заклинанием",
+        "healthRegen": "Около {value} ед. здоровья каждые 5 сек. во время отдыха",
+        "manaRegen": "Около {value} ед. маны каждые 5 сек. во время отдыха",
+        "damageReduction": "Снижение урона от атакующего {level} уровня: {value}%",
+        "dpsFromAp": "Добавляет {value} ед. урона в секунду к вашим атакам"
+      },
+      "notes": {
+        "minorForClass": "Малополезно для вашего класса.",
+        "baseChance": "Включает базовый шанс 5%, общий для всех искателей приключений.",
+        "dpsApprox": "Это приблизительная оценка, не учитывающая критические удары и урон от способностей."
+      }
+    },
     "talents": {
       "defaultBuildName": "Билд {n}"
     },
@@ -334,6 +368,49 @@ export const ru_RU: EnTranslations = {
         "many": "Список игроков: на {realm} в сети {count} игроков.",
         "other": "Список игроков: на {realm} в сети {count} игрока."
       }
+    },
+    "account": {
+      "title": "Аккаунт",
+      "loggedOutPrompt": "Войдите, чтобы управлять аккаунтом.",
+      "memberSince": "Дата регистрации: {date}",
+      "sectionSettings": "Настройки аккаунта",
+      "sectionWallet": "Кошелёк $WOC",
+      "sectionCharacters": "Персонажи",
+      "sectionDanger": "Опасная зона",
+      "changePassword": "Сменить пароль",
+      "currentPassword": "Текущий пароль",
+      "newPassword": "Новый пароль",
+      "confirmNewPassword": "Подтвердите новый пароль",
+      "savePassword": "Обновить пароль",
+      "passwordChanged": "Пароль обновлён. На других устройствах выполнен выход.",
+      "errCurrentRequired": "Введите текущий пароль.",
+      "errPasswordShort": "Новый пароль должен содержать не менее 6 символов.",
+      "errPasswordLong": "Новый пароль должен содержать не более 128 символов.",
+      "errPasswordUnchanged": "Новый пароль должен отличаться от текущего.",
+      "errPasswordConfirm": "Новые пароли не совпадают.",
+      "emailLabel": "Эл. почта (необязательно)",
+      "emailHint": "Используется только для восстановления аккаунта. Мы не рассылаем рекламные письма.",
+      "saveEmail": "Сохранить почту",
+      "emailSaved": "Почта сохранена.",
+      "errEmailInvalid": "Введите корректный адрес эл. почты.",
+      "errCurrentPassword": "Текущий пароль неверен.",
+      "errUsernameMatch": "Это имя пользователя не совпадает с вашим аккаунтом.",
+      "errPasswordIncorrect": "Неверный пароль.",
+      "errCharactersOnline": "Выйдите из всех персонажей перед деактивацией.",
+      "deactivatedLocked": "Этот аккаунт деактивирован. Для восстановления обратитесь к администратору.",
+      "charactersSummary": "Управляйте персонажами и входите в мир.",
+      "charactersCount": "Персонажей: {count}",
+      "goToCharacters": "Показать персонажей",
+      "walletSummary": "Подтвердите кошелёк Solana, чтобы показать знак держателя на карточке игрока.",
+      "manageWallet": "Управление кошельком",
+      "deactivate": "Деактивировать аккаунт",
+      "deactivateWarning": "Деактивация заблокирует ваш аккаунт и выполнит выход на всех устройствах. Для восстановления обратитесь к администратору. Подтвердите, повторно введя имя пользователя и пароль.",
+      "confirmUsername": "Введите имя пользователя для подтверждения",
+      "confirmPassword": "Пароль",
+      "deactivateConfirm": "Деактивировать мой аккаунт",
+      "deactivated": "Ваш аккаунт деактивирован.",
+      "logOut": "Выйти",
+      "logOutSummary": "Выйти на этом устройстве."
     }
   },
   "skinEvent": {
@@ -378,6 +455,8 @@ export const ru_RU: EnTranslations = {
     "news": "Новости",
     "download": "Скачать",
     "loginRegister": "Войти / Зарегистрироваться",
+    "account": "Аккаунт",
+    "logout": "Выйти",
     "donate": "Пожертвовать"
   },
   "stats": {
@@ -571,36 +650,36 @@ export const ru_RU: EnTranslations = {
         "flavor": "Рынок чувствует ваше движение: 1% предложения."
       },
       "tidelord": {
-        "name": "Tidelord",
-        "flavor": "The tide answers your call: 2% of supply."
+        "name": "Повелитель приливов",
+        "flavor": "Прилив отвечает на ваш зов: 2% предложения."
       },
       "stormcaller": {
-        "name": "Stormcaller",
-        "flavor": "Storms gather at your name: 3% of supply."
+        "name": "Призыватель бурь",
+        "flavor": "Бури собираются на ваше имя: 3% предложения."
       },
       "krakencrown": {
-        "name": "Krakencrown",
-        "flavor": "Crowned by the deep: 4% of supply."
+        "name": "Кракенова корона",
+        "flavor": "Глубины венчают вас короной: 4% предложения."
       },
       "titanforged": {
-        "name": "Titanforged",
-        "flavor": "Forged among titans: 5% of supply."
+        "name": "Титанокованный",
+        "flavor": "Выкован среди титанов: 5% предложения."
       },
       "starhoard": {
-        "name": "Starhoard",
-        "flavor": "A hoard that bends starlight: 6% of supply."
+        "name": "Звездный клад",
+        "flavor": "Клад, изгибающий звездный свет: 6% предложения."
       },
       "voidwarden": {
-        "name": "Voidwarden",
-        "flavor": "Keeper at the void's edge: 7% of supply."
+        "name": "Страж пустоты",
+        "flavor": "Хранитель у края пустоты: 7% предложения."
       },
       "realmshaper": {
-        "name": "Realmshaper",
-        "flavor": "You reshape the realm: 8% of supply."
+        "name": "Творец пределов",
+        "flavor": "Вы меняете облик мира: 8% предложения."
       },
       "worldforger": {
-        "name": "Worldforger",
-        "flavor": "Forging a world of your own: 9% of supply."
+        "name": "Кователь миров",
+        "flavor": "Куете собственный мир: 9% предложения."
       },
       "worldbearer": {
         "name": "Носитель мира",
@@ -1609,6 +1688,8 @@ export const ru_RU: EnTranslations = {
       "title": "Книга заклинаний",
       "classSubtitle": "Способности: {className}",
       "close": "Закрыть книгу заклинаний",
+      "resetBar": "Сбросить панель",
+      "resetBarAria": "Сбросить текущую панель действий до стандартных способностей",
       "trainableAtLevel": "Можно обучиться на уровне {level}",
       "learnAtLevel": "Вы изучите это на уровне {level}.",
       "knownAbilityAria": "{name}, ранг {rank}. {summary}",
@@ -1921,6 +2002,16 @@ export const ru_RU: EnTranslations = {
     "loot": {
       "takeAll": "Взять все",
       "close": "Закрыть добычу"
+    },
+    "lootRoll": {
+      "title": "Бросок за добычу",
+      "need": "Нужно",
+      "greed": "Жадность",
+      "pass": "Пас",
+      "needAria": "Нужно: {item}",
+      "greedAria": "Жадность: {item}",
+      "passAria": "Пас: {item}",
+      "everyonePassed": "Все отказались от {item}."
     }
   },
   "entities": {

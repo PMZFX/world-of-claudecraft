@@ -8,6 +8,7 @@ import {
   pruneChatLogs, pruneClientPerfReports, searchCharacters, characterCountsByRealm, moderationStatusForAccount, renameCharacter,
   findCharacterReportTargetByName, topArenaRatings, topLifetimeXp, chatMuteStatusForAccount, loadAccountCosmetics,
   referralCountForAccount, primarySlugForAccount, lifetimeXpStanding, isAdminAccount,
+  accountById, characterCountForAccount, updatePasswordHash, revokeTokensExcept, setAccountEmail, setAccountDeactivated,
 } from './db';
 import { virtualLevel } from '../src/sim/types';
 import { Sim } from '../src/sim/sim';
@@ -24,6 +25,9 @@ import { requestIp, rateLimited, authThrottled, recordAuthFailure, clearAuthFail
 import { verifyTurnstile } from './turnstile';
 import { handleWalletChallenge, handleWalletLink, handleWalletGet, handleWalletUnlink } from './wallet';
 import { handleWocBalance, parseWocBalanceQuery } from './woc_balance';
+import {
+  handleAccountWhoami, handleAccountChangePassword, handleAccountLogout, handleAccountSetEmail, handleAccountDeactivate,
+} from './account';
 import { handleCardUpload, handleCardRoutes, captureReferral, cardUploadContentLengthTooLarge } from './player_card';
 import { handleAdminApi } from './admin';
 import { pruneExpiredBlockedIps } from './ip_block_db';
@@ -209,6 +213,13 @@ async function bearerAccount(req: http.IncomingMessage): Promise<number | null> 
   const m = /^Bearer ([a-f0-9]{64})$/.exec(auth);
   if (!m) return null;
   return accountForToken(m[1]);
+}
+
+// Raw bearer token string (or null) — needed when an account action must keep
+// the caller's own session alive while revoking the rest (password change).
+function bearerToken(req: http.IncomingMessage): string | null {
+  const m = /^Bearer ([a-f0-9]{64})$/.exec(req.headers.authorization ?? '');
+  return m ? m[1] : null;
 }
 
 async function bearerActiveAccount(req: http.IncomingMessage, res: http.ServerResponse): Promise<number | null> {
@@ -590,6 +601,42 @@ async function handleApi(req: http.IncomingMessage, res: http.ServerResponse): P
       const limit = Math.max(1, Math.min(RELEASES_SIZE, Number(params.get('limit')) || RELEASES_SIZE));
       const entries = await getReleases();
       return json(res, 200, { repo: GITHUB_REPO, releases: entries.slice(0, limit) });
+    }
+    // Account self-service portal — all bearer-auth, account-scoped. Each route
+    // delegates to an exported, testable handler in server/account.ts (mirroring
+    // server/wallet.ts); main.ts only resolves the bearer account first.
+    if (req.method === 'GET' && url === '/api/account') {
+      const accountId = await bearerActiveAccount(req, res);
+      if (accountId === null) return;
+      return handleAccountWhoami(res, accountId);
+    }
+    if (req.method === 'POST' && url === '/api/account/password') {
+      const accountId = await bearerActiveAccount(req, res);
+      if (accountId === null) return;
+      // Resolve the caller's own token once so the revoke inside the handler can
+      // never accidentally fall back to null (which would nuke this session too).
+      const callerToken = bearerToken(req);
+      if (!callerToken) return json(res, 401, { error: 'not authenticated' });
+      return handleAccountChangePassword(req, res, accountId, callerToken);
+    }
+    if (req.method === 'POST' && url === '/api/account/logout') {
+      const callerToken = bearerToken(req);
+      if (!callerToken || await accountForToken(callerToken) === null) return json(res, 401, { error: 'not authenticated' });
+      return handleAccountLogout(res, callerToken);
+    }
+    if (req.method === 'POST' && url === '/api/account/email') {
+      const accountId = await bearerActiveAccount(req, res);
+      if (accountId === null) return;
+      return handleAccountSetEmail(req, res, accountId);
+    }
+    if (req.method === 'POST' && url === '/api/account/deactivate') {
+      const accountId = await bearerActiveAccount(req, res);
+      if (accountId === null) return;
+      return handleAccountDeactivate(req, res, accountId, {
+        anyCharacterOnline: (characterIds) =>
+          [...game.clients.values()].some((s) => s.characterId != null && characterIds.includes(s.characterId)),
+        disconnectAccount: (id, reason) => game.disconnectAccount(id, reason),
+      });
     }
     // Non-custodial Solana wallet linking — all account-scoped.
     if (req.method === 'POST' && url === '/api/wallet/link/challenge') {

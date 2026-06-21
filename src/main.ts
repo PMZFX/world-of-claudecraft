@@ -15,8 +15,11 @@ import { voice } from './game/voice';
 import { sfx } from './game/sfx';
 import { activePvpOpponentIds, handlePickedEntity, hoverCursorKind, isAttackableEntity } from './game/interactions';
 import { clickMoveShouldCancel, clickMoveShouldWalk, clickMoveStep, distance2d, latencyAdjustedStopDistance, stepAngleToward } from './game/click_move';
-import { Api, ClientWorld, CharacterSummary, type ReleaseEntry } from './net/online';
+import { Api, isAuthError, ClientWorld, CharacterSummary, type ReleaseEntry } from './net/online';
 import { setWalletDisplayAvailable, setWocBalance, setWalletUiEnabled, resolveWocBalanceUpdate } from './ui/wallet_balance';
+import {
+  accountPortalModel, validatePasswordChange, validateEmailShape, deactivateConfirmReady,
+} from './ui/account_portal';
 import { absolutePublishedCardUrl, setCardUploader, setReferralProvider, setStandingProvider } from './ui/player_card_share';
 // The wallet module is loaded lazily via dynamic import() in the wallet
 // controller below, so it stays out of the main entry chunk and only loads when
@@ -161,6 +164,18 @@ function userFacingApiError(err: unknown): string {
   if (normalized === 'character already in world') return t('errors.api.alreadyInWorld');
   if (normalized === 'this character must be renamed before entering the world.') return t('errors.api.renameBeforeEntering');
   if (normalized === 'logins are only allowed from the game client') return t('errors.api.webLoginOnly');
+  // Account portal REST errors (server/main.ts /api/account/*). English-source,
+  // re-localized here onto the English-only hudChrome.account.* keys.
+  if (normalized === 'current password is incorrect') return t('hudChrome.account.errCurrentPassword');
+  if (normalized === 'enter a valid email address') return t('hudChrome.account.errEmailInvalid');
+  if (normalized === 'username does not match') return t('hudChrome.account.errUsernameMatch');
+  if (normalized === 'password is incorrect') return t('hudChrome.account.errPasswordIncorrect');
+  if (normalized === 'log out all characters before deactivating') return t('hudChrome.account.errCharactersOnline');
+  if (normalized === 'this account has been deactivated.') return t('hudChrome.account.deactivatedLocked');
+  if (normalized === 'password must be at most 128 chars') return t('hudChrome.account.errPasswordLong');
+  // The account row vanished mid-session (404 from /api/account/*); treat as a
+  // dropped session rather than rendering raw English in the form.
+  if (normalized === 'account not found') return t('errors.api.notAuthenticated');
   // Cloudflare Turnstile rejection on login/register (server/main.ts passesTurnstile).
   if (normalized === 'verification failed, please try again') return t('errors.api.verificationFailed');
   // WebSocket disconnect reasons surfaced through the fatal overlay (net/online.ts).
@@ -1645,7 +1660,7 @@ const hoverTimeouts: Record<string, number | null> = {
 };
 
 function switchMainView(targetId: string): void {
-  const views = ['#hero-view', '#highscores-view', '#wiki-view', '#news-view', '#download-view'];
+  const views = ['#hero-view', '#highscores-view', '#wiki-view', '#news-view', '#download-view', '#account-view'];
   const currentViewId = views.find(id => {
     const el = $(id);
     return el && !el.hasAttribute('hidden');
@@ -1658,7 +1673,8 @@ function switchMainView(targetId: string): void {
     '#highscores-view': 'nav-btn-highscores',
     '#wiki-view': 'nav-btn-wiki',
     '#news-view': 'nav-btn-news',
-    '#download-view': 'nav-btn-download'
+    '#download-view': 'nav-btn-download',
+    '#account-view': 'nav-btn-account'
   };
 
   const activeNavId = navMap[targetId];
@@ -1868,6 +1884,192 @@ async function enterRealmFlow(): Promise<void> {
   const auto = dir.realms.find((r) => r.name === remembered);
   if (auto) { selectRealm(auto); return; }
   showRealmList(dir);
+}
+
+// ── Home-page account portal ("Account" nav tab) ────────────────────────────
+// The nav swaps Login/Register → Account once a session exists; the portal page
+// is a thin consumer of the pure account_portal.ts model + the REST Api.
+function loginNavItem(): HTMLElement | null {
+  return ($('#nav-btn-login') as HTMLElement).closest('.nav-item') as HTMLElement | null;
+}
+
+const loggedInNavItems = ['#nav-item-account', '#nav-item-logout'];
+
+function enterLoggedInChrome(): void {
+  loggedInNavItems.forEach((sel) => { ($(sel) as HTMLElement).hidden = false; });
+  const li = loginNavItem();
+  if (li) li.hidden = true;
+}
+
+function enterLoggedOutChrome(): void {
+  loggedInNavItems.forEach((sel) => { ($(sel) as HTMLElement).hidden = true; });
+  const li = loginNavItem();
+  if (li) li.hidden = false;
+}
+
+function logoutAccount(): void {
+  const finish = () => {
+    api.clearSession();
+    location.reload();
+  };
+  if (!api.token) { finish(); return; }
+  void api.logout().finally(finish);
+}
+
+function setAccountFieldMsg(sel: string, text: string, ok: boolean): void {
+  const el = $(sel);
+  el.textContent = text;
+  el.classList.toggle('is-error', !ok && text !== '');
+  el.classList.toggle('is-ok', ok && text !== '');
+}
+
+function paintAccountPortal(
+  model: ReturnType<typeof accountPortalModel>,
+  // When the account fetch failed transiently we re-render the shell but must
+  // NOT clobber an already-populated email field: a blank value would otherwise
+  // be submitted as a null email update on the next save.
+  preserveEmailInput = false,
+): void {
+  ($('#account-logged-out') as HTMLElement).hidden = model.loggedIn;
+  ($('#account-sections') as HTMLElement).hidden = !model.loggedIn;
+  $('#account-username').textContent = model.header.username;
+  const since = $('#account-member-since');
+  since.textContent = model.header.memberSinceIso
+    ? t('hudChrome.account.memberSince', { date: formatDateTime(new Date(model.header.memberSinceIso), { dateStyle: 'medium' }) })
+    : '';
+  $('#account-char-count').textContent = t('hudChrome.account.charactersCount', {
+    count: formatNumber(model.header.characterCount),
+  });
+  if (!preserveEmailInput) ($('#account-email') as HTMLInputElement).value = model.email;
+}
+
+const loggedOutModel = () => accountPortalModel({ loggedIn: false, username: '', email: '', createdAt: '', characterCount: 0 });
+
+function handleAccountSessionExpired(): void {
+  api.clearSession();
+  enterLoggedOutChrome();
+  paintAccountPortal(loggedOutModel());
+}
+
+// Load the account portal from a (possibly restored) token. A 401/403 means the
+// token is genuinely stale → clear the session. Any other failure (5xx from a
+// restarting server, a captive-portal blip, being briefly offline) is transient:
+// keep the token and stay optimistically logged in, since only the local copy
+// would be lost. `setChrome` flips the nav into the logged-in state (boot path).
+async function loadAccountPortal(setChrome: boolean): Promise<void> {
+  if (!api.token) { paintAccountPortal(loggedOutModel()); return; }
+  try {
+    const acct = await api.getAccount();
+    if (setChrome) enterLoggedInChrome();
+    paintAccountPortal(accountPortalModel({
+      loggedIn: true, username: acct.username, email: acct.email,
+      createdAt: acct.createdAt, characterCount: acct.characterCount,
+    }));
+  } catch (err) {
+    if (isAuthError(err)) { handleAccountSessionExpired(); return; }
+    console.warn('account session check deferred (transient):', err);
+    if (setChrome) enterLoggedInChrome();
+    paintAccountPortal(accountPortalModel({
+      loggedIn: true, username: api.username ?? '', email: '', createdAt: '', characterCount: 0,
+    }), true);
+  }
+}
+
+// Boot path: a restored token re-validates and sets the logged-in nav chrome.
+const revalidateAccountSession = (): Promise<void> => loadAccountPortal(true);
+// Navigating to the Account view: refresh the portal without touching the chrome.
+const renderAccountPortal = (): Promise<void> => loadAccountPortal(false);
+
+// `focusWallet` differentiates the Wallet card's CTA from "View Characters":
+// both land on the realm/character picker, but Manage Wallet then scrolls to and
+// focuses the wallet control once it renders.
+let pendingWalletFocus = false;
+function accountGoToCharacters(focusWallet = false): void {
+  pendingWalletFocus = focusWallet;
+  switchMainView('#hero-view');
+  void enterRealmFlow().then(() => { if (pendingWalletFocus) tryFocusWalletButton(); });
+}
+
+function tryFocusWalletButton(attempt = 0): void {
+  const btn = document.getElementById('btn-wallet');
+  if (btn && btn.offsetParent !== null) {
+    pendingWalletFocus = false;
+    btn.scrollIntoView({ block: 'center' });
+    btn.focus();
+    return;
+  }
+  if (attempt < 20) window.setTimeout(() => tryFocusWalletButton(attempt + 1), 100);
+  else pendingWalletFocus = false;
+}
+
+let accountPortalWired = false;
+function setupAccountPortal(): void {
+  if (accountPortalWired) return;
+  accountPortalWired = true;
+
+  ($('#account-password-form') as HTMLFormElement).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const current = ($('#account-current-pass') as HTMLInputElement).value;
+    const next = ($('#account-new-pass') as HTMLInputElement).value;
+    const confirm = ($('#account-confirm-pass') as HTMLInputElement).value;
+    const err = validatePasswordChange(current, next, confirm);
+    if (err) {
+      const key = err === 'empty-current' ? 'errCurrentRequired'
+        : err === 'too-short' ? 'errPasswordShort'
+        : err === 'too-long' ? 'errPasswordLong'
+        : err === 'confirm-mismatch' ? 'errPasswordConfirm'
+        : 'errPasswordUnchanged';
+      setAccountFieldMsg('#account-password-msg', t(`hudChrome.account.${key}` as TranslationKey), false);
+      return;
+    }
+    try {
+      await api.changePassword(current, next);
+      setAccountFieldMsg('#account-password-msg', t('hudChrome.account.passwordChanged'), true);
+      ($('#account-current-pass') as HTMLInputElement).value = '';
+      ($('#account-new-pass') as HTMLInputElement).value = '';
+      ($('#account-confirm-pass') as HTMLInputElement).value = '';
+    } catch (e2) {
+      setAccountFieldMsg('#account-password-msg', userFacingApiError(e2), false);
+    }
+  });
+
+  ($('#account-email-form') as HTMLFormElement).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = ($('#account-email') as HTMLInputElement).value;
+    if (!validateEmailShape(email)) {
+      setAccountFieldMsg('#account-email-msg', t('hudChrome.account.errEmailInvalid'), false);
+      return;
+    }
+    try {
+      const saved = await api.setEmail(email);
+      ($('#account-email') as HTMLInputElement).value = saved;
+      setAccountFieldMsg('#account-email-msg', t('hudChrome.account.emailSaved'), true);
+    } catch (e2) {
+      setAccountFieldMsg('#account-email-msg', userFacingApiError(e2), false);
+    }
+  });
+
+  const deUser = $('#account-deactivate-user') as HTMLInputElement;
+  const dePass = $('#account-deactivate-pass') as HTMLInputElement;
+  const deBtn = $('#account-deactivate-btn') as HTMLButtonElement;
+  const syncDeactivate = () => { deBtn.disabled = !deactivateConfirmReady(api.username ?? '', deUser.value, dePass.value); };
+  deUser.addEventListener('input', syncDeactivate);
+  dePass.addEventListener('input', syncDeactivate);
+  ($('#account-deactivate-form') as HTMLFormElement).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await api.deactivateAccount(deUser.value, dePass.value);
+      api.clearSession();
+      setAccountFieldMsg('#account-deactivate-msg', t('hudChrome.account.deactivated'), true);
+      window.setTimeout(() => location.reload(), 1200);
+    } catch (e2) {
+      setAccountFieldMsg('#account-deactivate-msg', userFacingApiError(e2), false);
+    }
+  });
+
+  ($('#account-manage-wallet') as HTMLElement).addEventListener('click', () => accountGoToCharacters(true));
+  ($('#account-go-characters') as HTMLElement).addEventListener('click', () => accountGoToCharacters(false));
+  ($('#account-logout') as HTMLElement).addEventListener('click', logoutAccount);
 }
 
 function showRealmList(dir?: import('./net/online').RealmDirectory): void {
@@ -3512,7 +3714,34 @@ function wireStartScreens(): void {
   const offlineNameInput = $('#char-name') as HTMLInputElement;
   const offlineError = $('#offline-error');
   
-  const handleOnlineSelect = () => show('#login-panel');
+  const goToLoggedInPlay = () => {
+    void enterRealmFlow().catch((err) => {
+      if (isAuthError(err)) {
+        api.clearSession();
+        enterLoggedOutChrome();
+      } else {
+        loginError(userFacingApiError(err));
+      }
+      show('#login-panel');
+    });
+  };
+
+  const enterOnlinePlayFlow = () => {
+    switchMainView('#hero-view');
+    if (api.token) {
+      goToLoggedInPlay();
+      return;
+    }
+    show('#mode-select');
+  };
+
+  const handleOnlineSelect = () => {
+    if (api.token) {
+      goToLoggedInPlay();
+      return;
+    }
+    show('#login-panel');
+  };
 
   const handleOfflineStart = (cls: PlayerClass) => {
     const rawName = offlineNameInput.value.trim();
@@ -3826,6 +4055,10 @@ function wireStartScreens(): void {
     // so don't reset the widget or let the user re-submit the (now duplicate) auth.
     try {
       $('#charselect-user').textContent = api.username ?? '';
+      // Persist the session so a reload restores the logged-in "Account" tab,
+      // and reveal that tab now.
+      api.saveSession();
+      enterLoggedInChrome();
       // bind-on-login: surface the account's linked wallet (and flip a
       // connected-but-unlinked button into a "Link" call-to-action).
       void refreshWalletLinkStatus();
@@ -4193,10 +4426,7 @@ function wireStartScreens(): void {
     });
   };
 
-  setupNavBtn(navBtnPlay, '#hero-view', () => {
-    switchMainView('#hero-view');
-    show('#mode-select');
-  });
+  setupNavBtn(navBtnPlay, '#hero-view', enterOnlinePlayFlow);
 
   setupNavBtn(navBtnHighscores, '#highscores-view', () => {
     switchMainView('#highscores-view');
@@ -4211,6 +4441,20 @@ function wireStartScreens(): void {
   setupNavBtn(navBtnLogin, '#hero-view', () => {
     show('#login-panel');
   });
+  setupNavBtn($('#nav-btn-account'), '#account-view', () => {
+    switchMainView('#account-view');
+    void renderAccountPortal();
+  });
+  setupNavBtn($('#nav-btn-logout'), '#hero-view', logoutAccount);
+  setupAccountPortal();
+  // Restore a persisted session: show the Account tab immediately, then confirm
+  // the stored token is still valid against the server (clearing it if not).
+  if (api.restoreSession()) {
+    enterLoggedInChrome();
+    void revalidateAccountSession();
+  } else {
+    enterLoggedOutChrome();
+  }
 
   // Header Logo click listener to return to homepage
   const headerLogoBtn = $('#header-logo-btn');

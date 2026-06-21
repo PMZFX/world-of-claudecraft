@@ -43,6 +43,43 @@ describe('client HTML shell', () => {
     expect(liveHtml).not.toContain('id="chat-input"');
   });
 
+  it('keeps the Account nav tab hidden unless a session is restored', () => {
+    expect(html).toContain('<li class="nav-item" id="nav-item-account" hidden>');
+    expect(html).toContain('<li class="nav-item" id="nav-item-logout" hidden>');
+    expect(mainTs).toContain('if (api.restoreSession()) {');
+    expect(mainTs).toContain('} else {\n    enterLoggedOutChrome();\n  }');
+  });
+
+  it('shows a logged-in Logout nav item next to Account', () => {
+    expect(html).toContain('id="nav-btn-account"');
+    expect(html).toContain('id="nav-btn-logout"');
+    expect(html.indexOf('id="nav-btn-account"')).toBeLessThan(html.indexOf('id="nav-btn-logout"'));
+    expect(html).toContain('data-i18n="nav.logout"');
+    expect(mainTs).toContain("const loggedInNavItems = ['#nav-item-account', '#nav-item-logout'];");
+    expect(mainTs).toContain('function logoutAccount(): void {');
+    expect(mainTs).toContain('void api.logout().finally(finish);');
+    expect(mainTs).toContain('api.clearSession();');
+    expect(mainTs).toContain("setupNavBtn($('#nav-btn-logout'), '#hero-view', logoutAccount);");
+  });
+
+  it('requires users to confirm a new account password', () => {
+    expect(html).toContain('id="account-confirm-pass"');
+    expect(mainTs).toContain("const confirm = ($('#account-confirm-pass') as HTMLInputElement).value;");
+    expect(mainTs).toContain('validatePasswordChange(current, next, confirm)');
+  });
+
+  it('routes logged-in play navigation to the realm and character flow', () => {
+    expect(mainTs).toContain('const goToLoggedInPlay = () => {');
+    expect(mainTs).toContain('void enterRealmFlow().catch((err) => {');
+    expect(mainTs).toContain('api.clearSession();');
+    expect(mainTs).toContain('const enterOnlinePlayFlow = () => {');
+    expect(mainTs).toContain('if (api.token) {');
+    expect(mainTs).toContain('goToLoggedInPlay();');
+    expect(mainTs).toContain('setupNavBtn(navBtnPlay, \'#hero-view\', enterOnlinePlayFlow);');
+    expect(mainTs).toContain('const handleOnlineSelect = () => {');
+    expect(mainTs).toContain("show('#login-panel');");
+  });
+
   it('ships crawlable SEO metadata and sitemap hints', () => {
     expect(html).toContain('<meta name="robots" content="index, follow, max-image-preview:large" />');
     expect(html).toContain('<link rel="canonical" href="https://worldofclaudecraft.com/" />');
@@ -362,16 +399,38 @@ describe('client HTML shell', () => {
     expect(html).toContain('body.mobile-touch .action-btn.mobile-drag-source');
   });
 
-  it('falls back to the normal hotbar when a form hotbar has no saved spells', () => {
+  it('seeds druid form bars with the form kit, and only clones normal for rogue stealth', () => {
+    expect(hudTs).toContain('if (this.isFormKitBar()) {');
+    expect(hudTs).toContain('if (this.seedFormBarIfNeeded(parsed)) return;');
+    expect(hudTs).toContain('buildDefaultFormBar(this.formKitAbilityIds(this.activeHotbarForm), Hud.BAR_ABILITY_SLOTS)');
     expect(hudTs).toContain('const emptyFormMap = this.activeHotbarForm !== \'normal\' && parsed.every((action) => action === null);');
     expect(hudTs).toContain("localStorage.getItem(this.slotMapKey('normal'))");
     expect(hudTs).not.toContain('this.loadedSlotMapFromStorage = stored || this.activeHotbarForm !== \'normal\';');
+  });
+
+  it('migrates a pre-existing form bar at most once via a per-form seeded marker', () => {
+    expect(hudTs).toContain('_seeded');
+    expect(hudTs).toContain('shouldSeedFormBar(parsed, normalActions, false)');
+  });
+
+  it('only auto-places abilities that belong on the active form bar', () => {
+    expect(hudTs).toContain('if (this.shouldAutoPlaceOnForm(id, this.activeHotbarForm)) autoPlaceAbilityIds.add(id);');
   });
 
   it('keeps the active druid form toggle on its form action bar', () => {
     expect(hudTs).toContain("if (this.activeHotbarForm === 'bear') return 'bear_form';");
     expect(hudTs).toContain("if (this.activeHotbarForm === 'cat') return 'cat_form';");
     expect(hudTs).toContain('if (formToggle && knownAbilityIds.includes(formToggle)) autoPlaceAbilityIds.add(formToggle);');
+  });
+
+  it('offers a reset-to-default action bar button in the spellbook, only for classes with form bars', () => {
+    expect(hudTs).toContain('data-reset-bar');
+    expect(hudTs).toContain('this.resetActiveFormBarToDefault()');
+    expect(hudTs).toContain("t('abilityUi.spellbook.resetBar')");
+    expect(html).toContain('.spellbook-reset {');
+    expect(html).toContain('body.mobile-touch #spellbook .spellbook-reset {');
+    expect(hudTs).toContain('const resetBtnHtml = this.classHasFormBars()');
+    expect(hudTs).toContain('return classHasFormBars(this.sim.cfg.playerClass);');
   });
 
   it('shows mobile spellbook add and remove controls for the spell bar', () => {

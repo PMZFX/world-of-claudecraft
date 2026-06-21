@@ -1,7 +1,7 @@
 import * as http from 'node:http';
 import { json, readBody } from './http_util';
 import { rateLimited } from './ratelimit';
-import { findAccount, touchLogin, saveToken, accountForToken, isAdminAccount } from './db';
+import { findAccount, touchLogin, saveToken, accountForToken, isAdminAccount, setAccountDeactivated } from './db';
 import { verifyPassword, newToken } from './auth';
 import {
   overviewCounts, registrationsByDay, sessionsByDay, classDistribution, levelDistribution,
@@ -129,6 +129,17 @@ export async function handleAdminApi(
         return ok(res, { ok: true });
       } catch (err) {
         return fail(res, 400, err instanceof Error ? err.message : 'moderation action failed');
+      }
+    }
+    // Reverse a player's self-service deactivation (admin-only).
+    const reactivateMatch = /^\/admin\/api\/moderation\/accounts\/(\d+)\/reactivate$/.exec(path);
+    if (req.method === 'POST' && reactivateMatch) {
+      const targetAccountId = Number(reactivateMatch[1]);
+      try {
+        await setAccountDeactivated(targetAccountId, false);
+        return ok(res, { ok: true });
+      } catch (err) {
+        return fail(res, 400, err instanceof Error ? err.message : 'reactivation failed');
       }
     }
     const chatMuteMatch = /^\/admin\/api\/moderation\/accounts\/(\d+)\/chat-mute$/.exec(path);
