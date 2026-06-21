@@ -5375,6 +5375,10 @@ export class Hud {
   renderBags(): void {
     const el = $('#bags');
     const sim = this.sim;
+    // .bag-grid (not #bags) is the scroll container; it is recreated on every
+    // rebuild, so capture its scroll offset and reapply it to the fresh grid —
+    // otherwise using an item (e.g. a potion) snaps the list back to the top.
+    const prevScrollTop = el.querySelector('.bag-grid')?.scrollTop ?? 0;
     el.innerHTML = `<div class="panel-title"><span>${esc(t('itemUi.bags.title'))}</span><button type="button" class="x-btn" data-close aria-label="${esc(t('itemUi.bags.close'))}">${svgIcon('close')}</button></div>`;
     const grid = document.createElement('div');
     grid.className = 'bag-grid';
@@ -5452,6 +5456,7 @@ export class Hud {
       grid.appendChild(row);
     }
     el.appendChild(grid);
+    grid.scrollTop = prevScrollTop;
     const money = document.createElement('div');
     money.className = 'money';
     money.innerHTML = `${this.wocBalanceHtml()}${this.moneyHtml(sim.copper)}`;
