@@ -24,7 +24,7 @@ export interface BotTrackingContext { readonly [botTrackingBrand]: true }
 export interface BotDetector {
   createTrackingContext(ref: PlayerSessionRef): BotTrackingContext;
   releaseTrackingContext(ctx: BotTrackingContext): void;
-  observeCommand(ctx: BotTrackingContext, cmd: string, now: number): void;
+  observeCommand(ctx: BotTrackingContext, cmd: string, now: number, message?: unknown): void;
   observeEvent(ctx: BotTrackingContext, ev: SimEvent, now: number): void;
   observeInput(ctx: BotTrackingContext, frame: MoveInputFrame, now: number): void;
   observeProtocolAnomaly(ctx: BotTrackingContext, anomaly: ProtocolAnomaly, raw: string, now: number): void;

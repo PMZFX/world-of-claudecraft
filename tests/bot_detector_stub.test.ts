@@ -10,6 +10,7 @@ describe('bot-detector stub (open-source no-op)', () => {
 
     // A full observation cycle is inert and never escalates.
     detector.observeCommand(ctx, 'attack', Date.now());
+    detector.observeCommand(ctx, 'attack', Date.now(), {some: 'payload'});
     detector.observeEvent(ctx, { type: 'tradeDone' } as any, Date.now());
     detector.observeInput(ctx, { moveInput: emptyMoveInput(), facing: 0 }, Date.now());
     detector.observeProtocolAnomaly(ctx, 'unknown_command', '{"t":"cmd","cmd":"x"}', Date.now());
