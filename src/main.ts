@@ -18,7 +18,7 @@ import { music } from './game/music';
 import { voice } from './game/voice';
 import { sfx } from './game/sfx';
 import { activePvpOpponentIds, handlePickedEntity, hoverCursorKind, isAttackableEntity } from './game/interactions';
-import { clickMoveShouldCancel, clickMoveShouldWalk, clickMoveStep, distance2d, latencyAdjustedStopDistance, stepAngleToward } from './game/click_move';
+import { clickMoveShouldWalk, clickMoveStep, distance2d, latencyAdjustedStopDistance, resolveClickMoveAction, stepAngleToward } from './game/click_move';
 import { Api, isAuthError, ClientWorld, CharacterSummary, NATIVE_APP, type ReleaseEntry } from './net/online';
 import { setWalletDisplayAvailable, setWocBalance, setWalletUiEnabled, resolveWocBalanceUpdate } from './ui/wallet_balance';
 import {
@@ -1307,13 +1307,18 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
     const mi = input.readMoveInput();
     let facing: number | null = mouselook ? input.camYaw : null;
     if (input.clickMoveTarget) {
-      if (clickMoveShouldCancel(mi, {
+      const action = resolveClickMoveAction(mi, {
         mouselook,
         movementSuspended: input.suspendMovement,
         playerDead: world.player.dead,
         enabled: settings.get('clickToMove') > 0 || settings.get('attackMove'),
-      })) {
+      });
+      if (action === 'cancel') {
         input.clearClickMove();
+      } else if (action === 'pause') {
+        // Game menu is up: hold the destination and stand still; the run resumes
+        // when the menu closes. mi is already all-false here (movement suspended).
+        return { mi, facing };
       } else {
         if (input.clickMoveEntityId !== null) {
           const e = world.entities.get(input.clickMoveEntityId);

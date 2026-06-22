@@ -101,6 +101,24 @@ describe('Input autorun', () => {
     expect(input.autorun).toBe(true);
     expect(input.readMoveInput().forward).toBe(true);
   });
+
+  it('opening the Escape menu pauses but does not cancel autorun, and it resumes on close', () => {
+    // The classic complaint: autorun, then hit Escape to change a keybind or a
+    // setting. Suspending movement (the open menu) must only pause forward motion
+    // for that frame, never clear the autorun latch, so closing the menu resumes
+    // the run instead of stranding the player.
+    const { input } = makeInput();
+    input.toggleAutorun();
+    expect(input.readMoveInput().forward).toBe(true);
+
+    input.suspendMovement = true; // mirrors main.ts setting it while the game menu is open
+    expect(input.autorun).toBe(true); // latch survives the menu
+    expect(input.readMoveInput().forward).toBe(false); // held still while suspended
+
+    input.suspendMovement = false; // menu closed
+    expect(input.autorun).toBe(true);
+    expect(input.readMoveInput().forward).toBe(true); // run resumes
+  });
 });
 
 describe('Input click-to-move marker pulses', () => {
