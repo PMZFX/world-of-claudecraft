@@ -297,7 +297,8 @@ export const ja_JP: EnTranslations = {
         "frame": "フレームとタイミング",
         "network": "ネットワーク",
         "renderer": "レンダラー",
-        "system": "システム"
+        "system": "システム",
+        "input": "Input"
       },
       "labels": {
         "fps": "FPS",
@@ -317,7 +318,8 @@ export const ja_JP: EnTranslations = {
         "gpu": "GPU",
         "memory": "メモリ",
         "hitches": "カクつき",
-        "entities": "エンティティ"
+        "entities": "エンティティ",
+        "apm": "APM"
       },
       "themes": {
         "gold": "ゴールド",

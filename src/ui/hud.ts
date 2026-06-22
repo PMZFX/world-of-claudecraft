@@ -547,6 +547,7 @@ export class Hud {
   private openQuestDetailId: string | null = null;
   private selectedQuestLogId: string | null = null;
   private questDialogReturnFocus: HTMLElement | null = null;
+  private questDialogOpenedAtMs = 0;
   private questLogReturnFocus: HTMLElement | null = null;
   private lastPortraitTarget = -999;
   // swing timer: the period is captured from the reset edge (swingTimer jumping
@@ -5068,6 +5069,7 @@ export class Hud {
   openQuestDialog(npcId: number): void {
     const npc = this.sim.entities.get(npcId);
     if (!npc || npc.kind !== 'npc') return;
+    this.questDialogOpenedAtMs = performance.now();
     if ($('#quest-dialog').style.display !== 'block') this.questDialogReturnFocus = this.currentFocusableElement();
     this.closeOtherWindows('#quest-dialog');
     // Voice the greeting only on the initial open — renderGossip also runs when
@@ -5190,14 +5192,22 @@ export class Hud {
       btn.className = 'btn';
       btn.type = 'button';
       btn.textContent = t('questUi.dialog.accept');
-      btn.addEventListener('click', () => { this.sim.acceptQuest(questId); this.renderGossip(npc); });
+      btn.addEventListener('click', () => {
+        this.sim.acceptQuest(questId);
+        this.sim.reportTelemetry('quest_accept', { timeMs: performance.now() - this.questDialogOpenedAtMs });
+        this.renderGossip(npc);
+      });
       el.appendChild(btn);
     } else if (state === 'ready') {
       const btn = document.createElement('button');
       btn.className = 'btn';
       btn.type = 'button';
       btn.textContent = t('questUi.dialog.completeQuest');
-      btn.addEventListener('click', () => { this.sim.turnInQuest(questId); this.renderGossip(npc); });
+      btn.addEventListener('click', () => {
+        this.sim.turnInQuest(questId);
+        this.sim.reportTelemetry('quest_turnin', { timeMs: performance.now() - this.questDialogOpenedAtMs });
+        this.renderGossip(npc);
+      });
       el.appendChild(btn);
     }
     const back = document.createElement('button');

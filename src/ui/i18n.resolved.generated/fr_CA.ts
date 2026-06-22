@@ -297,7 +297,8 @@ export const fr_CA: EnTranslations = {
         "frame": "Images et cadence",
         "network": "Réseau",
         "renderer": "Rendu",
-        "system": "Système"
+        "system": "Système",
+        "input": "Input"
       },
       "labels": {
         "fps": "FPS",
@@ -317,7 +318,8 @@ export const fr_CA: EnTranslations = {
         "gpu": "GPU",
         "memory": "Mémoire",
         "hitches": "Saccades",
-        "entities": "Entités"
+        "entities": "Entités",
+        "apm": "APM"
       },
       "themes": {
         "gold": "Or",

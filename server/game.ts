@@ -1487,6 +1487,9 @@ export class GameServer {
         if (exit) sim.leaveDungeon(pid);
         break;
       }
+      // client telemetry should not be considered as unknown command. Used for offline stats computing.
+      case 'telemetry':
+        break;
       default:
         this.botDetector.observeProtocolAnomaly(session.botTrackingContext, 'unknown_command', raw, receivedAtMs);
     }

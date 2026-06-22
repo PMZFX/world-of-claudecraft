@@ -8098,6 +8098,9 @@ export class Sim {
     this.emit({ type: 'log', text: `Quest completed: ${quest.name}`, color: '#ff0', pid: meta.entityId });
   }
 
+  // No-op in offline mode
+  reportTelemetry(): void {}
+
   private onMobKilledForQuests(mob: Entity, meta: PlayerMeta): void {
     for (const qp of meta.questLog.values()) {
       if (qp.state !== 'active') continue;

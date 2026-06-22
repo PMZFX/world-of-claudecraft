@@ -297,7 +297,8 @@ export const ko_KR: EnTranslations = {
         "frame": "프레임 및 시간",
         "network": "네트워크",
         "renderer": "렌더러",
-        "system": "시스템"
+        "system": "시스템",
+        "input": "Input"
       },
       "labels": {
         "fps": "FPS",
@@ -317,7 +318,8 @@ export const ko_KR: EnTranslations = {
         "gpu": "GPU",
         "memory": "메모리",
         "hitches": "버벅임",
-        "entities": "개체"
+        "entities": "개체",
+        "apm": "APM"
       },
       "themes": {
         "gold": "황금",

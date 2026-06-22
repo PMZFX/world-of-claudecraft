@@ -297,7 +297,8 @@ export const ru_RU: EnTranslations = {
         "frame": "Кадры и время",
         "network": "Сеть",
         "renderer": "Рендер",
-        "system": "Система"
+        "system": "Система",
+        "input": "Input"
       },
       "labels": {
         "fps": "FPS",
@@ -317,7 +318,8 @@ export const ru_RU: EnTranslations = {
         "gpu": "GPU",
         "memory": "Память",
         "hitches": "Подвисания",
-        "entities": "Объекты"
+        "entities": "Объекты",
+        "apm": "APM"
       },
       "themes": {
         "gold": "Золото",

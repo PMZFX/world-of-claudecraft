@@ -15,8 +15,8 @@ import { normalizeMoveFacing, sanitizeMoveInput } from '../sim/move_input';
 import {
   isOverheadEmoteId,
   type AccountCosmetics, type ArenaInfo, type CharacterSearchResult, type DuelInfo, type FriendInfo,
-  type IWorld, type LeaderboardEntry, type MarketInfo, type OverheadEmoteId, type PartyInfo,
-  type PresenceStatus, type SocialInfo, type TradeInfo,
+  type IWorld, type LeaderboardEntry, type MarketInfo, type OverheadEmoteId,
+  type PartyInfo, type PresenceStatus, type SocialInfo, type TradeInfo,
 } from '../world_api';
 
 // ---------------------------------------------------------------------------
@@ -1090,6 +1090,10 @@ export class ClientWorld implements IWorld {
     if (!this.canSendCommand()) return;
     this.pendingQuestCommands.set(questId, 'turnin');
     this.cmd({ cmd: 'turnin', quest: questId });
+  }
+  reportTelemetry(kind: string, data: Record<string, number>): void {
+    if (!this.canSendCommand()) return;
+    this.cmd({ cmd: 'telemetry', kind, ...data });
   }
   abandonQuest(questId: string): void {
     if (!this.canSendCommand()) return;

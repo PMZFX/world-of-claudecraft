@@ -1,6 +1,7 @@
 import { Sim } from './sim/sim';
 import { Renderer } from './render/renderer';
 import { Input } from './game/input';
+import { InputActivityMeter, installInputActivityTracking } from './game/input_activity';
 import { Keybinds } from './game/keybinds';
 import { Settings, GameSettings, SETTING_RANGES, normalizeClickMoveButton } from './game/settings';
 import { MobileControls, PHONE_TOUCH_QUERY, isPhoneTouchDevice, useTouchInterface, setInterfaceMode, interfaceModeFromSetting } from './game/mobile_controls';
@@ -1488,6 +1489,14 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
   // online-only and null offline; Chromium-only sources (heap, connection) report
   // null elsewhere so their rows simply hide. The pure assembly lives in
   // perf_metrics_sampler.ts; here we inject the live sources.
+  // Input-activity meter for the overlay APM readout
+  const inputMeter = new InputActivityMeter();
+  installInputActivityTracking(inputMeter, window, () => performance.now());
+  const APM_BEAT_MS = 10_000;
+  window.setInterval(() => {
+    world.reportTelemetry('apm', { count: inputMeter.drainCount(), periodMs: APM_BEAT_MS });
+  }, APM_BEAT_MS);
+
   const sampleMetrics = createMetricsSampler({
     renderer,
     meter: perfMeter,
@@ -1495,6 +1504,7 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
     getEntityCount: () => world.entities.size,
     getEchoMs: () => onlineInputEchoMs,
     getJitterMs: () => onlineJitterMs,
+    getApm: () => inputMeter.apm(performance.now()),
   });
 
   function frame(now: number): void {

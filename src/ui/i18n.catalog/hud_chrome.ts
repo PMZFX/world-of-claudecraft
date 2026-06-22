@@ -193,6 +193,7 @@ export const hudChromeStrings = {
       network: "Network",
       renderer: "Renderer",
       system: "System",
+      input: "Input",
     },
     // Short metric labels shown in the overlay's left column and the Stats toggles.
     labels: {
@@ -214,6 +215,7 @@ export const hudChromeStrings = {
       memory: "Memory",
       hitches: "Hitches",
       entities: "Entities",
+      apm: "APM",
     },
     // Color-theme preset names (also the swatches' accessible names).
     themes: {

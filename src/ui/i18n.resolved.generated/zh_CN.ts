@@ -297,7 +297,8 @@ export const zh_CN: EnTranslations = {
         "frame": "帧与计时",
         "network": "网络",
         "renderer": "渲染器",
-        "system": "系统"
+        "system": "系统",
+        "input": "Input"
       },
       "labels": {
         "fps": "FPS",
@@ -317,7 +318,8 @@ export const zh_CN: EnTranslations = {
         "gpu": "GPU",
         "memory": "内存",
         "hitches": "卡顿",
-        "entities": "实体"
+        "entities": "实体",
+        "apm": "APM"
       },
       "themes": {
         "gold": "金色",

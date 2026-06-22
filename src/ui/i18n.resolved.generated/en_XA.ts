@@ -297,7 +297,8 @@ export const en_XA: EnTranslations = {
         "frame": "[Ƒŕáɱé & Ţíɱíñĝ]",
         "network": "[Ñéţŵóŕķ]",
         "renderer": "[Ŕéñðéŕéŕ]",
-        "system": "[Šýšţéɱ]"
+        "system": "[Šýšţéɱ]",
+        "input": "[Íñþúţ]"
       },
       "labels": {
         "fps": "[ƑÞŠ]",
@@ -317,7 +318,8 @@ export const en_XA: EnTranslations = {
         "gpu": "[ĜÞÚ]",
         "memory": "[Ɱéɱóŕý]",
         "hitches": "[Ĥíţçĥéš]",
-        "entities": "[Éñţíţíéš]"
+        "entities": "[Éñţíţíéš]",
+        "apm": "[ÁÞⱮ]"
       },
       "themes": {
         "gold": "[Ĝóļð]",
