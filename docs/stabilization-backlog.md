@@ -35,6 +35,7 @@ roadmap decisions.
 | Item | Result | Verification |
 |---|---|---|
 | `index.html` Meta Pixel/noscript parse warning | Moved the Meta Pixel no-script image fallback from `head` to the start of `body`, which keeps the fallback behavior while making the document valid for Vite's HTML parser. | `npm run build` passed without the parse5 `disallowed-content-in-noscript-in-head` warning. |
+| Upstream analytics IDs | Removed the hardcoded Google Tag and Meta Pixel runtime snippets from the fork shell, removed the HUD Meta Pixel level-up hook, and tightened the malware scanner so analytics origins are not treated as suppressed egress by default. | `npx vitest run tests/client_shell.test.ts tests/malware_scan.test.ts`; `npm run security:gate`. |
 
 ## Accept For Now
 
@@ -49,7 +50,7 @@ roadmap decisions.
 |---|---|---|
 | Upstream merge policy | How often should this fork pull from `levy-street/main`? | `docs/development/upstream-sync.md` |
 | Release/deploy target | Will PMZFX deploy its own hosted instance, or stay local/private initially? | `docs/fork-notes.md` |
-| Fork identity | Which branding, domain, analytics, and community links should diverge from upstream? | Future design note |
+| Fork identity | Which branding, domain, and community links should diverge from upstream? | Future design note |
 
 ## Cleanup Branch Plan
 

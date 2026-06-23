@@ -133,14 +133,16 @@ describe('client HTML shell', () => {
     expect(serverMain).toContain("['/support', '/support.html']");
   });
 
-  it('loads Meta Pixel outside local development and tracks level 5', () => {
-    expect(html).toContain('https://connect.facebook.net/en_US/fbevents.js');
-    expect(html).toContain("fbq('init', '1692101265042180');");
-    expect(html).toContain("fbq('track', 'PageView');");
-    expect(html).toContain('https://www.facebook.com/tr?id=1692101265042180&ev=PageView&noscript=1');
-    expect(html).toContain("if (!['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)) {");
-    expect(hudTs).toContain("fbq('trackCustom', eventName, data ?? {});");
-    expect(hudTs).toContain("if (ev.level === 5) trackMetaPixel('ReachedLevel5', { level: ev.level });");
+  it('does not ship third-party analytics by default', () => {
+    const shells = [html, playHtml].join('\n');
+    expect(shells).not.toContain('googletagmanager.com');
+    expect(shells).not.toContain('G-BR5Z7GT7C2');
+    expect(shells).not.toContain('connect.facebook.net');
+    expect(shells).not.toContain('facebook.com/tr');
+    expect(shells).not.toContain('1692101265042180');
+    expect(hudTs).not.toContain('fbq');
+    expect(hudTs).not.toContain('trackMetaPixel');
+    expect(hudTs).not.toContain('ReachedLevel5');
   });
 
   it('excludes wallet verification surfaces from native app builds', () => {
