@@ -19,6 +19,7 @@ chat logs, moderation data, social data, wallet links, and play sessions.
 
 - `ensureSchema()`
 - `createAccount()`, `saveToken()`, `accountForToken()`
+- `loadAccountSessionState()`
 - `createCharacterCapped()`, `listCharacterSummaries()`, `getCharacter()`,
   `saveCharacterState()`
 - `GameServer.saveAll(reason)`
@@ -37,6 +38,12 @@ REST account/character request
 Character select
 -> listCharacterSummaries()
 -> roster fields plus skin JSONB expression
+```
+
+```text
+WebSocket join
+-> loadAccountSessionState()
+-> moderation, chat mute, admin, and account cosmetics
 ```
 
 ```text
@@ -78,6 +85,9 @@ accidental looseness.
 - Dirty state is marked from WebSocket movement/commands, sim events, passive
   regen/rest states, and account-cosmetic updates. Future mutation paths should
   update the dirty markers in `server/game.ts`.
+- `loadAccountSessionState()` intentionally bundles WebSocket join account data
+  that used to be separate account reads. Keep moderation, mute, admin, and
+  cosmetic session fields aligned when changing account schema.
 
 ## Verification Steps
 
@@ -88,6 +98,8 @@ accidental looseness.
 - Run DB-related tests when changing `server/db.ts`.
 - Confirm `/api/characters` does not load full `characters.state` for roster
   display unless that endpoint intentionally needs full saved state.
+- Confirm WebSocket joins still load moderation, mute, admin, and account
+  cosmetics through `loadAccountSessionState()`.
 - Confirm unchanged loaded characters increment `characterSaveSkips` rather than
   issuing duplicate `UPDATE characters` writes.
 - Confirm clean loaded characters increment `characterSaveCleanSkips` during

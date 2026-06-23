@@ -25,6 +25,7 @@ Player input
 -> ClientWorld.flushInput()
 -> WebSocket /ws
 -> server/main.ts authenticateWebSocket()
+-> accountForToken(), loadAccountSessionState(), getCharacter()
 -> GameServer.handleMessage()
 -> authoritative Sim
 -> GameServer broadcast snapshots/events

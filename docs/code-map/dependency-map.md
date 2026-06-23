@@ -64,6 +64,7 @@ Online networking:
 src/net/online.ts
 -> WebSocket / REST
 -> server/main.ts
+-> server/db.ts loadAccountSessionState()
 -> server/game.ts
 -> src/sim/sim.ts
 ```
@@ -79,7 +80,7 @@ src/net/online.ts
 | SYS-UI | UI | `src/ui/hud.ts`, `src/ui/*`, `src/main.ts` | Central client | High |
 | SYS-AUDIO | Audio | `src/game/audio.ts`, `music.ts`, `sfx.ts`, `voice.ts` | Client support | Medium |
 | SYS-NETWORK | Networking | `src/net/online.ts`, `server/main.ts`, `server/game.ts` | Central online | High |
-| SYS-SAVELOAD | Save/load | `server/db.ts`, `server/game.ts`, `src/sim/sim.ts` | Central online | High |
+| SYS-SAVELOAD | Save/load | `server/db.ts`, `server/game.ts`, `src/sim/sim.ts` | Central online and account session state | High |
 | SYS-ENTITY | Entity system | `src/sim/entity.ts`, `src/sim/types.ts`, `src/sim/sim.ts` | Central | High |
 | SYS-COMBAT | Combat | `src/sim/sim.ts`, `src/sim/mob_combat.ts`, `src/sim/content/classes.ts` | Central gameplay | High |
 | SYS-INVENTORY | Inventory | `src/sim/sim.ts`, `src/sim/content/items.ts`, `src/ui/hud.ts` | Gameplay | High |

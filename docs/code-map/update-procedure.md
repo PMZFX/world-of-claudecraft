@@ -51,6 +51,10 @@
    scripts/update-code-map.sh
    ```
 
+   If generated artifacts are committed, run this again after the commit when
+   `recent-git-changes.txt` must represent the committed state instead of the
+   pre-commit working tree.
+
 7. Add a change note under:
 
    ```text

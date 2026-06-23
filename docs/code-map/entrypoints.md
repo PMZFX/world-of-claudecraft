@@ -62,10 +62,13 @@ Server startup flow:
    player cards under `/p/`, and static files.
 5. `WebSocketServer` accepts only `/ws`.
 6. First WebSocket message must be `{t:"auth", token, character, clientSeed}`.
-7. `GameServer.join()` attaches the authenticated character to the shared
+7. `authenticateWebSocket()` resolves the token, loads bundled account session
+   state with `loadAccountSessionState()`, loads the character row with
+   `getCharacter()`, then enforces moderation, rename, and IP connection gates.
+8. `GameServer.join()` attaches the authenticated character to the shared
    authoritative `Sim`.
-8. `game.start()` begins the server tick loop.
-9. SIGINT and SIGTERM trigger character, market, session, chat log, and DB
+9. `game.start()` begins the server tick loop.
+10. SIGINT and SIGTERM trigger character, market, session, chat log, and DB
    shutdown cleanup.
 
 ## Headless RL Environment

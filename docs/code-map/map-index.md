@@ -54,6 +54,7 @@
 - [Recent Git Changes](generated/recent-git-changes.txt)
 - [Symbol Index](generated/symbol-index.txt)
 - [TODO and FIXME List](generated/todo-fixme.txt)
+- [Dependency Graph Notes](generated/dependency-graph.txt)
 
 ## Maintenance
 
@@ -66,6 +67,16 @@
 - [Upstream Sync](../development/upstream-sync.md)
 - [PR Checklist](../development/pr-checklist.md)
 - [High Risk Change Checklist](../development/high-risk-change-checklist.md)
+- [Change Notes](change-notes/)
 - [Initial Map Change Note](change-notes/2026-06-23-initial-map.md)
 - [Fork Prep Change Note](change-notes/2026-06-23-fork-prep.md)
 - [Workflow Prep Change Note](change-notes/2026-06-23-workflow-prep.md)
+- [Server Performance Baseline Change Note](change-notes/2026-06-23-server-performance-baseline.md)
+- [Self Snapshot Fast Paths Change Note](change-notes/2026-06-23-self-snapshot-fast-paths.md)
+- [Arena Ladder Cache Change Note](change-notes/2026-06-23-arena-ladder-cache.md)
+- [Command Timing Buckets Change Note](change-notes/2026-06-23-command-timing-buckets.md)
+- [WebSocket Backpressure Change Note](change-notes/2026-06-23-websocket-backpressure.md)
+- [Dirty Saves and Self State Change Note](change-notes/2026-06-23-dirty-saves-self-state.md)
+- [Arena Info Cache Change Note](change-notes/2026-06-23-arena-info-cache.md)
+- [WebSocket Account Session State Change Note](change-notes/2026-06-23-websocket-account-session-state.md)
+- [Code Map Refresh Change Note](change-notes/2026-06-23-code-map-refresh.md)

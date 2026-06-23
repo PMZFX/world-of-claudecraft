@@ -1,19 +1,19 @@
 # Recent Git Changes
 
 ## Status
-A  docs/code-map/change-notes/2026-06-23-websocket-account-session-state.md
+ M docs/code-map/data-flow-map.md
+ M docs/code-map/dependency-map.md
+ M docs/code-map/entrypoints.md
  M docs/code-map/generated/README.md
- M docs/code-map/generated/file-list.txt
  M docs/code-map/generated/recent-git-changes.txt
  M docs/code-map/generated/source-tree.txt
- M docs/code-map/generated/symbol-index.txt
- M docs/code-map/systems/networking.md
- M docs/design/2026-06-23-server-performance-baseline.md
- M server/db.ts
- M server/main.ts
- M tests/character_db.test.ts
+ M docs/code-map/map-index.md
+ M docs/code-map/systems/save-load.md
+ M docs/code-map/update-procedure.md
+?? docs/code-map/change-notes/2026-06-23-code-map-refresh.md
 
 ## Recent Commits
+2735d18d perf(server): consolidate websocket account state
 79c313ba perf(server): cache arena self info
 8a977c46 perf(server): skip clean autosave and stable self json
 6bb787d1 perf(server): guard websocket backpressure
@@ -33,4 +33,3 @@ e69305f0 docs(code-map): add fork development baseline
 6cb43a1a fix(android): pass Play Integrity cloud project number
 4b62e5f5 fix(native): register iOS attestation plugin
 d97ff842 fix: include guide html in docker build
-5460ff85 Merge pull request #865 from levy-street/fix/v014-docker-wiki-scripts
