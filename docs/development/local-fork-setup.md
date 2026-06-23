@@ -13,7 +13,7 @@ git remote -v
 ```
 
 ```text
-origin   https://github.com/PMZFX/world-of-claudecraft.git
+origin   git@github.com:PMZFX/world-of-claudecraft.git
 upstream https://github.com/levy-street/world-of-claudecraft.git
 ```
 
@@ -128,6 +128,24 @@ Stop services:
 ```bash
 docker compose down
 ```
+
+## Fresh Clone Verification
+
+The fork baseline was verified from a clean clone on 2026-06-23:
+
+```bash
+git clone git@github.com:PMZFX/world-of-claudecraft.git /tmp/wocc-fresh-test
+cd /tmp/wocc-fresh-test
+npm ci
+scripts/ci-parity.sh
+```
+
+Expected result:
+
+- `npm ci` installs from `package-lock.json` with no vulnerabilities.
+- `scripts/ci-parity.sh` passes generation, committed artifact diff checks,
+  `security:gate`, tests, typecheck, `build:env`, `build:server`, and `build`.
+- The only current client build warning is the known chunk-size warning.
 
 ## Pulling Upstream
 

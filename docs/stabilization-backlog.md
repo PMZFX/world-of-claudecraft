@@ -19,7 +19,6 @@ roadmap decisions.
 |---|---|---|---|
 | Confirm GitHub Actions are enabled on the fork | CI is already defined, but pushed baseline had no visible check status through the connector. | Check the GitHub Actions tab for `PMZFX/world-of-claudecraft`; enable workflows if GitHub prompts. | External |
 | Add branch protection for `main` | Prevents direct changes from bypassing the baseline checks. | Require PRs and passing CI once Actions is confirmed. | External |
-| Fresh-clone onboarding test | Verifies the fork can be recreated without hidden local state. | Clone into a temporary directory, run `npm ci`, `scripts/ci-parity.sh`, and local Docker setup notes. | Backlog |
 
 ## Should Fix Soon
 
@@ -36,6 +35,7 @@ roadmap decisions.
 | Upstream analytics IDs | Removed the hardcoded Google Tag and Meta Pixel runtime snippets from the fork shell, removed the HUD Meta Pixel level-up hook, and tightened the malware scanner so analytics origins are not treated as suppressed egress by default. | `npx vitest run tests/client_shell.test.ts tests/malware_scan.test.ts`; `npm run security:gate`. |
 | Cursor asset path warnings | Changed static shell cursor references from relative `./ui/cursors/...` paths to public-root `/ui/cursors/...` paths. | `npm run build` passed without unresolved cursor asset warnings. |
 | Admin i18n dynamic import warnings | Removed the admin runtime import of `LOCALE_LOADERS`; the generated loaders remain as test/parity scaffolding, but the admin bundle now stays fully static as documented. | `npx vitest run tests/i18n_emit_shape.test.ts tests/i18n_admin_catalog.test.ts tests/admin_format_i18n.test.ts tests/localization_fixes.test.ts`; `npm run build` passed without ineffective admin dynamic import warnings. |
+| Fresh-clone onboarding test | Cloned `git@github.com:PMZFX/world-of-claudecraft.git` into `/tmp`, installed dependencies from lockfile, and ran the full local CI parity gate from that clean checkout. | `npm ci`; `scripts/ci-parity.sh`. |
 
 ## Accept For Now
 
@@ -54,8 +54,6 @@ roadmap decisions.
 
 ## Cleanup Branch Plan
 
-1. `dev-stabilization`: backlog, verification scripts, and repo workflow setup.
-2. `docs/fresh-clone-onboarding`: verify and tighten setup docs from a clean
-   clone.
+All planned cleanup branches have been merged into `main`.
 
 Last verified: 2026-06-23
