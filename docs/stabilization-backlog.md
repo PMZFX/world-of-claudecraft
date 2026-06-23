@@ -25,7 +25,6 @@ roadmap decisions.
 
 | Item | Why It Matters | First Action | Status |
 |---|---|---|---|
-| Cursor asset path warnings | Vite cannot resolve cursor PNG references at build time. | Trace CSS references for `./ui/cursors/*.png` and decide whether paths should use `public/`, imported URLs, or CSS rewrite. | Backlog |
 | Admin i18n dynamic import warnings | Locale modules are both statically and dynamically imported, defeating chunk splitting. | Inspect `src/admin/i18n.resolved.generated/index.ts` and `loaders.ts`; decide whether generator output should separate eager and lazy entry points. | Backlog |
 | Large client chunks | Large bundles slow iteration and can hurt player load time later. | Record current chunk sizes, then defer code splitting until after product direction is clearer. | Backlog |
 | Local CI parity script adoption | Contributors should not have to infer the CI sequence from YAML. | Use `scripts/ci-parity.sh` before merging stabilization branches. | In progress |
@@ -36,6 +35,7 @@ roadmap decisions.
 |---|---|---|
 | `index.html` Meta Pixel/noscript parse warning | Moved the Meta Pixel no-script image fallback from `head` to the start of `body`, which keeps the fallback behavior while making the document valid for Vite's HTML parser. | `npm run build` passed without the parse5 `disallowed-content-in-noscript-in-head` warning. |
 | Upstream analytics IDs | Removed the hardcoded Google Tag and Meta Pixel runtime snippets from the fork shell, removed the HUD Meta Pixel level-up hook, and tightened the malware scanner so analytics origins are not treated as suppressed egress by default. | `npx vitest run tests/client_shell.test.ts tests/malware_scan.test.ts`; `npm run security:gate`. |
+| Cursor asset path warnings | Changed static shell cursor references from relative `./ui/cursors/...` paths to public-root `/ui/cursors/...` paths. | `npm run build` passed without unresolved cursor asset warnings. |
 
 ## Accept For Now
 
@@ -55,10 +55,9 @@ roadmap decisions.
 ## Cleanup Branch Plan
 
 1. `dev-stabilization`: backlog, verification scripts, and repo workflow setup.
-2. `fix/cursor-assets`: make cursor asset paths build-clean.
-3. `chore/admin-i18n-chunks`: reduce admin i18n warning noise if generator
+2. `chore/admin-i18n-chunks`: reduce admin i18n warning noise if generator
    changes are low risk.
-4. `docs/fresh-clone-onboarding`: verify and tighten setup docs from a clean
+3. `docs/fresh-clone-onboarding`: verify and tighten setup docs from a clean
    clone.
 
 Last verified: 2026-06-23

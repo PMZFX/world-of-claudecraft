@@ -80,7 +80,7 @@ that maps this machine's instance to:
 ## Verification Notes
 
 `npm run build` completed on 2026-06-23. Vite emitted existing warnings about
-runtime-resolved cursor paths, ineffective dynamic admin locale imports, and
-chunk size. The build still succeeded.
+ineffective dynamic admin locale imports and chunk size. The build still
+succeeded.
 
 Last verified: 2026-06-23
