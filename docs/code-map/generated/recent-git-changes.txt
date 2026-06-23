@@ -6,16 +6,13 @@
  M docs/code-map/generated/recent-git-changes.txt
  M docs/code-map/generated/source-tree.txt
  M docs/code-map/systems/networking.md
- M docs/code-map/systems/save-load.md
  M docs/design/2026-06-23-server-performance-baseline.md
- M server/game.ts
- M src/admin/types.ts
  M src/sim/sim.ts
- M tests/game_sessions.test.ts
- M tests/snapshots.test.ts
-?? docs/code-map/change-notes/2026-06-23-dirty-saves-self-state.md
+ M tests/arena.test.ts
+?? docs/code-map/change-notes/2026-06-23-arena-info-cache.md
 
 ## Recent Commits
+8a977c46 perf(server): skip clean autosave and stable self json
 6bb787d1 perf(server): guard websocket backpressure
 89fb2de7 perf(server): add command timing buckets
 f320c3bf perf(server): cache arena ladders for snapshots
@@ -35,4 +32,3 @@ e69305f0 docs(code-map): add fork development baseline
 d97ff842 fix: include guide html in docker build
 5460ff85 Merge pull request #865 from levy-street/fix/v014-docker-wiki-scripts
 9174acf0 fix: include wiki build scripts in docker context
-45730bf4 Merge pull request #863 from levy-street/release/v0.14.0

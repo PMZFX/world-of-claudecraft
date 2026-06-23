@@ -88,18 +88,19 @@ break auth, or expose moderation/security regressions.
 - Stable self-field JSON work is visible through `selfStableJsonBuilds` and
   `selfStableJsonSkips`. Stable fields currently include inventory, buyback,
   equipment, cosmetics, quests, milestones, stats, weapon, and talents.
+- Arena self-state uses `Sim.arenaInfoFor()` caching keyed by sim tick and
+  arena-state version. Queue/match/result/augment changes invalidate within the
+  same tick; normal tick changes refresh naturally.
 - Slow WebSocket clients skip snapshot frames above `WS_BACKPRESSURE_SKIP_BYTES`
   and are disconnected above `WS_BACKPRESSURE_CRITICAL_BYTES`. This protects the
   server queue but can make a slow client visually stale until its buffer drains.
-- `arenaInfoFor()` still runs from the self-snapshot path. Its ladder reads are
-  cached by `Sim.arenaLadder()`, but the rest of arena self-state should be
-  reviewed before scaling online arena/leaderboard traffic.
 
 ## Verification Steps
 
 - Register/login and enter online world.
 - Open two browser sessions and confirm presence and movement.
 - Exercise chat and at least one interact/loot/combat command.
+- Queue for arena if changing arena snapshot behavior.
 - Watch server logs for protocol errors.
 - Check admin stats for `snapshotMsAvg`, `commandTimings`, `messagesIn`,
   `messagesOut`, `wireBytesIn`, `wireBytesOut`, `characterSaveWrites`, and

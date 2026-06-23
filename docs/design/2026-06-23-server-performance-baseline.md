@@ -66,14 +66,17 @@ visibility, and a short list of high-value follow-up work.
   weapon, and talents skip JSON rebuilds while their signatures and dirty bits
   are unchanged. Volatile buckets such as cooldowns, party, trade, duel, arena,
   and market continue to be evaluated normally.
+- Added per-player `arenaInfoFor()` caching keyed by sim tick and arena-state
+  version. This avoids rebuilding arena standings, queue state, match rosters,
+  Fiesta details, and ladder references repeatedly within the same tick while
+  preserving same-tick invalidation for queue, match, result, and augment
+  changes.
 
 ## Ranked Follow-Up Work
 
-1. Split or cache the rest of `arenaInfoFor()` output. Ladder construction is
-   cached, but per-player arena self-state still serializes from snapshots.
-2. Combine WebSocket auth account reads where possible. Current join performs
+1. Combine WebSocket auth account reads where possible. Current join performs
    several account lookups before the player reaches the world.
-3. Split full character state into smaller persistence domains only if dirty
+2. Split full character state into smaller persistence domains only if dirty
    tracking and self-state versioning are not enough. This is higher risk
    because inventory, gear, quests, talents, stats, and position currently share
    one JSONB document.

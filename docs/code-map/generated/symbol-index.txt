@@ -4938,38 +4938,39 @@ src/sim/sim.ts:355:export interface DuelState {
 src/sim/sim.ts:362:type GroundAoE = {
 src/sim/sim.ts:377:export interface ArenaQueueUnit {
 src/sim/sim.ts:386:export interface ArenaMatch {
-src/sim/sim.ts:405:export interface FiestaState {
-src/sim/sim.ts:432:export interface FiestaPowerup {
-src/sim/sim.ts:443:export function eloDelta(winnerRating: number, loserRating: number, score = 1): number {
-src/sim/sim.ts:448:export interface InstanceSlot {
-src/sim/sim.ts:458:export interface ResolvedAbility {
-src/sim/sim.ts:469:export interface RewardCounters {
-src/sim/sim.ts:481:export interface SentChat {
-src/sim/sim.ts:487:export interface SkinClaimResult {
-src/sim/sim.ts:493:export interface ItemUseResult {
-src/sim/sim.ts:500:export const JOINABLE_CHANNELS = ['world', 'lfg'] as const;
-src/sim/sim.ts:501:export type JoinableChannel = (typeof JOINABLE_CHANNELS)[number];
-src/sim/sim.ts:505:export interface PlayerMeta {
-src/sim/sim.ts:589:export interface AwayStatus {
-src/sim/sim.ts:602:export interface MarketListing {
-src/sim/sim.ts:615:export interface MarketCollection {
-src/sim/sim.ts:623:export interface MarketSave {
-src/sim/sim.ts:632:export interface CharacterState {
-src/sim/sim.ts:678:export interface PetState {
-src/sim/sim.ts:687:const PET_NAME_RE = /^[A-Za-z][A-Za-z '-]{1,15}$/;
-src/sim/sim.ts:689:interface PendingMobRespawn {
-src/sim/sim.ts:699:export function computeQuestState(
-src/sim/sim.ts:716:function copyPos(dst: { x: number; y: number; z: number }, src: { x: number; y: number; z: number }): void {
-src/sim/sim.ts:722:function freshCounters(): RewardCounters {
-src/sim/sim.ts:730:function isFormToggle(ability: AbilityDef): boolean {
-src/sim/sim.ts:737:function isToggleBuff(ability: AbilityDef): boolean {
-src/sim/sim.ts:743:function isStealthToggle(ability: AbilityDef): boolean {
-src/sim/sim.ts:747:function preservesStealth(ability: AbilityDef): boolean {
-src/sim/sim.ts:751:function isShamanShock(abilityId: string): boolean {
-src/sim/sim.ts:755:function ignoresDamagePushback(abilityId: string): boolean {
-src/sim/sim.ts:759:function isPetClass(cls: PlayerClass): boolean {
-src/sim/sim.ts:763:export class Sim {
-src/sim/sim.ts:11798:export function formatMoney(copper: number): string {
+src/sim/sim.ts:401:interface ArenaInfoCacheEntry {
+src/sim/sim.ts:411:export interface FiestaState {
+src/sim/sim.ts:438:export interface FiestaPowerup {
+src/sim/sim.ts:449:export function eloDelta(winnerRating: number, loserRating: number, score = 1): number {
+src/sim/sim.ts:454:export interface InstanceSlot {
+src/sim/sim.ts:464:export interface ResolvedAbility {
+src/sim/sim.ts:475:export interface RewardCounters {
+src/sim/sim.ts:487:export interface SentChat {
+src/sim/sim.ts:493:export interface SkinClaimResult {
+src/sim/sim.ts:499:export interface ItemUseResult {
+src/sim/sim.ts:506:export const JOINABLE_CHANNELS = ['world', 'lfg'] as const;
+src/sim/sim.ts:507:export type JoinableChannel = (typeof JOINABLE_CHANNELS)[number];
+src/sim/sim.ts:511:export interface PlayerMeta {
+src/sim/sim.ts:595:export interface AwayStatus {
+src/sim/sim.ts:608:export interface MarketListing {
+src/sim/sim.ts:621:export interface MarketCollection {
+src/sim/sim.ts:629:export interface MarketSave {
+src/sim/sim.ts:638:export interface CharacterState {
+src/sim/sim.ts:684:export interface PetState {
+src/sim/sim.ts:693:const PET_NAME_RE = /^[A-Za-z][A-Za-z '-]{1,15}$/;
+src/sim/sim.ts:695:interface PendingMobRespawn {
+src/sim/sim.ts:705:export function computeQuestState(
+src/sim/sim.ts:722:function copyPos(dst: { x: number; y: number; z: number }, src: { x: number; y: number; z: number }): void {
+src/sim/sim.ts:728:function freshCounters(): RewardCounters {
+src/sim/sim.ts:736:function isFormToggle(ability: AbilityDef): boolean {
+src/sim/sim.ts:743:function isToggleBuff(ability: AbilityDef): boolean {
+src/sim/sim.ts:749:function isStealthToggle(ability: AbilityDef): boolean {
+src/sim/sim.ts:753:function preservesStealth(ability: AbilityDef): boolean {
+src/sim/sim.ts:757:function isShamanShock(abilityId: string): boolean {
+src/sim/sim.ts:761:function ignoresDamagePushback(abilityId: string): boolean {
+src/sim/sim.ts:765:function isPetClass(cls: PlayerClass): boolean {
+src/sim/sim.ts:769:export class Sim {
+src/sim/sim.ts:11829:export function formatMoney(copper: number): string {
 src/sim/spatial.ts:8:const OFFSET = 32768;
 src/sim/spatial.ts:10:export class SpatialGrid {
 src/sim/tab_target.ts:15:export interface TabCandidate {

@@ -344,6 +344,22 @@ describe('arena: forfeit + persistence', () => {
     expect(afterJoin).not.toBe(first);
     expect(afterJoin.map((r) => r.name)).toContain('New');
   });
+
+  it('caches arena info per player until arena state or tick changes', () => {
+    const sim = makeWorld();
+    const a = sim.addPlayer('warrior', 'Aleph');
+
+    const first = sim.arenaInfoFor(a);
+    expect(sim.arenaInfoFor(a)).toBe(first);
+
+    sim.arenaQueueJoin(a);
+    const queued = sim.arenaInfoFor(a);
+    expect(queued).not.toBe(first);
+    expect(sim.arenaInfoFor(a)).toBe(queued);
+
+    sim.tick();
+    expect(sim.arenaInfoFor(a)).not.toBe(queued);
+  });
 });
 
 function queue2v2(classes: PlayerClass[] = ['warrior', 'mage', 'rogue', 'priest']): { sim: Sim; pids: number[] } {

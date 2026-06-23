@@ -398,6 +398,12 @@ export interface ArenaMatch {
   fiesta?: FiestaState; // present only for format === 'fiesta'
 }
 
+interface ArenaInfoCacheEntry {
+  tick: number;
+  version: number;
+  info: import('../world_api').ArenaInfo | null;
+}
+
 // Everything that makes a Fiesta bout a fiesta. Lives on the ArenaMatch so it is
 // torn down with the match. Deterministic throughout: augment offers draw from
 // `rng` (seeded from the sim stream at match start) so a replay re-offers the
@@ -800,6 +806,8 @@ export class Sim {
   private arenaBusySlots = new Set<number>();
   private nextArenaMatchId = 1;
   private arenaLadderCache = new Map<ArenaFormat, import('../world_api').ArenaLadderEntry[]>();
+  private arenaInfoVersion = 0;
+  private arenaInfoCache = new Map<number, ArenaInfoCacheEntry>();
   // per-player chat token bucket (anti-spam); refilled lazily by sim time
   private chatTokens = new Map<number, { tokens: number; at: number }>();
   // per-player set of opt-in global channels (world, lfg) joined via /join
@@ -9164,6 +9172,7 @@ export class Sim {
         return;
       }
       this.arenaQueue1v1.push(id);
+      this.invalidateArenaInfoCache();
       this.emit({ type: 'arenaQueued', position: this.arenaQueue1v1.length, format: '1v1', pid: id });
       this.emit({ type: 'log', text: 'You join the Ashen Coliseum queue. Stand by for a worthy opponent…', color: '#ffa040', pid: id });
       return;
@@ -9202,6 +9211,7 @@ export class Sim {
     const queue = isFiesta ? this.arenaQueueFiesta : this.arenaQueue2v2;
     const unit: ArenaQueueUnit = { pids: unitPids, rating: this.arenaTeamRating(unitPids, '2v2') };
     queue.push(unit);
+    this.invalidateArenaInfoCache();
     const position = queue.reduce((n, u) => n + u.pids.length, 0);
     const joinText = isFiesta
       ? 'You join the 2v2 Fiesta queue. Get ready to PARTY…'
@@ -9220,6 +9230,7 @@ export class Sim {
     const teamQueue = fmt === '2v2' ? this.arenaQueue2v2 : fmt === 'fiesta' ? this.arenaQueueFiesta : null;
     const unit = teamQueue ? teamQueue.find((u) => u.pids.includes(id)) : null;
     if (this.arenaDequeue(id)) {
+      this.invalidateArenaInfoCache();
       this.emit({ type: 'arenaUnqueued', pid: id });
       const leaveText = fmt === 'fiesta' ? 'You leave the 2v2 Fiesta queue.'
         : fmt === '2v2' ? 'You leave the Ashen Coliseum 2v2 queue.'
@@ -9401,6 +9412,7 @@ export class Sim {
         if (match.timer <= 0) {
           match.state = 'active';
           match.timer = 0;
+          this.invalidateArenaInfoCache();
           for (const e of fighters) this.readyArenaFighter(e, { clearPrep: false });
           for (const mPid of this.arenaAllPids(match)) {
             this.emit({ type: 'log', text: match.fiesta ? 'FIESTA — GO!' : 'Fight!', color: '#ff5a3c', pid: mPid });
@@ -9549,6 +9561,7 @@ export class Sim {
       return;
     }
     this.arenaBusySlots.add(slot);
+    this.invalidateArenaInfoCache();
     const returns = new Map<number, { x: number; z: number; facing: number }>();
     for (let i = 0; i < allPids.length; i++) {
       const e = entities[i]!;
@@ -9735,6 +9748,7 @@ export class Sim {
     }
     match.state = 'over';
     match.timer = ARENA_RETURN_DELAY;
+    this.invalidateArenaInfoCache();
     const overText = match.fiesta ? 'FIESTA OVER! What a party. Returning to the world…' : 'The bout is decided. Returning to the world…';
     for (const mPid of this.arenaAllPids(match)) {
       this.emit({ type: 'log', text: overText, color: match.fiesta ? '#ff3df0' : '#ffa040', pid: mPid });
@@ -9746,6 +9760,7 @@ export class Sim {
   private returnFromArena(match: ArenaMatch): void {
     for (const pid of this.arenaAllPids(match)) this.arenaMatches.delete(pid);
     this.arenaBusySlots.delete(match.slot);
+    this.invalidateArenaInfoCache();
     for (const pid of this.arenaAllPids(match)) {
       const e = this.entities.get(pid);
       const ret = match.returns.get(pid);
@@ -9888,6 +9903,7 @@ export class Sim {
     match.fiesta.offers.delete(id);
     r.meta.fiestaAugments.push(augmentId);
     this.fiestaApplyAugments(r.meta, r.e);
+    this.invalidateArenaInfoCache();
     for (const mPid of this.arenaAllPids(match)) {
       this.emit({ type: 'augmentChosen', augmentId, byPid: id, byName: r.meta.name, mine: mPid === id, pid: mPid });
     }
@@ -10027,6 +10043,7 @@ export class Sim {
     const next = queue.shift()!;
     if (queue.length === 0) f.pending.delete(pid);
     f.offers.set(pid, next);
+    this.invalidateArenaInfoCache();
     this.emit({ type: 'augmentOffer', tier: next.tier, wave: next.wave, choices: next.choices, pid });
   }
 
@@ -10348,9 +10365,23 @@ export class Sim {
 
   private invalidateArenaLadderCache(): void {
     this.arenaLadderCache.clear();
+    this.invalidateArenaInfoCache();
+  }
+
+  private invalidateArenaInfoCache(): void {
+    this.arenaInfoVersion++;
+    this.arenaInfoCache.clear();
   }
 
   arenaInfoFor(pid: number): import('../world_api').ArenaInfo | null {
+    const cached = this.arenaInfoCache.get(pid);
+    if (cached && cached.tick === this.tickCount && cached.version === this.arenaInfoVersion) return cached.info;
+    const info = this.buildArenaInfoFor(pid);
+    this.arenaInfoCache.set(pid, { tick: this.tickCount, version: this.arenaInfoVersion, info });
+    return info;
+  }
+
+  private buildArenaInfoFor(pid: number): import('../world_api').ArenaInfo | null {
     const meta = this.players.get(pid);
     if (!meta) return null;
     const match = this.arenaMatches.get(pid);
