@@ -83,6 +83,19 @@ const TICK_EMA_ALPHA = 0.05;
 const JSON_NULL = 'null';
 const JSON_EMPTY_ARRAY = '[]';
 const JSON_EMPTY_OBJECT = '{}';
+const COMMAND_TIMING_CATEGORIES = [
+  'parse', 'protocol', 'input', 'combat', 'targeting', 'interaction',
+  'inventory', 'quest', 'chat', 'social', 'party', 'pet', 'trade', 'duel',
+  'arena', 'talents', 'market', 'dev', 'dungeon', 'telemetry', 'other',
+] as const;
+
+type CommandTimingCategory = typeof COMMAND_TIMING_CATEGORIES[number];
+
+interface CommandTimingAccumulator {
+  count: number;
+  totalMs: number;
+  maxMs: number;
+}
 
 // How often to re-broadcast online players' $WOC holder-tier flair. Each wallet
 // read is served from the woc_balance.ts cache (CACHE_TTL_MS), which is the real
@@ -169,6 +182,7 @@ export interface AdminServerStats {
   wireBytesOut: number;
   characterSaveWrites: number;
   characterSaveSkips: number;
+  commandTimings: Record<string, { count: number; totalMs: number; avgMs: number; maxMs: number }>;
   simEntities: number;
   rssBytes: number;
   heapUsedBytes: number;
@@ -405,6 +419,7 @@ export class GameServer {
   private wireBytesOut = 0;
   private characterSaveWrites = 0;
   private characterSaveSkips = 0;
+  private readonly commandTimings = new Map<CommandTimingCategory, CommandTimingAccumulator>();
   private readonly ipSessionCounts = new Map<string, number>();
 
   constructor() {
@@ -973,6 +988,7 @@ export class GameServer {
       wireBytesOut: this.wireBytesOut,
       characterSaveWrites: this.characterSaveWrites,
       characterSaveSkips: this.characterSaveSkips,
+      commandTimings: this.commandTimingStats(),
       simEntities: this.sim.entities.size,
       rssBytes: mem.rss,
       heapUsedBytes: mem.heapUsed,
@@ -1192,22 +1208,181 @@ export class GameServer {
   // -------------------------------------------------------------------------
 
   handleMessage(session: ClientSession, raw: string): void {
+    const started = process.hrtime.bigint();
     const receivedAtMs = Date.now();
     this.messagesIn++;
     this.wireBytesIn += raw.length;
+    let category: CommandTimingCategory = 'parse';
     let msg: any;
     try {
       msg = JSON.parse(raw);
     } catch {
       this.botDetector.observeProtocolAnomaly(session.botTrackingContext, 'invalid_json', raw, receivedAtMs);
+      this.recordCommandTiming(category, started);
       return;
     }
+    category = this.messageTimingCategory(msg);
     // a malformed payload must never take down the server for everyone
     try {
       this.dispatchMessage(session, msg, raw, receivedAtMs);
     } catch (err) {
       console.error(`bad message from ${session.name} (cmd: ${String(msg?.cmd ?? msg?.t)}):`, err);
+    } finally {
+      this.recordCommandTiming(category, started);
     }
+  }
+
+  private messageTimingCategory(msg: unknown): CommandTimingCategory {
+    if (typeof msg !== 'object' || msg === null || Array.isArray(msg)) return 'protocol';
+    const record = msg as Record<string, unknown>;
+    if (record.t === 'input') return 'input';
+    if (record.t !== 'cmd') return 'protocol';
+    return this.commandTimingCategory(typeof record.cmd === 'string' ? record.cmd : '');
+  }
+
+  private commandTimingCategory(cmd: string): CommandTimingCategory {
+    switch (cmd) {
+      case 'castSlot':
+      case 'cast':
+      case 'attack':
+      case 'stopattack':
+      case 'release':
+      case 'prestige':
+        return 'combat';
+      case 'target':
+      case 'tab':
+      case 'targetNearest':
+      case 'tabFriendly':
+      case 'targetNearestFriendly':
+      case 'setMarker':
+      case 'clearMarker':
+        return 'targeting';
+      case 'interact':
+      case 'loot':
+      case 'lootRoll':
+      case 'pickup':
+      case 'emote':
+      case 'change_skin':
+      case 'unequip_mech_chroma':
+      case 'claim_event_skin':
+      case 'challengeResponse':
+        return 'interaction';
+      case 'equip':
+      case 'unequip_item':
+      case 'use':
+      case 'discard':
+      case 'buy':
+      case 'sell':
+      case 'buyback':
+        return 'inventory';
+      case 'accept':
+      case 'turnin':
+      case 'abandon':
+        return 'quest';
+      case 'chat':
+        return 'chat';
+      case 'friend_add':
+      case 'friend_remove':
+      case 'block_add':
+      case 'block_remove':
+      case 'social_refresh':
+      case 'guild_create':
+      case 'guild_invite':
+      case 'guild_accept':
+      case 'guild_decline':
+      case 'guild_leave':
+      case 'guild_kick':
+      case 'guild_promote':
+      case 'guild_demote':
+      case 'guild_transfer':
+      case 'guild_disband':
+        return 'social';
+      case 'pinvite':
+      case 'paccept':
+      case 'pdecline':
+      case 'pleave':
+      case 'pkick':
+      case 'praid':
+      case 'pmoveRaid':
+        return 'party';
+      case 'pet_abandon':
+      case 'pet_rename':
+      case 'pet_revive':
+      case 'pet_attack':
+      case 'pet_taunt':
+      case 'pet_feed':
+      case 'pet_heal':
+      case 'pet_mode':
+        return 'pet';
+      case 'trade_req':
+      case 'trade_accept':
+      case 'trade_offer':
+      case 'trade_confirm':
+      case 'trade_cancel':
+        return 'trade';
+      case 'duel_req':
+      case 'duel_accept':
+      case 'duel_decline':
+        return 'duel';
+      case 'arena_queue':
+      case 'arena_leave':
+      case 'arena_augment':
+        return 'arena';
+      case 'applyTalents':
+      case 'respec':
+      case 'setSpec':
+      case 'saveLoadout':
+      case 'switchLoadout':
+      case 'deleteLoadout':
+        return 'talents';
+      case 'market_search':
+      case 'market_list':
+      case 'market_buy':
+      case 'market_cancel':
+      case 'market_collect':
+        return 'market';
+      case 'dev_level':
+      case 'dev_teleport':
+      case 'dev_give':
+        return 'dev';
+      case 'enter_crypt':
+      case 'enter_dungeon':
+      case 'leave_crypt':
+      case 'leave_dungeon':
+        return 'dungeon';
+      case 'telemetry':
+        return 'telemetry';
+      default:
+        return 'other';
+    }
+  }
+
+  private recordCommandTiming(category: CommandTimingCategory, started: bigint): void {
+    const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
+    let bucket = this.commandTimings.get(category);
+    if (!bucket) {
+      bucket = { count: 0, totalMs: 0, maxMs: 0 };
+      this.commandTimings.set(category, bucket);
+    }
+    bucket.count++;
+    bucket.totalMs += elapsedMs;
+    if (elapsedMs > bucket.maxMs) bucket.maxMs = elapsedMs;
+  }
+
+  private commandTimingStats(): AdminServerStats['commandTimings'] {
+    const out: AdminServerStats['commandTimings'] = {};
+    for (const category of COMMAND_TIMING_CATEGORIES) {
+      const bucket = this.commandTimings.get(category);
+      if (!bucket || bucket.count === 0) continue;
+      const totalMs = Math.round(bucket.totalMs * 100) / 100;
+      out[category] = {
+        count: bucket.count,
+        totalMs,
+        avgMs: Math.round((bucket.totalMs / bucket.count) * 1000) / 1000,
+        maxMs: Math.round(bucket.maxMs * 1000) / 1000,
+      };
+    }
+    return out;
   }
 
   private dispatchMessage(session: ClientSession, msg: any, raw: string, receivedAtMs: number): void {

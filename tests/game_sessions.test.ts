@@ -52,6 +52,29 @@ describe('GameServer sessions', () => {
     expect(server.sim.meta(session.pid)?.questsDone.has('q_aldrics_fallen_star')).toBe(true);
   });
 
+  it('records message handler timings by command category', () => {
+    const server = new GameServer();
+    const session = expectJoined(server.join(fakeWs(), 50, 501, 'Timing', 'warrior', null));
+
+    server.handleMessage(session, '{');
+    server.handleMessage(session, JSON.stringify({ t: 'input', seq: 1, mi: { f: 1 } }));
+    server.handleMessage(session, JSON.stringify({ t: 'cmd', cmd: 'accept', quest: 'no_such_quest' }));
+    server.handleMessage(session, JSON.stringify({ t: 'cmd', cmd: 'chat', text: 'hello' }));
+    server.handleMessage(session, JSON.stringify({ t: 'cmd', cmd: 'unknown_perf_probe' }));
+
+    const timings = server.adminStats().commandTimings;
+    expect(timings.parse.count).toBe(1);
+    expect(timings.input.count).toBe(1);
+    expect(timings.quest.count).toBe(1);
+    expect(timings.chat.count).toBe(1);
+    expect(timings.other.count).toBe(1);
+    for (const key of ['parse', 'input', 'quest', 'chat', 'other']) {
+      expect(timings[key].totalMs).toBeGreaterThanOrEqual(0);
+      expect(timings[key].avgMs).toBeGreaterThanOrEqual(0);
+      expect(timings[key].maxMs).toBeGreaterThanOrEqual(0);
+    }
+  });
+
   it('marks Aldric quest completion account-wide when a character turns it in', () => {
     markAccountQuestComplete.mockClear();
     const server = new GameServer();

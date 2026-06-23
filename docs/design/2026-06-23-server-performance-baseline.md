@@ -46,6 +46,11 @@ visibility, and a short list of high-value follow-up work.
   arena result updates. `arenaInfoFor()` still calls it from snapshots, but the
   live 1v1/2v2 ladders are now built once per invalidation instead of once per
   player snapshot.
+- Added command timing buckets to `GameServer.adminStats()`. The buckets track
+  JSON parse failures, protocol/input handling, and broad command categories
+  such as combat, inventory, quests, chat, social, arena, talents, market, and
+  dungeon commands. The timing covers JSON parse plus synchronous dispatch; it
+  does not include async work that a command starts after returning.
 
 ## Ranked Follow-Up Work
 
@@ -58,12 +63,9 @@ visibility, and a short list of high-value follow-up work.
    cached, but per-player arena self-state still serializes from snapshots.
 4. Combine WebSocket auth account reads where possible. Current join performs
    several account lookups before the player reaches the world.
-5. Add lightweight timing around command dispatch categories. This will show
-   whether action processing is dominated by chat/social DB work, sim commands,
-   JSON parsing, or antibot checks.
-6. Consider backpressure policy for slow WebSocket clients using
+5. Consider backpressure policy for slow WebSocket clients using
    `ws.bufferedAmount` so one stuck client cannot build unbounded pending output.
-7. Split full character state into smaller persistence domains only if dirty
+6. Split full character state into smaller persistence domains only if dirty
    tracking and self-state versioning are not enough. This is higher risk
    because inventory, gear, quests, talents, stats, and position currently share
    one JSONB document.
@@ -72,7 +74,8 @@ visibility, and a short list of high-value follow-up work.
 
 - DB tests should cover the new roster query and realm-scoped indexes.
 - Admin stats should remain additive so existing admin clients continue to work.
-- Manual performance runs should compare admin `snapshotMsAvg`, wire byte
-  counters, and online player count before and after protocol/tick changes.
+- Manual performance runs should compare admin `snapshotMsAvg`, command timing
+  buckets, wire byte counters, and online player count before and after
+  protocol/tick changes.
 
 Last verified: 2026-06-23

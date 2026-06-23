@@ -51,7 +51,8 @@ GameServer.selfWireJson()
 Admin status request
 -> server/admin.ts
 -> GameServer.adminStats()
--> tick, snapshot, wire message, wire byte, save, memory, and entity counters
+-> tick, snapshot, command timing, wire message, wire byte, save, memory, and
+   entity counters
 ```
 
 ## Dependencies
@@ -77,8 +78,9 @@ break auth, or expose moderation/security regressions.
 
 - The wire protocol is implemented directly in `ClientWorld` and `GameServer`;
   there is no single schema file for every message type.
-- Snapshot volume and CPU are now visible through additive admin stats, but
-  command-dispatch timing is not split by command category yet.
+- Snapshot volume, wire volume, saves, and synchronous command-dispatch timing
+  are visible through additive admin stats. Command timings are broad buckets
+  and do not include async work that a command launches after returning.
 - `arenaInfoFor()` still runs from the self-snapshot path. Its ladder reads are
   cached by `Sim.arenaLadder()`, but the rest of arena self-state should be
   reviewed before scaling online arena/leaderboard traffic.
@@ -89,8 +91,8 @@ break auth, or expose moderation/security regressions.
 - Open two browser sessions and confirm presence and movement.
 - Exercise chat and at least one interact/loot/combat command.
 - Watch server logs for protocol errors.
-- Check admin stats for `snapshotMsAvg`, `messagesIn`, `messagesOut`,
-  `wireBytesIn`, `wireBytesOut`, `characterSaveWrites`, and
+- Check admin stats for `snapshotMsAvg`, `commandTimings`, `messagesIn`,
+  `messagesOut`, `wireBytesIn`, `wireBytesOut`, `characterSaveWrites`, and
   `characterSaveSkips` when doing server performance work.
 
 Last verified: 2026-06-23
