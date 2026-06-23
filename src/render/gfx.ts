@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GFX_CONFIG_VERSION } from '../graphics_config';
 
 // Quality tiers: every tier-dependent knob keys off this module instead of
 // scattered LOW_GFX ternaries.
@@ -10,7 +11,7 @@ import * as THREE from 'three';
 //   3. otherwise: persisted graphics preset, with missing values -> ultra
 
 export type GfxTier = 'low' | 'medium' | 'high' | 'ultra';
-export const GFX_CONFIG_VERSION = 14;
+export { GFX_CONFIG_VERSION };
 
 export const GFX_BUCKET_IDS = [
   'resolution',
@@ -329,6 +330,11 @@ function storedNumericSetting(key: string): number | undefined {
   }
 }
 
+export function storedGraphicsPreset(): number | undefined {
+  if (storedNumericSetting('graphicsConfigVersion') !== GFX_CONFIG_VERSION) return undefined;
+  return storedNumericSetting('graphicsPreset');
+}
+
 function probeGpuRenderer(): string | undefined {
   if (typeof document === 'undefined') return undefined;
   try {
@@ -361,7 +367,7 @@ function runtimeHints(): GfxRuntimeHints {
       ? (matchMedia('(max-width: 940px)').matches || matchMedia('(max-height: 760px)').matches)
       : false,
     gpuRenderer: probeGpuRenderer(),
-    graphicsPreset: storedNumericSetting('graphicsPreset'),
+    graphicsPreset: storedGraphicsPreset(),
     terrainDetail: storedNumericSetting('terrainDetail'),
     foliageDensity: storedNumericSetting('foliageDensity'),
     effectsQuality: storedNumericSetting('effectsQuality'),

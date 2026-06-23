@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { frameGraphGeometry, MAX_VISIBLE_MS } from '../src/ui/perf_graph_painter';
+import { frameGraphCanvasMetrics, frameGraphGeometry, MAX_VISIBLE_MS } from '../src/ui/perf_graph_painter';
 
 const TARGET = 1000 / 60; // ~16.67ms
 
@@ -46,5 +46,15 @@ describe('frameGraphGeometry', () => {
   it('handles an empty sample list', () => {
     const geo = frameGraphGeometry([], TARGET, 100, 26);
     expect(geo.points).toEqual([]);
+  });
+});
+
+describe('frameGraphCanvasMetrics', () => {
+  it('sizes the backing store without depending on CSS canvas width', () => {
+    expect(frameGraphCanvasMetrics(60, 26, 2.5)).toEqual({ pxW: 120, pxH: 52, dpr: 2 });
+  });
+
+  it('falls back to a positive backing store for invalid dimensions or DPR', () => {
+    expect(frameGraphCanvasMetrics(0, 0, 0)).toEqual({ pxW: 1, pxH: 1, dpr: 1 });
   });
 });

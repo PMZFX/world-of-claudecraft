@@ -132,6 +132,8 @@ export const zh_CN: Partial<Record<TranslationKey, string>> = {
   "hudChrome.options.browserEffectsNote": "自动模式会根据你的浏览器和设备调低高开销的 CSS 特效（模糊、光晕、背景动画）。如果界面感觉卡顿，可手动降低。",
   "hudChrome.options.footstepSounds": "脚步声",
   "hudChrome.options.clickFeedback": "点击标记",
+  "hudChrome.options.autoFaceOnCast": "施法时自动面向目标",
+  "hudChrome.options.autoFaceOnCastHelp": "施放目标技能时，角色会转向目标，让挥击和弹道从正面发出。关闭后将使用经典行为：未面向目标时施法会被拒绝。",
   "hudChrome.options.showWalletOnCharacterScreen": "在角色界面显示钱包",
   "hudChrome.options.showWalletOnPlayerCard": "在玩家卡片显示钱包",
   "hudChrome.playerCard.showWalletBadge": "显示钱包徽章",

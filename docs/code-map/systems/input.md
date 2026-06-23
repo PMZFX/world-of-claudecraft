@@ -12,6 +12,8 @@ browser frame loop.
 
 - `src/game/input.ts`: central input state and event listeners.
 - `src/game/keybinds.ts`: saved keybinding definitions and lookup.
+- `src/game/settings.ts`: persisted input-adjacent preferences such as
+  click-to-move, attack-move, and auto-face-on-cast.
 - `src/game/gamepad.ts`: gamepad polling.
 - `src/game/gamepad_bindings.ts` and `src/game/gamepad_map.ts`: gamepad mapping.
 - `src/game/mobile_controls.ts`: touch controls and mobile interface mode.
@@ -42,6 +44,9 @@ DOM events / touch / gamepad
 - Uses keybind settings and browser DOM events.
 - Calls interaction and click-to-move helpers.
 - Does not own combat or world mutation directly.
+- Targeted cast auto-facing is toggled from the Key Bindings panel but enforced
+  by `Sim.castAbility()`. Online clients resend the preference after WebSocket
+  hello through `ClientWorld.setAutoFaceOnCast()`.
 
 ## What Depends On This
 
@@ -70,5 +75,7 @@ mobile controls, and online input echo.
 - Open and close chat, inventory, character, and settings UI.
 - Test touch controls if changing mobile paths.
 - Test controller if changing gamepad paths.
+- Toggle auto-face-on-cast and verify casts behind the player either auto-turn
+  or reject, depending on the setting.
 
 Last verified: 2026-06-23

@@ -136,6 +136,8 @@ export const hudChromeStrings = {
     // Toggle for the OSRS-style click-feedback marker: entity targets and
     // click-to-move destinations (on by default).
     clickFeedback: "Click Marker",
+    autoFaceOnCast: "Auto-Face Target on Cast",
+    autoFaceOnCastHelp: "When you cast a targeted ability, your character turns to face the target so swings and projectiles come from the front. Turn off for the classic behavior where a cast at a target you are not facing is rejected.",
     showWalletOnCharacterScreen: "Show Wallet on Character Screen",
     showWalletOnPlayerCard: "Show Wallet on Player Card",
     // Interface panel: global HUD zoom slider, and the mirror of the landing

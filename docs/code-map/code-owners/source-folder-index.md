@@ -32,6 +32,9 @@ localization, and tests.
 Browser gameplay glue: input, keybinds, settings, mobile controls, camera,
 audio, SFX, music, performance reporting, and interactions. Medium to high risk.
 
+Shared browser settings constants can live at `src/` root when both `src/game/`
+and `src/render/` need them, for example `src/graphics_config.ts`.
+
 ## `src/render/`
 
 Three.js renderer and runtime asset loading. High risk for visual startup,
@@ -54,7 +57,8 @@ English source translation catalogs. Edit when adding user-facing UI text.
 ## `src/ui/i18n.locales/`
 
 Non-English overlays. The project guidance says contributors should generally
-avoid hand-editing these per-PR.
+avoid hand-editing these per-PR. When tests require immediate non-Latin coverage
+for a new UI string, edit the sparse overlay and regenerate i18n artifacts.
 
 ## `src/admin/`
 

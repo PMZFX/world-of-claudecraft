@@ -753,6 +753,7 @@
     background-size: cover; background-position: center; background-repeat: no-repeat; }
   .buff.debuff { border-color: var(--color-debuff); }
   .buff .dur { position: absolute; bottom: -13px; left: 0; right: 0; text-align: center; font-size: 10px; color: #eee; text-shadow: 1px 1px 1px #000; }
+  .buff .stacks { position: absolute; top: -4px; right: -3px; min-width: 13px; height: 13px; padding: 0 2px; box-sizing: border-box; text-align: center; font: 700 10px/12px var(--body-font); color: #fff; background: rgba(8, 8, 12, 0.92); border: 1px solid var(--color-debuff); border-radius: 7px; }
 
   /* ---------- cast bar ---------- */
   #castbar { position: absolute; left: 50%; transform: translateX(-50%); bottom: 200px; width: 300px;
@@ -2008,7 +2009,8 @@
   #perf-overlay .perf-row[data-sev="good"] .perf-value { color: #76e08a; }
   #perf-overlay .perf-row[data-sev="warn"] .perf-value { color: #ffcf5a; }
   #perf-overlay .perf-row[data-sev="bad"]  .perf-value { color: #ff6f63; }
-  #perf-overlay .perf-graph { display: none; width: 100%; height: 26px; margin-top: 4px; }
+  #perf-overlay .perf-graph-wrap { display: none; position: relative; width: 100%; height: 26px; margin-top: 4px; }
+  #perf-overlay .perf-graph { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
   #perf-overlay .perf-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
   #perf-overlay .perf-badges:empty { display: none; margin: 0; }
   #perf-overlay .perf-badge { font-size: calc(9.5px * var(--perf-scale)); font-variant: small-caps; letter-spacing: 0.4px;

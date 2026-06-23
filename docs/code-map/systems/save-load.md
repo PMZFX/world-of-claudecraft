@@ -68,6 +68,8 @@ GameServer session
 - Character roster
 - Persistent inventory, gear, quests, talents, position, money, arena rating,
   skins, and post-cap XP
+- Browser-local settings such as graphics preset version and auto-face-on-cast
+  preference
 - Admin dashboard and moderation tools
 
 ## Change Risk
@@ -104,5 +106,9 @@ accidental looseness.
   issuing duplicate `UPDATE characters` writes.
 - Confirm clean loaded characters increment `characterSaveCleanSkips` during
   autosave without calling `Sim.serializeCharacter()`.
+- Confirm stale browser graphics presets are migrated by
+  `src/game/settings.ts` without touching server character state.
+- Confirm auto-face-on-cast is restored from browser settings and resent to the
+  server on WebSocket hello.
 
 Last verified: 2026-06-23

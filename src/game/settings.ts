@@ -2,6 +2,8 @@
 // Esc options menu. Pure + persisted to localStorage; main.ts applies each
 // value to the live subsystem (Input / GameAudio / MusicDirector / Renderer).
 
+import { GFX_CONFIG_VERSION } from '../graphics_config';
+
 // Camera default is 0.7: the old fixed speed (1.0) was near the top of the
 // reasonable range and drew complaints, so out of the box it's calmer while
 // the slider still reaches 1.25 for players who liked it fast.
@@ -171,6 +173,9 @@ export const BOOL_SETTINGS = {
   // red when the click lands on a hostile. Purely a local presentation cue; it
   // never touches sim state. Off removes the marker entirely.
   clickFeedback: { def: true },
+  // on by default: targeted casts pivot the character toward the target. Off
+  // restores the classic facing requirement for hostile targeted casts.
+  autoFaceOnCast: { def: true },
   // off by default: swap the looping landing-page trailer for a static, dimmed,
   // high-contrast backdrop so the start-screen text stays legible (and the
   // 5.7 MB video is never fetched). Forced on regardless for phones / Save-Data /
@@ -198,6 +203,18 @@ function clampNumeric(key: NumericSettingKey, v: number): number {
   return Math.min(r.max, Math.max(r.min, v));
 }
 
+export function migratePersistedSettings(
+  raw: Record<string, unknown>,
+  graphicsVersion: number,
+): { raw: Record<string, unknown>; changed: boolean } {
+  const stored = typeof raw.graphicsConfigVersion === 'number' ? raw.graphicsConfigVersion : 0;
+  if (stored === graphicsVersion) return { raw, changed: false };
+  const next = { ...raw };
+  delete next.graphicsPreset;
+  next.graphicsConfigVersion = graphicsVersion;
+  return { raw: next, changed: true };
+}
+
 export type ClickMoveMouseButton = 0 | 2;
 
 export function normalizeClickMoveButton(value: number): ClickMoveMouseButton {
@@ -210,6 +227,7 @@ export function clickMoveButtonLabel(value: number): string {
 
 export class Settings {
   private values: GameSettings;
+  private graphicsConfigVersion = GFX_CONFIG_VERSION;
 
   constructor() {
     this.values = this.load();
@@ -218,7 +236,14 @@ export class Settings {
   private load(): GameSettings {
     let stored: unknown = null;
     try { stored = JSON.parse(localStorage.getItem(STORE_KEY) ?? 'null'); } catch { /* corrupt */ }
-    const raw = stored && typeof stored === 'object' ? stored as Record<string, unknown> : {};
+    const hadStored = !!stored && typeof stored === 'object';
+    let raw = hadStored ? stored as Record<string, unknown> : {};
+    let migrated = false;
+    if (hadStored) {
+      const result = migratePersistedSettings(raw, this.graphicsConfigVersion);
+      raw = result.raw;
+      migrated = result.changed;
+    }
     const out = {} as GameSettings;
     for (const key of NUMERIC_KEYS) {
       const v = raw[key];
@@ -228,11 +253,18 @@ export class Settings {
       const v = raw[key];
       out[key] = typeof v === 'boolean' ? v : BOOL_SETTINGS[key].def;
     }
+    this.values = out;
+    if (migrated) this.save();
     return out;
   }
 
   private save(): void {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(this.values)); } catch { /* storage unavailable */ }
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        ...this.values,
+        graphicsConfigVersion: this.graphicsConfigVersion,
+      }));
+    } catch { /* storage unavailable */ }
   }
 
   get<K extends keyof GameSettings>(key: K): GameSettings[K] {

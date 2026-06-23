@@ -535,6 +535,7 @@ export class ClientWorld implements IWorld {
   // chat locally when the player's filter is on. Hard words never arrive here.
   profanityWords: string[] = [];
   private profanityDirty = false;
+  private autoFaceOnCast = true;
   private pendingQuestCommands = new Map<string, 'accept' | 'turnin'>();
   private mouselookFacing: number | null = null;
   private sendTimer: number | undefined;
@@ -682,6 +683,7 @@ export class ClientWorld implements IWorld {
         this.profanityDirty = true;
       }
       this.connected = true;
+      this.cmd({ cmd: 'setPref', autoFaceOnCast: this.autoFaceOnCast });
       return;
     }
     if (msg.t === 'censor') {
@@ -872,7 +874,7 @@ export class ClientWorld implements IWorld {
       e.threat = new Map(w.thr ?? []);
       e.auras = (w.auras ?? []).map((a: any) => ({
         id: a.id, name: a.name, kind: a.kind, remaining: a.rem, duration: a.dur,
-        value: 0, sourceId: 0, school: 'physical' as const,
+        value: 0, sourceId: 0, school: 'physical' as const, stacks: a.stacks,
       }));
       e.loot = w.lootList ?? null;
       return e;
@@ -1053,6 +1055,11 @@ export class ClientWorld implements IWorld {
       return;
     }
     this.cmd({ cmd: 'castSlot', slot });
+  }
+
+  setAutoFaceOnCast(enabled: boolean): void {
+    this.autoFaceOnCast = enabled;
+    this.cmd({ cmd: 'setPref', autoFaceOnCast: enabled });
   }
 
   targetEntity(id: number | null): void {

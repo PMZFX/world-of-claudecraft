@@ -261,6 +261,7 @@ interface WireAura {
   kind: string;
   rem: number;
   dur: number;
+  stacks?: number;
 }
 
 interface WhoRosterRow {
@@ -323,7 +324,14 @@ function dynamicFields(e: Entity): Record<string, unknown> {
   // top hate-table entries so the party threat meter shows real numbers
   if (e.kind === 'mob' && !e.dead && e.threat.size > 0) out.thr = threatEntries(e, 8);
   if (e.auras.length > 0) {
-    out.auras = e.auras.map((a): WireAura => ({ id: a.id, name: a.name, kind: a.kind, rem: round2(a.remaining), dur: a.duration }));
+    out.auras = e.auras.map((a): WireAura => ({
+      id: a.id,
+      name: a.name,
+      kind: a.kind,
+      rem: round2(a.remaining),
+      dur: a.duration,
+      ...(a.stacks && a.stacks > 1 ? { stacks: a.stacks } : {}),
+    }));
   }
   if (e.kind === 'mob' && e.lootable && e.loot) {
     out.lootList = { copper: e.loot.copper, items: e.loot.items };
@@ -1627,6 +1635,7 @@ export class GameServer {
     switch (msg.cmd) {
       case 'castSlot': sim.castAbilityBySlot(msg.slot | 0, pid); break;
       case 'cast': if (typeof msg.ability === 'string') sim.castAbility(msg.ability, pid); break;
+      case 'setPref': if (typeof msg.autoFaceOnCast === 'boolean') sim.setAutoFaceOnCast(msg.autoFaceOnCast, pid); break;
       case 'target': sim.targetEntity(typeof msg.id === 'number' ? msg.id : null, pid); break;
       case 'tab': sim.tabTarget(pid); break;
       case 'targetNearest': sim.targetNearestEnemy(pid); break;

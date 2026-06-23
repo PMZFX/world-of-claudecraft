@@ -41,6 +41,14 @@ ClientWorld WebSocket command
 ```
 
 ```text
+Client settings apply / WebSocket hello
+-> ClientWorld.setAutoFaceOnCast()
+-> { cmd: "setPref", autoFaceOnCast }
+-> GameServer.handleMessage()
+-> Sim.setAutoFaceOnCast(enabled, pid)
+```
+
+```text
 WebSocket auth message
 -> accountForToken()
 -> loadAccountSessionState()
@@ -90,6 +98,12 @@ break auth, or expose moderation/security regressions.
 
 - The wire protocol is implemented directly in `ClientWorld` and `GameServer`;
   there is no single schema file for every message type.
+- `WireAura` carries optional `stacks` for stacking auras such as Sunder Armor.
+  Server serialization omits stacks of 0 or 1, and the client reconstructs the
+  value into local `Aura.stacks`.
+- `setPref` is currently used for the online auto-face-on-cast preference. It is
+  a WebSocket command, not a saved character field, so persistence is browser
+  settings plus a hello-time resend from `ClientWorld`.
 - Snapshot volume, wire volume, saves, and synchronous command-dispatch timing
   are visible through additive admin stats. Command timings are broad buckets
   and do not include async work that a command launches after returning.
@@ -111,6 +125,9 @@ break auth, or expose moderation/security regressions.
 - Register/login and enter online world.
 - Open two browser sessions and confirm presence and movement.
 - Exercise chat and at least one interact/loot/combat command.
+- Toggle auto-face-on-cast online, cast at a target behind the player, and
+  confirm server authority follows the current preference.
+- Apply Sunder Armor online and confirm the client receives stack counts.
 - Queue for arena if changing arena snapshot behavior.
 - Watch server logs for protocol errors.
 - Check admin stats for `snapshotMsAvg`, `commandTimings`, `messagesIn`,

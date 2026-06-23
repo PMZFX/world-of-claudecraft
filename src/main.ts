@@ -904,6 +904,10 @@ async function startGame(world: IWorld, offlineSim: Sim | null, online: ClientWo
       syncAttackMoveInput();
       return;
     }
+    if (key === 'autoFaceOnCast') {
+      world.setAutoFaceOnCast(settings.set('autoFaceOnCast', !!value));
+      return;
+    }
     // Interface & Comfort booleans: each toggles a body class (CSS does the rest)
     // or flips a live subsystem flag. No sim involvement — purely presentational.
     if (key === 'reduceMotion') {

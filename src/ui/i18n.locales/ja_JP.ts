@@ -132,6 +132,8 @@ export const ja_JP: Partial<Record<TranslationKey, string>> = {
   "hudChrome.options.browserEffectsNote": "自動はブラウザとデバイスに応じて、負荷の高い CSS エフェクト（ぼかし・グロー・背景アニメーション）を抑えます。動作が重い場合は手動で下げてください。",
   "hudChrome.options.footstepSounds": "足音",
   "hudChrome.options.clickFeedback": "クリックマーカー",
+  "hudChrome.options.autoFaceOnCast": "詠唱時に自動で対象を向く",
+  "hudChrome.options.autoFaceOnCastHelp": "対象指定アビリティを使うと、キャラクターが対象の方を向き、攻撃や投射物が正面から出るようになります。オフにすると、対象を向いていない詠唱は拒否される従来の挙動になります。",
   "hudChrome.options.showWalletOnCharacterScreen": "キャラクター画面にウォレットを表示",
   "hudChrome.options.showWalletOnPlayerCard": "プレイヤーカードにウォレットを表示",
   "hudChrome.playerCard.showWalletBadge": "ウォレットバッジを表示",

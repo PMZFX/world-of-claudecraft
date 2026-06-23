@@ -270,6 +270,7 @@ export interface IWorld {
   questState(questId: string): QuestState;
   castAbility(abilityId: string): void;
   castAbilityBySlot(slot: number): void;
+  setAutoFaceOnCast(enabled: boolean): void;
   targetEntity(id: number | null): void;
   tabTarget(): void;
   targetNearestFriendly(): void;

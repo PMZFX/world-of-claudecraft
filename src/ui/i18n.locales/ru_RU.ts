@@ -132,6 +132,8 @@ export const ru_RU: Partial<Record<TranslationKey, string>> = {
   "hudChrome.options.browserEffectsNote": "Авто снижает тяжёлые CSS-эффекты (размытие, свечение, движение фона) в зависимости от браузера и устройства. Если интерфейс тормозит, понизьте вручную.",
   "hudChrome.options.footstepSounds": "Звуки шагов",
   "hudChrome.options.clickFeedback": "Метка клика",
+  "hudChrome.options.autoFaceOnCast": "Автоповорот к цели при заклинании",
+  "hudChrome.options.autoFaceOnCastHelp": "При применении способности по цели персонаж поворачивается к ней, чтобы удары и снаряды выходили спереди. Если отключить, вернется классическое поведение: заклинание по цели, к которой персонаж не повернут, будет отклонено.",
   "hudChrome.options.showWalletOnCharacterScreen": "Показывать кошелек на экране персонажей",
   "hudChrome.options.showWalletOnPlayerCard": "Показывать кошелек на карточке игрока",
   "hudChrome.playerCard.showWalletBadge": "Показывать значок кошелька",

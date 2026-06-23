@@ -80,3 +80,4 @@
 - [Arena Info Cache Change Note](change-notes/2026-06-23-arena-info-cache.md)
 - [WebSocket Account Session State Change Note](change-notes/2026-06-23-websocket-account-session-state.md)
 - [Code Map Refresh Change Note](change-notes/2026-06-23-code-map-refresh.md)
+- [Upstream QoL Imports Change Note](change-notes/2026-06-23-upstream-qol-imports.md)

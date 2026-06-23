@@ -24,6 +24,23 @@ export interface FrameGraphGeometry {
 /** Wild stalls are clamped so normal variance stays legible. */
 export const MAX_VISIBLE_MS = 100;
 
+export interface FrameGraphCanvasMetrics {
+  pxW: number;
+  pxH: number;
+  dpr: number;
+}
+
+export function frameGraphCanvasMetrics(
+  cssW: number, cssH: number, devicePixelRatio: number,
+): FrameGraphCanvasMetrics {
+  const dpr = Math.min(2, devicePixelRatio > 0 ? devicePixelRatio : 1);
+  return {
+    pxW: Math.max(1, Math.round(cssW * dpr)),
+    pxH: Math.max(1, Math.round(cssH * dpr)),
+    dpr,
+  };
+}
+
 /** Map frame-time samples (ms, oldest->newest) to sparkline coordinates. The
  *  vertical range auto-scales from 2x target up to the worst sample, capped at
  *  MAX_VISIBLE_MS. Pure: no canvas, no DOM. */

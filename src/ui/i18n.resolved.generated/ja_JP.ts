@@ -253,6 +253,8 @@ export const ja_JP: EnTranslations = {
       "interfaceModeNote": "自動では、デバイスに応じてデスクトップ操作かタッチ操作を選びます。デスクトップを選ぶとキーボードとマウスに固定され（キーボード付きタブレットなどに便利）、タッチを選ぶと画面上の操作になります。",
       "footstepSounds": "足音",
       "clickFeedback": "クリックマーカー",
+      "autoFaceOnCast": "詠唱時に自動で対象を向く",
+      "autoFaceOnCastHelp": "対象指定アビリティを使うと、キャラクターが対象の方を向き、攻撃や投射物が正面から出るようになります。オフにすると、対象を向いていない詠唱は拒否される従来の挙動になります。",
       "showWalletOnCharacterScreen": "キャラクター画面にウォレットを表示",
       "showWalletOnPlayerCard": "プレイヤーカードにウォレットを表示",
       "uiScale": "UIスケール",

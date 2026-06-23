@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { clickMoveButtonLabel, normalizeClickMoveButton, Settings, SETTING_RANGES } from '../src/game/settings';
+import { clickMoveButtonLabel, migratePersistedSettings, normalizeClickMoveButton, Settings, SETTING_RANGES } from '../src/game/settings';
+import { GFX_CONFIG_VERSION } from '../src/graphics_config';
 
 function installStorage(): void {
   const map = new Map<string, string>();
@@ -43,6 +44,41 @@ describe('Settings', () => {
     // Interface Mode defaults to Auto (0): detect desktop vs touch from the device.
     expect(s.get('interfaceMode')).toBe(SETTING_RANGES.interfaceMode.def);
     expect(s.get('interfaceMode')).toBe(0);
+  });
+
+  it('frees returning players from a stale low graphics preset on a graphics config bump', () => {
+    localStorage.setItem('woc_settings', JSON.stringify({ graphicsPreset: 1, sfxVolume: 0.4 }));
+    const s = new Settings();
+
+    expect(s.get('graphicsPreset')).toBe(SETTING_RANGES.graphicsPreset.def);
+    expect(s.get('sfxVolume')).toBe(0.4);
+    const persisted = JSON.parse(localStorage.getItem('woc_settings')!);
+    expect(persisted.graphicsPreset).toBe(SETTING_RANGES.graphicsPreset.def);
+    expect(persisted.graphicsConfigVersion).toBe(GFX_CONFIG_VERSION);
+
+    expect(new Settings().set('graphicsPreset', 1)).toBe(1);
+    expect(new Settings().get('graphicsPreset')).toBe(1);
+  });
+
+  it('does not write storage or migrate for a genuinely fresh player', () => {
+    const s = new Settings();
+    expect(s.get('graphicsPreset')).toBe(SETTING_RANGES.graphicsPreset.def);
+    expect(localStorage.getItem('woc_settings')).toBeNull();
+  });
+
+  it('migratePersistedSettings only drops graphicsPreset when the version is behind', () => {
+    const stale = migratePersistedSettings({ graphicsPreset: 1, sfxVolume: 0.4 }, GFX_CONFIG_VERSION);
+    expect(stale.changed).toBe(true);
+    expect('graphicsPreset' in stale.raw).toBe(false);
+    expect(stale.raw.sfxVolume).toBe(0.4);
+    expect(stale.raw.graphicsConfigVersion).toBe(GFX_CONFIG_VERSION);
+
+    const current = migratePersistedSettings(
+      { graphicsPreset: 1, graphicsConfigVersion: GFX_CONFIG_VERSION },
+      GFX_CONFIG_VERSION,
+    );
+    expect(current.changed).toBe(false);
+    expect(current.raw.graphicsPreset).toBe(1);
   });
 
   it('clamps the touch joystick deadzone to its bounds', () => {

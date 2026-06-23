@@ -541,6 +541,9 @@ export interface PlayerMeta {
   questsDone: Set<string>;
   counters: RewardCounters;
   autoEquip: boolean;
+  // Client preference mirrored from local settings. Server sessions keep it in
+  // memory only; it is not persisted with character state. Defaults true.
+  autoFaceOnCast: boolean;
   // sim.time when this character entered the world; powers /played. Session-only
   // (sim.time resets to 0 each server boot), so it reports time this session.
   joinedAt: number;
@@ -1001,6 +1004,7 @@ export class Sim {
       questsDone: new Set(),
       counters: freshCounters(),
       autoEquip: opts?.autoEquip ?? false,
+      autoFaceOnCast: true,
       joinedAt: this.time,
       lastActiveTick: this.tickCount,
       arenaRating: savedArena1v1.rating,
@@ -2505,6 +2509,12 @@ export class Sim {
     if (known) this.castAbility(known.def.id, pid);
   }
 
+  setAutoFaceOnCast(enabled: boolean, pid?: number): void {
+    const r = this.resolve(pid);
+    if (!r) return;
+    r.meta.autoFaceOnCast = enabled;
+  }
+
   castAbility(abilityId: string, pid?: number): void {
     const r = this.resolve(pid);
     if (!r) return;
@@ -2569,6 +2579,7 @@ export class Sim {
       const d = dist2d(p.pos, target.pos);
       if (d > Math.max(ability.range, 5)) { this.error(p.id, 'Out of range.'); return; }
       if (this.lineOfSightBlocked(p, target, ability)) { this.error(p.id, 'Line of sight.'); return; }
+      if (meta.autoFaceOnCast && target !== p) p.facing = angleTo(p.pos, target.pos);
     } else if (ability.requiresTarget) {
       target = p.targetId !== null ? this.entities.get(p.targetId) ?? null : null;
       if (!target || target.dead || !this.isHostileTo(p, target)) {
@@ -2580,8 +2591,12 @@ export class Sim {
       if (d > maxRange) { this.error(p.id, 'Out of range.'); return; }
       if (ability.minRange && d < ability.minRange) { this.error(p.id, 'Too close!'); return; }
       if (this.lineOfSightBlocked(p, target, ability)) { this.error(p.id, 'Line of sight.'); return; }
-      const facingDiff = Math.abs(normAngle(angleTo(p.pos, target.pos) - p.facing));
-      if (facingDiff > MELEE_ARC) { this.error(p.id, 'You must be facing your target.'); return; }
+      if (meta.autoFaceOnCast) {
+        p.facing = angleTo(p.pos, target.pos);
+      } else {
+        const facingDiff = Math.abs(normAngle(angleTo(p.pos, target.pos) - p.facing));
+        if (facingDiff > MELEE_ARC) { this.error(p.id, 'You must be facing your target.'); return; }
+      }
       // execute-style gate: only usable while the target is nearly dead
       if (ability.requiresTargetHpBelow !== undefined
         && target.hp > target.maxHp * ability.requiresTargetHpBelow) {
@@ -4880,9 +4895,8 @@ export class Sim {
 
   private mobEffectiveMeleeRange(mob: Entity, target: Entity): number {
     const profile = this.mobCombatProfile(mob);
-    const targetMoved = dist2d(target.pos, target.prevPos) > 0.05;
     const mobMoved = dist2d(mob.pos, mob.prevPos) > 0.05;
-    return effectiveMobMeleeRange(profile, targetMoved, mobMoved);
+    return effectiveMobMeleeRange(profile, mobMoved);
   }
 
   private tryMobMeleeSwingInRange(mob: Entity, target: Entity): boolean {

@@ -505,6 +505,59 @@ describe('combat', () => {
     expect(wolf.hp).toBeLessThan(hpBefore);
   });
 
+  it('auto-faces the target on a targeted cast instead of rejecting when turned away', () => {
+    const sim = makeSim('mage');
+    const wolf = nearestMob(sim, 'forest_wolf');
+    teleportTo(sim, wolf.pos.x + 15, wolf.pos.z);
+    sim.targetEntity(wolf.id);
+    const toward = Math.atan2(wolf.pos.x - sim.player.pos.x, wolf.pos.z - sim.player.pos.z);
+    sim.player.facing = toward + Math.PI;
+    sim.events = [];
+    const hpBefore = wolf.hp;
+
+    sim.castAbility('fireball');
+
+    expect(sim.events.find((e: any) => e.type === 'error' && /facing/.test(e.text ?? ''))).toBeUndefined();
+    const facingErr = Math.abs(Math.atan2(Math.sin(sim.player.facing - toward), Math.cos(sim.player.facing - toward)));
+    expect(facingErr).toBeLessThan(1e-6);
+    expect(sim.player.castingAbility).toBe('fireball');
+    for (let i = 0; i < 20 * 3; i++) sim.tick();
+    expect(wolf.hp).toBeLessThan(hpBefore);
+  });
+
+  it('with auto-face disabled, rejects a targeted cast when turned away', () => {
+    const sim = makeSim('mage');
+    const wolf = nearestMob(sim, 'forest_wolf');
+    teleportTo(sim, wolf.pos.x + 15, wolf.pos.z);
+    sim.targetEntity(wolf.id);
+    sim.setAutoFaceOnCast(false);
+    const toward = Math.atan2(wolf.pos.x - sim.player.pos.x, wolf.pos.z - sim.player.pos.z);
+    const away = toward + Math.PI;
+    sim.player.facing = away;
+    sim.events = [];
+
+    sim.castAbility('fireball');
+
+    expect(sim.events.find((e: any) => e.type === 'error' && /facing/.test(e.text ?? ''))).toBeDefined();
+    expect(sim.player.facing).toBe(away);
+    expect(sim.player.castingAbility).toBeNull();
+  });
+
+  it('with auto-face disabled, allows a targeted cast when already facing the target', () => {
+    const sim = makeSim('mage');
+    const wolf = nearestMob(sim, 'forest_wolf');
+    teleportTo(sim, wolf.pos.x + 15, wolf.pos.z);
+    sim.targetEntity(wolf.id);
+    sim.setAutoFaceOnCast(false);
+    facePlayerAt(sim, wolf);
+    sim.events = [];
+
+    sim.castAbility('fireball');
+
+    expect(sim.events.find((e: any) => e.type === 'error' && /facing/.test(e.text ?? ''))).toBeUndefined();
+    expect(sim.player.castingAbility).toBe('fireball');
+  });
+
   it('tags a cast on a dead target with reason target_dead (and not on a live one)', () => {
     const sim = makeSim('mage');
     const wolf = nearestMob(sim, 'forest_wolf');

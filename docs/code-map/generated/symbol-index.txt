@@ -2235,21 +2235,21 @@ server/game.ts:222:export interface AdminLiveAura {
 server/game.ts:231:export interface AdminLivePlayer {
 server/game.ts:251:export interface RestartCountdownStatus {
 server/game.ts:258:interface WireAura {
-server/game.ts:266:interface WhoRosterRow {
-server/game.ts:274:type RememberedChat =
-server/game.ts:281:function identityFields(e: Entity): Record<string, unknown> {
-server/game.ts:297:function dynamicFields(e: Entity): Record<string, unknown> {
-server/game.ts:334:export function wireEntity(e: Entity): Record<string, unknown> {
-server/game.ts:341:function interestLimitSq(e: Entity, known: boolean): number {
-server/game.ts:348:function isStealthed(e: Entity): boolean {
-server/game.ts:357:function isUpdateDue(tick: number, e: Entity, d2: number, viewer: Entity, sentAtTick: number): boolean {
-server/game.ts:367:interface EntityWireCache {
-server/game.ts:377:function round2(v: number): number {
-server/game.ts:381:function logSocialErr(err: unknown): void {
-server/game.ts:386:function formatDuration(seconds: number): string {
-server/game.ts:400:function chatChannelHint(session: ClientSession, text: string): string {
-server/game.ts:411:function delay(ms: number): Promise<void> {
-server/game.ts:415:export class GameServer {
+server/game.ts:267:interface WhoRosterRow {
+server/game.ts:275:type RememberedChat =
+server/game.ts:282:function identityFields(e: Entity): Record<string, unknown> {
+server/game.ts:298:function dynamicFields(e: Entity): Record<string, unknown> {
+server/game.ts:342:export function wireEntity(e: Entity): Record<string, unknown> {
+server/game.ts:349:function interestLimitSq(e: Entity, known: boolean): number {
+server/game.ts:356:function isStealthed(e: Entity): boolean {
+server/game.ts:365:function isUpdateDue(tick: number, e: Entity, d2: number, viewer: Entity, sentAtTick: number): boolean {
+server/game.ts:375:interface EntityWireCache {
+server/game.ts:385:function round2(v: number): number {
+server/game.ts:389:function logSocialErr(err: unknown): void {
+server/game.ts:394:function formatDuration(seconds: number): string {
+server/game.ts:408:function chatChannelHint(session: ClientSession, text: string): string {
+server/game.ts:419:function delay(ms: number): Promise<void> {
+server/game.ts:423:export class GameServer {
 server/http_util.ts:4:export function json(res: http.ServerResponse, status: number, body: unknown): void {
 server/http_util.ts:15:export function isUniqueViolation(err: unknown): boolean {
 server/http_util.ts:20:export function readBody(req: http.IncomingMessage, maxBytes = 64 * 1024): Promise<any> {
@@ -3006,20 +3006,21 @@ src/game/pointer_pick.ts:16:export const DEFAULT_CLICK_PICK_MAX_MS = 280;
 src/game/pointer_pick.ts:17:export const DEFAULT_CLICK_PICK_DRAG_THRESHOLD = 18;
 src/game/pointer_pick.ts:19:export interface ClickPick {
 src/game/pointer_pick.ts:25:export function clickPickFromMouseGesture(g: MousePickGesture): ClickPick | null {
-src/game/settings.ts:8:export const SETTING_RANGES = {
-src/game/settings.ts:107:export const BOOL_SETTINGS = {
-src/game/settings.ts:185:export type NumericSettingKey = keyof typeof SETTING_RANGES;
-src/game/settings.ts:186:export type BoolSettingKey = keyof typeof BOOL_SETTINGS;
-src/game/settings.ts:187:export type GameSettings = { [K in NumericSettingKey]: number } & { [K in BoolSettingKey]: boolean };
-src/game/settings.ts:189:interface Range { min: number; max: number; def: number }
-src/game/settings.ts:191:const STORE_KEY = 'woc_settings';
-src/game/settings.ts:192:const NUMERIC_KEYS = Object.keys(SETTING_RANGES) as NumericSettingKey[];
-src/game/settings.ts:193:const BOOL_KEYS = Object.keys(BOOL_SETTINGS) as BoolSettingKey[];
-src/game/settings.ts:195:function clampNumeric(key: NumericSettingKey, v: number): number {
-src/game/settings.ts:201:export type ClickMoveMouseButton = 0 | 2;
-src/game/settings.ts:203:export function normalizeClickMoveButton(value: number): ClickMoveMouseButton {
-src/game/settings.ts:207:export function clickMoveButtonLabel(value: number): string {
-src/game/settings.ts:211:export class Settings {
+src/game/settings.ts:10:export const SETTING_RANGES = {
+src/game/settings.ts:109:export const BOOL_SETTINGS = {
+src/game/settings.ts:190:export type NumericSettingKey = keyof typeof SETTING_RANGES;
+src/game/settings.ts:191:export type BoolSettingKey = keyof typeof BOOL_SETTINGS;
+src/game/settings.ts:192:export type GameSettings = { [K in NumericSettingKey]: number } & { [K in BoolSettingKey]: boolean };
+src/game/settings.ts:194:interface Range { min: number; max: number; def: number }
+src/game/settings.ts:196:const STORE_KEY = 'woc_settings';
+src/game/settings.ts:197:const NUMERIC_KEYS = Object.keys(SETTING_RANGES) as NumericSettingKey[];
+src/game/settings.ts:198:const BOOL_KEYS = Object.keys(BOOL_SETTINGS) as BoolSettingKey[];
+src/game/settings.ts:200:function clampNumeric(key: NumericSettingKey, v: number): number {
+src/game/settings.ts:206:export function migratePersistedSettings(
+src/game/settings.ts:218:export type ClickMoveMouseButton = 0 | 2;
+src/game/settings.ts:220:export function normalizeClickMoveButton(value: number): ClickMoveMouseButton {
+src/game/settings.ts:224:export function clickMoveButtonLabel(value: number): string {
+src/game/settings.ts:228:export class Settings {
 src/game/sfx.ts:14:const SAMPLE_GAIN = 0.85; // base level for sampled clips; sfxVolume multiplies this
 src/game/sfx.ts:15:const MAX_VOICES = 24;     // concurrent one-shot sources (frame-budget guard)
 src/game/sfx.ts:16:const REF_DISTANCE = 5;    // world units at which a sound is at full volume
@@ -3035,6 +3036,7 @@ src/game/voice.ts:14:const VOICE_BASE_GAIN = 0.9;
 src/game/voice.ts:16:class GameVoice {
 src/game/voice.ts:56:export const voice = new GameVoice();
 src/game/voice_manifest.generated.ts:3:export const VOICE_LINES: Record<string, string> =
+src/graphics_config.ts:3:export const GFX_CONFIG_VERSION = 15;
 src/guide/app.ts:16:const RTL_LANGS = new Set(['ar', 'he', 'fa', 'ur']);
 src/guide/app.ts:17:function isRtl(tag: string): boolean {
 src/guide/app.ts:21:export class GuideApp {
@@ -3334,124 +3336,124 @@ src/main.ts:566:let hasBegunWorldEntry = false;
 src/main.ts:568:function beginWorldEntry(): boolean {
 src/main.ts:574:function enterLoadingState(statusText: string): void {
 src/main.ts:593:function mountGameUi(): void {
-src/main.ts:1680:function sanitizeOfflineName(raw: string): string {
-src/main.ts:1699:const api = new Api();
-src/main.ts:1704:const REFERRAL_SLUG = (() => {
-src/main.ts:1710:let activeTransitionTimeout: number | null = null;
-src/main.ts:1711:let activeTransitionCleanup: (() => void) | null = null;
-src/main.ts:1712:let characterPreview: CharacterPreview | null = null;
-src/main.ts:1713:let authModeApply: ((mode: 'login' | 'register') => void) | null = null;
-src/main.ts:1714:let offlineSkin = 0; // chosen appearance skin for the offline quick-start character
-src/main.ts:1715:let onlineSkin = 0; // chosen appearance skin for new online characters
-src/main.ts:1719:function renderSkinPicker(rowId: string, cls: PlayerClass, current: number, onPick: (i: number) => void): void {
-src/main.ts:1765:function decorateClassChips(): void {
-src/main.ts:1787:function selectedSkin(rowId: string, fallback: number): number {
-src/main.ts:1795:function refreshOfflineSkins(cls: PlayerClass): void {
-src/main.ts:1805:function refreshOnlineSkins(cls: PlayerClass): void {
-src/main.ts:1814:function updatePreviewContainer(panelId: string): void {
-src/main.ts:1848:function syncPreviewAfterPanelLayout(): void {
-src/main.ts:1856:const currentlyRenderedClass: Record<string, PlayerClass | null> = {
-src/main.ts:1861:const revertTimeouts: Record<string, number | null> = {
-src/main.ts:1866:const hoverTimeouts: Record<string, number | null> = {
-src/main.ts:1872:function switchMainView(targetId: string): void {
-src/main.ts:1954:function show(el: string): void {
-src/main.ts:2068:function loginError(text: string): void {
-src/main.ts:2073:const LAST_REALM_KEY = 'woc_last_realm';
-src/main.ts:2078:function realmPopulation(online: boolean, players: number): { labelKey: TranslationKey; cls: string } {
-src/main.ts:2101:function loginNavItem(): HTMLElement | null {
-src/main.ts:2105:const loggedInNavItems = ['#nav-item-account', '#nav-item-logout'];
-src/main.ts:2107:function enterLoggedInChrome(): void {
-src/main.ts:2113:function enterLoggedOutChrome(): void {
-src/main.ts:2119:function logoutAccount(): void {
-src/main.ts:2128:function setAccountFieldMsg(sel: string, text: string, ok: boolean): void {
-src/main.ts:2135:function paintAccountPortal(
-src/main.ts:2155:const loggedOutModel = () => accountPortalModel({ loggedIn: false, username: '', email: '', createdAt: '', characterCount: 0 });
-src/main.ts:2157:function handleAccountSessionExpired(): void {
-src/main.ts:2188:const revalidateAccountSession = (): Promise<void> => loadAccountPortal(true);
-src/main.ts:2190:const renderAccountPortal = (): Promise<void> => loadAccountPortal(false);
-src/main.ts:2195:let pendingWalletFocus = false;
-src/main.ts:2196:function accountGoToCharacters(focusWallet = false): void {
-src/main.ts:2202:function tryFocusWalletButton(attempt = 0): void {
-src/main.ts:2214:let accountPortalWired = false;
-src/main.ts:2215:function setupAccountPortal(): void {
-src/main.ts:2284:function showRealmList(dir?: import('./net/online').RealmDirectory): void {
-src/main.ts:2342:function selectRealm(entry: import('./net/online').RealmEntry): void {
-src/main.ts:2351:const REALM_TYPE_KEYS = { 'Normal': 'realmTypes.normal', 'PvP': 'realmTypes.pvp', 'RP': 'realmTypes.rp', 'RP-PvP': 'realmTypes.rpPvp' } as const;
-src/main.ts:2352:let realmDropdownOpen = false;
-src/main.ts:2354:function closeRealmDropdown(): void {
-src/main.ts:2362:function toggleRealmDropdown(): void {
-src/main.ts:2372:function renderRealmDropdown(): void {
-src/main.ts:2406:function selectRealmInline(entry: import('./net/online').RealmEntry): void {
-src/main.ts:2416:function setDeleteCharacterError(message: string): void {
-src/main.ts:2420:function closeDeleteCharacterDialog(): void {
-src/main.ts:2431:function normalizeDeleteConfirmation(name: string): string {
-src/main.ts:2435:function openDeleteCharacterDialog(character: CharacterSummary): void {
-src/main.ts:2578:function fatalOverlay(message: string): void {
-src/main.ts:2651:const activeClassDetailsTimeouts: Record<string, number | null> = {};
-src/main.ts:2653:function renderClassDetails(panelId: string, className: PlayerClass): void {
-src/main.ts:2881:const STATS_CACHE_KEY = 'woc_cached_stats';
-src/main.ts:2882:const STATS_CACHE_TTL_MS = 30000; // 30 seconds
-src/main.ts:2884:function readTranslationKey(value: string | null): TranslationKey | null {
-src/main.ts:2888:function updateSeoMetadata(lang: SupportedLanguage): void {
-src/main.ts:2919:function translatePage(): void {
-src/main.ts:2968:function refreshLocalizedDynamicShell(): void {
-src/main.ts:3084:let highscoresLoading = false;
-src/main.ts:3135:function renderReleaseBody(md: string): string {
-src/main.ts:3171:let newsLoading = false;
-src/main.ts:3208:let caCopyResetTimer: number | null = null;
-src/main.ts:3213:function wireContractAddressCopy(): void {
-src/main.ts:3254:function syncHomepageMusicToggle(): void {
-src/main.ts:3261:function playHomepageMusic(): void {
-src/main.ts:3273:function setHomepageMusicMuted(muted: boolean): void {
-src/main.ts:3289:function wireHomepageMusicToggle(): void {
-src/main.ts:3303:let linkedWalletPubkey: string | null = null;
-src/main.ts:3304:let linkedWocBalance: number | null = null;
-src/main.ts:3305:let connectedWocBalance: number | null = null;
-src/main.ts:3306:let walletVerifyPending = false;
-src/main.ts:3307:let walletVerifyInProgress = false;
-src/main.ts:3308:let walletVerifyTimeout: number | null = null;
-src/main.ts:3309:let walletVerifyModalUnsubscribe: (() => void) | null = null;
-src/main.ts:3310:let walletFlowStatus: 'connect' | 'sign' | 'verify' | null = null;
-src/main.ts:3311:let walletHiddenNoticeTimeout: number | null = null;
-src/main.ts:3316:const WALLET_ENABLED = !NATIVE_APP && String(import.meta.env.VITE_WALLET_DISABLED ?? '').trim() !== '1';
-src/main.ts:3318:function walletCharacterScreenVisible(): boolean {
-src/main.ts:3326:function syncWalletCharacterScreenVisibility(): void {
-src/main.ts:3332:function showWalletHiddenNotice(): void {
-src/main.ts:3348:function hideWalletCharacterScreenRow(): void {
-src/main.ts:3355:let walletMod: typeof import('./net/wallet') | null = null;
-src/main.ts:3356:function loadWallet(): Promise<typeof import('./net/wallet')> {
-src/main.ts:3364:const shortenAddress = (a: string): string => `${a.slice(0, 4)}?${a.slice(-4)}`;
-src/main.ts:3365:const formatWoc = (n: number): string => formatNumber(n, { maximumFractionDigits: 2 });
-src/main.ts:3366:const walletBalanceText = (n: number): string => t('wallet.balanceAmount', { amount: formatWoc(n) });
-src/main.ts:3367:let walletPickerModal: HTMLDivElement | null = null;
-src/main.ts:3368:let walletPickerResolve: ((id: string | null) => void) | null = null;
-src/main.ts:3369:let walletPickerReturnFocus: HTMLElement | null = null;
-src/main.ts:3371:function walletPickerFocusable(root: HTMLElement): HTMLElement[] {
-src/main.ts:3376:function closeWalletPicker(id: string | null): void {
-src/main.ts:3388:function showWalletPicker(wallets: readonly WalletOption[], selectedId: string | null): Promise<string | null> {
-src/main.ts:3498:function walletAddressLabel(address: string, linked: boolean, balance: number | null): string {
-src/main.ts:3511:function walletHelpText(address: string, linked: boolean, balance: number | null): string {
-src/main.ts:3528:function walletLinkedDisconnectedHelpText(address: string, balance: number | null): string {
-src/main.ts:3535:function setWalletStatus(text: string | null): void {
-src/main.ts:3551:function walletFlowHelpText(): string {
-src/main.ts:3564:function setWalletHelp(text: string, state: 'default' | 'attention' | 'verified'): void {
-src/main.ts:3572:function setWalletFlowStatus(status: typeof walletFlowStatus): void {
-src/main.ts:3577:function updateWalletButton(): void {
-src/main.ts:3660:function clearWalletVerifyTimeout(): void {
-src/main.ts:3667:function clearWalletVerifyModalWatcher(): void {
-src/main.ts:3673:function cancelWalletVerifyPending(): void {
-src/main.ts:3730:let lastOnDemandRefreshAddress: string | null = null;
-src/main.ts:3731:let lastOnDemandRefreshAt = 0;
-src/main.ts:3732:const ON_DEMAND_REFRESH_THROTTLE_MS = 5000;
-src/main.ts:3733:function refreshWocBalanceOnDemand(): void {
-src/main.ts:3744:function flashWalletError(message: string): void {
-src/main.ts:3899:function wireWallet(): void {
-src/main.ts:3945:function stopLandingTrailer(): void {
-src/main.ts:3957:let landingTrailerWired = false;
-src/main.ts:3958:function applyLandingBackdrop(highContrast: boolean): void {
-src/main.ts:4007:function wireStartScreens(): void {
-src/main.ts:4950:function initHomepageMusic(): void {
-src/main.ts:4969:function fadeOutHomepageMusic(durationMs = 1600): void {
+src/main.ts:1684:function sanitizeOfflineName(raw: string): string {
+src/main.ts:1703:const api = new Api();
+src/main.ts:1708:const REFERRAL_SLUG = (() => {
+src/main.ts:1714:let activeTransitionTimeout: number | null = null;
+src/main.ts:1715:let activeTransitionCleanup: (() => void) | null = null;
+src/main.ts:1716:let characterPreview: CharacterPreview | null = null;
+src/main.ts:1717:let authModeApply: ((mode: 'login' | 'register') => void) | null = null;
+src/main.ts:1718:let offlineSkin = 0; // chosen appearance skin for the offline quick-start character
+src/main.ts:1719:let onlineSkin = 0; // chosen appearance skin for new online characters
+src/main.ts:1723:function renderSkinPicker(rowId: string, cls: PlayerClass, current: number, onPick: (i: number) => void): void {
+src/main.ts:1769:function decorateClassChips(): void {
+src/main.ts:1791:function selectedSkin(rowId: string, fallback: number): number {
+src/main.ts:1799:function refreshOfflineSkins(cls: PlayerClass): void {
+src/main.ts:1809:function refreshOnlineSkins(cls: PlayerClass): void {
+src/main.ts:1818:function updatePreviewContainer(panelId: string): void {
+src/main.ts:1852:function syncPreviewAfterPanelLayout(): void {
+src/main.ts:1860:const currentlyRenderedClass: Record<string, PlayerClass | null> = {
+src/main.ts:1865:const revertTimeouts: Record<string, number | null> = {
+src/main.ts:1870:const hoverTimeouts: Record<string, number | null> = {
+src/main.ts:1876:function switchMainView(targetId: string): void {
+src/main.ts:1958:function show(el: string): void {
+src/main.ts:2072:function loginError(text: string): void {
+src/main.ts:2077:const LAST_REALM_KEY = 'woc_last_realm';
+src/main.ts:2082:function realmPopulation(online: boolean, players: number): { labelKey: TranslationKey; cls: string } {
+src/main.ts:2105:function loginNavItem(): HTMLElement | null {
+src/main.ts:2109:const loggedInNavItems = ['#nav-item-account', '#nav-item-logout'];
+src/main.ts:2111:function enterLoggedInChrome(): void {
+src/main.ts:2117:function enterLoggedOutChrome(): void {
+src/main.ts:2123:function logoutAccount(): void {
+src/main.ts:2132:function setAccountFieldMsg(sel: string, text: string, ok: boolean): void {
+src/main.ts:2139:function paintAccountPortal(
+src/main.ts:2159:const loggedOutModel = () => accountPortalModel({ loggedIn: false, username: '', email: '', createdAt: '', characterCount: 0 });
+src/main.ts:2161:function handleAccountSessionExpired(): void {
+src/main.ts:2192:const revalidateAccountSession = (): Promise<void> => loadAccountPortal(true);
+src/main.ts:2194:const renderAccountPortal = (): Promise<void> => loadAccountPortal(false);
+src/main.ts:2199:let pendingWalletFocus = false;
+src/main.ts:2200:function accountGoToCharacters(focusWallet = false): void {
+src/main.ts:2206:function tryFocusWalletButton(attempt = 0): void {
+src/main.ts:2218:let accountPortalWired = false;
+src/main.ts:2219:function setupAccountPortal(): void {
+src/main.ts:2288:function showRealmList(dir?: import('./net/online').RealmDirectory): void {
+src/main.ts:2346:function selectRealm(entry: import('./net/online').RealmEntry): void {
+src/main.ts:2355:const REALM_TYPE_KEYS = { 'Normal': 'realmTypes.normal', 'PvP': 'realmTypes.pvp', 'RP': 'realmTypes.rp', 'RP-PvP': 'realmTypes.rpPvp' } as const;
+src/main.ts:2356:let realmDropdownOpen = false;
+src/main.ts:2358:function closeRealmDropdown(): void {
+src/main.ts:2366:function toggleRealmDropdown(): void {
+src/main.ts:2376:function renderRealmDropdown(): void {
+src/main.ts:2410:function selectRealmInline(entry: import('./net/online').RealmEntry): void {
+src/main.ts:2420:function setDeleteCharacterError(message: string): void {
+src/main.ts:2424:function closeDeleteCharacterDialog(): void {
+src/main.ts:2435:function normalizeDeleteConfirmation(name: string): string {
+src/main.ts:2439:function openDeleteCharacterDialog(character: CharacterSummary): void {
+src/main.ts:2582:function fatalOverlay(message: string): void {
+src/main.ts:2655:const activeClassDetailsTimeouts: Record<string, number | null> = {};
+src/main.ts:2657:function renderClassDetails(panelId: string, className: PlayerClass): void {
+src/main.ts:2885:const STATS_CACHE_KEY = 'woc_cached_stats';
+src/main.ts:2886:const STATS_CACHE_TTL_MS = 30000; // 30 seconds
+src/main.ts:2888:function readTranslationKey(value: string | null): TranslationKey | null {
+src/main.ts:2892:function updateSeoMetadata(lang: SupportedLanguage): void {
+src/main.ts:2923:function translatePage(): void {
+src/main.ts:2972:function refreshLocalizedDynamicShell(): void {
+src/main.ts:3088:let highscoresLoading = false;
+src/main.ts:3139:function renderReleaseBody(md: string): string {
+src/main.ts:3175:let newsLoading = false;
+src/main.ts:3212:let caCopyResetTimer: number | null = null;
+src/main.ts:3217:function wireContractAddressCopy(): void {
+src/main.ts:3258:function syncHomepageMusicToggle(): void {
+src/main.ts:3265:function playHomepageMusic(): void {
+src/main.ts:3277:function setHomepageMusicMuted(muted: boolean): void {
+src/main.ts:3293:function wireHomepageMusicToggle(): void {
+src/main.ts:3307:let linkedWalletPubkey: string | null = null;
+src/main.ts:3308:let linkedWocBalance: number | null = null;
+src/main.ts:3309:let connectedWocBalance: number | null = null;
+src/main.ts:3310:let walletVerifyPending = false;
+src/main.ts:3311:let walletVerifyInProgress = false;
+src/main.ts:3312:let walletVerifyTimeout: number | null = null;
+src/main.ts:3313:let walletVerifyModalUnsubscribe: (() => void) | null = null;
+src/main.ts:3314:let walletFlowStatus: 'connect' | 'sign' | 'verify' | null = null;
+src/main.ts:3315:let walletHiddenNoticeTimeout: number | null = null;
+src/main.ts:3320:const WALLET_ENABLED = !NATIVE_APP && String(import.meta.env.VITE_WALLET_DISABLED ?? '').trim() !== '1';
+src/main.ts:3322:function walletCharacterScreenVisible(): boolean {
+src/main.ts:3330:function syncWalletCharacterScreenVisibility(): void {
+src/main.ts:3336:function showWalletHiddenNotice(): void {
+src/main.ts:3352:function hideWalletCharacterScreenRow(): void {
+src/main.ts:3359:let walletMod: typeof import('./net/wallet') | null = null;
+src/main.ts:3360:function loadWallet(): Promise<typeof import('./net/wallet')> {
+src/main.ts:3368:const shortenAddress = (a: string): string => `${a.slice(0, 4)}?${a.slice(-4)}`;
+src/main.ts:3369:const formatWoc = (n: number): string => formatNumber(n, { maximumFractionDigits: 2 });
+src/main.ts:3370:const walletBalanceText = (n: number): string => t('wallet.balanceAmount', { amount: formatWoc(n) });
+src/main.ts:3371:let walletPickerModal: HTMLDivElement | null = null;
+src/main.ts:3372:let walletPickerResolve: ((id: string | null) => void) | null = null;
+src/main.ts:3373:let walletPickerReturnFocus: HTMLElement | null = null;
+src/main.ts:3375:function walletPickerFocusable(root: HTMLElement): HTMLElement[] {
+src/main.ts:3380:function closeWalletPicker(id: string | null): void {
+src/main.ts:3392:function showWalletPicker(wallets: readonly WalletOption[], selectedId: string | null): Promise<string | null> {
+src/main.ts:3502:function walletAddressLabel(address: string, linked: boolean, balance: number | null): string {
+src/main.ts:3515:function walletHelpText(address: string, linked: boolean, balance: number | null): string {
+src/main.ts:3532:function walletLinkedDisconnectedHelpText(address: string, balance: number | null): string {
+src/main.ts:3539:function setWalletStatus(text: string | null): void {
+src/main.ts:3555:function walletFlowHelpText(): string {
+src/main.ts:3568:function setWalletHelp(text: string, state: 'default' | 'attention' | 'verified'): void {
+src/main.ts:3576:function setWalletFlowStatus(status: typeof walletFlowStatus): void {
+src/main.ts:3581:function updateWalletButton(): void {
+src/main.ts:3664:function clearWalletVerifyTimeout(): void {
+src/main.ts:3671:function clearWalletVerifyModalWatcher(): void {
+src/main.ts:3677:function cancelWalletVerifyPending(): void {
+src/main.ts:3734:let lastOnDemandRefreshAddress: string | null = null;
+src/main.ts:3735:let lastOnDemandRefreshAt = 0;
+src/main.ts:3736:const ON_DEMAND_REFRESH_THROTTLE_MS = 5000;
+src/main.ts:3737:function refreshWocBalanceOnDemand(): void {
+src/main.ts:3748:function flashWalletError(message: string): void {
+src/main.ts:3903:function wireWallet(): void {
+src/main.ts:3949:function stopLandingTrailer(): void {
+src/main.ts:3961:let landingTrailerWired = false;
+src/main.ts:3962:function applyLandingBackdrop(highContrast: boolean): void {
+src/main.ts:4011:function wireStartScreens(): void {
+src/main.ts:4954:function initHomepageMusic(): void {
+src/main.ts:4973:function fadeOutHomepageMusic(durationMs = 1600): void {
 src/net/native_attestation.ts:3:export interface NativeAttestationProof {
 src/net/native_attestation.ts:9:interface ChallengeResponse {
 src/net/native_attestation.ts:14:interface NativeAttestationPlugin {
@@ -3934,50 +3936,50 @@ src/render/foliage.ts:1332:function segmentCircleEntry(
 src/render/foliage.ts:1348:function cameraSegmentHitsTree(
 src/render/foliage.ts:1362:function updateTreeHides(
 src/render/foliage.ts:1378:export function buildFoliage(seed: number): FoliageView {
-src/render/gfx.ts:12:export type GfxTier = 'low' | 'medium' | 'high' | 'ultra';
-src/render/gfx.ts:13:export const GFX_CONFIG_VERSION = 14;
-src/render/gfx.ts:15:export const GFX_BUCKET_IDS = [
-src/render/gfx.ts:30:export type GfxBucketId = typeof GFX_BUCKET_IDS[number];
-src/render/gfx.ts:31:export type GfxBucketCost = 'gpu' | 'cpu' | 'mixed';
-src/render/gfx.ts:33:export interface GfxBucketBand {
-src/render/gfx.ts:42:export type GfxBucketBands = Record<GfxBucketId, GfxBucketBand>;
-src/render/gfx.ts:43:export type GfxBucketLevels = Record<GfxBucketId, number>;
-src/render/gfx.ts:45:export interface GfxRuntimeHints {
-src/render/gfx.ts:59:export interface GfxSettings {
-src/render/gfx.ts:88:export interface GfxRuntimeBudget {
-src/render/gfx.ts:103:const PRESET_LOW = 1;
-src/render/gfx.ts:104:const PRESET_MEDIUM = 2;
-src/render/gfx.ts:105:const PRESET_HIGH = 3;
-src/render/gfx.ts:106:const PRESET_ULTRA = 4;
-src/render/gfx.ts:107:const PRESET_ADVANCED = 5;
-src/render/gfx.ts:108:const DEFAULT_PRESET = PRESET_ULTRA;
-src/render/gfx.ts:110:export const GFX_BUDGETS: Record<GfxTier, GfxRuntimeBudget> = {
-src/render/gfx.ts:169:export const GFX_BUCKET_BANDS: Record<GfxTier, GfxBucketBands> = {
-src/render/gfx.ts:228:function bucketBaselines(bands: GfxBucketBands): GfxBucketLevels {
-src/render/gfx.ts:245:export function graphicsPresetLabel(value: number | undefined): 'low' | 'medium' | 'high' | 'ultra' | 'advanced' {
-src/render/gfx.ts:256:export function shouldUseAutoGovernor(hints?: Pick<GfxRuntimeHints, 'search' | 'graphicsPreset'>): boolean {
-src/render/gfx.ts:266:export function configureMaskedDoubleSidedVegetationMaterial<T extends THREE.Material>(mat: T): T {
-src/render/gfx.ts:276:function settingsFor(
-src/render/gfx.ts:314:export function forcedTierFromSearch(search: string): GfxTier | null {
-src/render/gfx.ts:321:function storedNumericSetting(key: string): number | undefined {
-src/render/gfx.ts:332:function probeGpuRenderer(): string | undefined {
-src/render/gfx.ts:346:export function urlForcedTier(): GfxTier | null {
-src/render/gfx.ts:351:function runtimeHints(): GfxRuntimeHints {
-src/render/gfx.ts:372:export function isConstrainedBrowser(hints: GfxRuntimeHints): boolean {
-src/render/gfx.ts:377:export function tierFromHints(hints: GfxRuntimeHints, softwareGl: boolean): GfxTier {
-src/render/gfx.ts:393:function rendererName(webgl: THREE.WebGLRenderer): string {
-src/render/gfx.ts:403:export function isSoftwareGL(webgl: THREE.WebGLRenderer): boolean {
-src/render/gfx.ts:407:export function isWeakIntegratedGpu(name: string | undefined): boolean {
-src/render/gfx.ts:416:export let GFX: GfxSettings = settingsFor(tierFromHints(runtimeHints(), false), runtimeHints());
-src/render/gfx.ts:418:export function initGfxTier(webgl: THREE.WebGLRenderer): GfxTier {
-src/render/gfx.ts:425:export const gfxInternalsForTest = {
-src/render/gfx.ts:433:export const sharedUniforms = {
-src/render/gfx.ts:441:export const SUN_ANCHOR = new THREE.Vector3(90, 140, 50);
-src/render/gfx.ts:442:export const SUN_DIR = SUN_ANCHOR.clone().normalize();
-src/render/gfx.ts:444:export interface SurfaceMatOpts {
-src/render/gfx.ts:465:export function addRimGlow(mat: THREE.Material): void {
-src/render/gfx.ts:483:const matCache = new Map<string, THREE.Material>();
-src/render/gfx.ts:485:export function surfaceMat(opts: SurfaceMatOpts): THREE.Material {
+src/render/gfx.ts:13:export type GfxTier = 'low' | 'medium' | 'high' | 'ultra';
+src/render/gfx.ts:16:export const GFX_BUCKET_IDS = [
+src/render/gfx.ts:31:export type GfxBucketId = typeof GFX_BUCKET_IDS[number];
+src/render/gfx.ts:32:export type GfxBucketCost = 'gpu' | 'cpu' | 'mixed';
+src/render/gfx.ts:34:export interface GfxBucketBand {
+src/render/gfx.ts:43:export type GfxBucketBands = Record<GfxBucketId, GfxBucketBand>;
+src/render/gfx.ts:44:export type GfxBucketLevels = Record<GfxBucketId, number>;
+src/render/gfx.ts:46:export interface GfxRuntimeHints {
+src/render/gfx.ts:60:export interface GfxSettings {
+src/render/gfx.ts:89:export interface GfxRuntimeBudget {
+src/render/gfx.ts:104:const PRESET_LOW = 1;
+src/render/gfx.ts:105:const PRESET_MEDIUM = 2;
+src/render/gfx.ts:106:const PRESET_HIGH = 3;
+src/render/gfx.ts:107:const PRESET_ULTRA = 4;
+src/render/gfx.ts:108:const PRESET_ADVANCED = 5;
+src/render/gfx.ts:109:const DEFAULT_PRESET = PRESET_ULTRA;
+src/render/gfx.ts:111:export const GFX_BUDGETS: Record<GfxTier, GfxRuntimeBudget> = {
+src/render/gfx.ts:170:export const GFX_BUCKET_BANDS: Record<GfxTier, GfxBucketBands> = {
+src/render/gfx.ts:229:function bucketBaselines(bands: GfxBucketBands): GfxBucketLevels {
+src/render/gfx.ts:246:export function graphicsPresetLabel(value: number | undefined): 'low' | 'medium' | 'high' | 'ultra' | 'advanced' {
+src/render/gfx.ts:257:export function shouldUseAutoGovernor(hints?: Pick<GfxRuntimeHints, 'search' | 'graphicsPreset'>): boolean {
+src/render/gfx.ts:267:export function configureMaskedDoubleSidedVegetationMaterial<T extends THREE.Material>(mat: T): T {
+src/render/gfx.ts:277:function settingsFor(
+src/render/gfx.ts:315:export function forcedTierFromSearch(search: string): GfxTier | null {
+src/render/gfx.ts:322:function storedNumericSetting(key: string): number | undefined {
+src/render/gfx.ts:333:export function storedGraphicsPreset(): number | undefined {
+src/render/gfx.ts:338:function probeGpuRenderer(): string | undefined {
+src/render/gfx.ts:352:export function urlForcedTier(): GfxTier | null {
+src/render/gfx.ts:357:function runtimeHints(): GfxRuntimeHints {
+src/render/gfx.ts:378:export function isConstrainedBrowser(hints: GfxRuntimeHints): boolean {
+src/render/gfx.ts:383:export function tierFromHints(hints: GfxRuntimeHints, softwareGl: boolean): GfxTier {
+src/render/gfx.ts:399:function rendererName(webgl: THREE.WebGLRenderer): string {
+src/render/gfx.ts:409:export function isSoftwareGL(webgl: THREE.WebGLRenderer): boolean {
+src/render/gfx.ts:413:export function isWeakIntegratedGpu(name: string | undefined): boolean {
+src/render/gfx.ts:422:export let GFX: GfxSettings = settingsFor(tierFromHints(runtimeHints(), false), runtimeHints());
+src/render/gfx.ts:424:export function initGfxTier(webgl: THREE.WebGLRenderer): GfxTier {
+src/render/gfx.ts:431:export const gfxInternalsForTest = {
+src/render/gfx.ts:439:export const sharedUniforms = {
+src/render/gfx.ts:447:export const SUN_ANCHOR = new THREE.Vector3(90, 140, 50);
+src/render/gfx.ts:448:export const SUN_DIR = SUN_ANCHOR.clone().normalize();
+src/render/gfx.ts:450:export interface SurfaceMatOpts {
+src/render/gfx.ts:471:export function addRimGlow(mat: THREE.Material): void {
+src/render/gfx.ts:489:const matCache = new Map<string, THREE.Material>();
+src/render/gfx.ts:491:export function surfaceMat(opts: SurfaceMatOpts): THREE.Material {
 src/render/impact_site.ts:11:export const MIREFEN_IMPACT_SITE = {
 src/render/impact_site.ts:20:const VISUAL_LIFT = 0.055;
 src/render/impact_site.ts:21:const SCORCH_SEGMENTS = 88;
@@ -4954,26 +4956,26 @@ src/sim/sim.ts:499:export interface ItemUseResult {
 src/sim/sim.ts:506:export const JOINABLE_CHANNELS = ['world', 'lfg'] as const;
 src/sim/sim.ts:507:export type JoinableChannel = (typeof JOINABLE_CHANNELS)[number];
 src/sim/sim.ts:511:export interface PlayerMeta {
-src/sim/sim.ts:595:export interface AwayStatus {
-src/sim/sim.ts:608:export interface MarketListing {
-src/sim/sim.ts:621:export interface MarketCollection {
-src/sim/sim.ts:629:export interface MarketSave {
-src/sim/sim.ts:638:export interface CharacterState {
-src/sim/sim.ts:684:export interface PetState {
-src/sim/sim.ts:693:const PET_NAME_RE = /^[A-Za-z][A-Za-z '-]{1,15}$/;
-src/sim/sim.ts:695:interface PendingMobRespawn {
-src/sim/sim.ts:705:export function computeQuestState(
-src/sim/sim.ts:722:function copyPos(dst: { x: number; y: number; z: number }, src: { x: number; y: number; z: number }): void {
-src/sim/sim.ts:728:function freshCounters(): RewardCounters {
-src/sim/sim.ts:736:function isFormToggle(ability: AbilityDef): boolean {
-src/sim/sim.ts:743:function isToggleBuff(ability: AbilityDef): boolean {
-src/sim/sim.ts:749:function isStealthToggle(ability: AbilityDef): boolean {
-src/sim/sim.ts:753:function preservesStealth(ability: AbilityDef): boolean {
-src/sim/sim.ts:757:function isShamanShock(abilityId: string): boolean {
-src/sim/sim.ts:761:function ignoresDamagePushback(abilityId: string): boolean {
-src/sim/sim.ts:765:function isPetClass(cls: PlayerClass): boolean {
-src/sim/sim.ts:769:export class Sim {
-src/sim/sim.ts:11829:export function formatMoney(copper: number): string {
+src/sim/sim.ts:598:export interface AwayStatus {
+src/sim/sim.ts:611:export interface MarketListing {
+src/sim/sim.ts:624:export interface MarketCollection {
+src/sim/sim.ts:632:export interface MarketSave {
+src/sim/sim.ts:641:export interface CharacterState {
+src/sim/sim.ts:687:export interface PetState {
+src/sim/sim.ts:696:const PET_NAME_RE = /^[A-Za-z][A-Za-z '-]{1,15}$/;
+src/sim/sim.ts:698:interface PendingMobRespawn {
+src/sim/sim.ts:708:export function computeQuestState(
+src/sim/sim.ts:725:function copyPos(dst: { x: number; y: number; z: number }, src: { x: number; y: number; z: number }): void {
+src/sim/sim.ts:731:function freshCounters(): RewardCounters {
+src/sim/sim.ts:739:function isFormToggle(ability: AbilityDef): boolean {
+src/sim/sim.ts:746:function isToggleBuff(ability: AbilityDef): boolean {
+src/sim/sim.ts:752:function isStealthToggle(ability: AbilityDef): boolean {
+src/sim/sim.ts:756:function preservesStealth(ability: AbilityDef): boolean {
+src/sim/sim.ts:760:function isShamanShock(abilityId: string): boolean {
+src/sim/sim.ts:764:function ignoresDamagePushback(abilityId: string): boolean {
+src/sim/sim.ts:768:function isPetClass(cls: PlayerClass): boolean {
+src/sim/sim.ts:772:export class Sim {
+src/sim/sim.ts:11843:export function formatMoney(copper: number): string {
 src/sim/spatial.ts:8:const OFFSET = 32768;
 src/sim/spatial.ts:10:export class SpatialGrid {
 src/sim/tab_target.ts:15:export interface TabCandidate {
@@ -5309,50 +5311,50 @@ src/ui/hud.ts:388:function materialImpactKey(tgt: Entity): string {
 src/ui/hud.ts:395:function weaponSwingKey(cls: string): string {
 src/ui/hud.ts:407:function yellVoiceKey(text: string): string {
 src/ui/hud.ts:415:export class Hud {
-src/ui/hud.ts:10004:function describeAbilitySummary(known: ResolvedAbility, resourceType: ResourceType | null): string {
-src/ui/hud.ts:10019:function abilityDisplayName(def: AbilityDef): string {
-src/ui/hud.ts:10023:function abilityDisplayDescription(def: AbilityDef, damageText: string): string {
-src/ui/hud.ts:10027:function classDisplayName(cls: PlayerClass): string {
-src/ui/hud.ts:10031:function itemDisplayName(item: ItemDef): string {
-src/ui/hud.ts:10035:function itemDisplayNameFromSource(name: string): string {
-src/ui/hud.ts:10040:function itemStackDisplayName(item: string, stackSuffix?: string): string {
-src/ui/hud.ts:10047:function mobDisplayName(mobId: string): string {
-src/ui/hud.ts:10051:function npcDisplayName(npcId: string): string {
-src/ui/hud.ts:10055:function npcDisplayTitle(npcId: string): string {
-src/ui/hud.ts:10059:function npcGreeting(npcId: string, playerClass: PlayerClass, playerName: string): string {
-src/ui/hud.ts:10064:function questTitle(questId: string): string {
-src/ui/hud.ts:10068:function questNarrative(questId: string, field: 'text' | 'completion', playerName: string): string {
-src/ui/hud.ts:10072:function questObjectiveLabel(questId: string, objectiveIndex: number): string {
-src/ui/hud.ts:10076:function questTitleFromSource(name: string): string {
-src/ui/hud.ts:10081:function zoneDisplayName(zoneId: string): string {
-src/ui/hud.ts:10085:function zoneWelcome(zoneId: string): string {
-src/ui/hud.ts:10089:function zonePoiLabel(zoneId: string, poiIndex: number): string {
-src/ui/hud.ts:10093:function dungeonDisplayName(dungeonId: string): string {
-src/ui/hud.ts:10097:function dungeonText(dungeonId: string, field: 'enterText' | 'leaveText'): string {
-src/ui/hud.ts:10101:function dungeonDisplayNameFromSource(name: string): string {
-src/ui/hud.ts:10106:function entityDisplayName(entity: Entity): string {
-src/ui/hud.ts:10112:function abilityDisplayNameFromSource(name: string): string {
-src/ui/hud.ts:10124:function auraDisplayNameFromSource(name: string): string {
-src/ui/hud.ts:10130:function combatAbilityName(name: string | null): string {
-src/ui/hud.ts:10134:function resourceDisplayName(resourceType: ResourceType | null): string {
-src/ui/hud.ts:10138:function itemSlotName(slot: EquipSlot): string {
-src/ui/hud.ts:10142:function itemQualityLabel(quality: ItemDef['quality']): string {
-src/ui/hud.ts:10146:function itemKindLabel(kind: ItemDef['kind']): string {
-src/ui/hud.ts:10150:function itemStatName(stat: string): string {
-src/ui/hud.ts:10155:function itemNumber(value: number, fractionDigits = 0): string {
-src/ui/hud.ts:10159:function parseSimMoney(text: string): number | null {
-src/ui/hud.ts:10173:function formatAbilityNumber(value: number): string {
-src/ui/hud.ts:10177:function abilityRangeLine(def: AbilityDef): string | null {
-src/ui/hud.ts:10188:function abilityCastLine(known: ResolvedAbility): string {
-src/ui/hud.ts:10198:function abilityRequirementLines(def: AbilityDef): string[] {
-src/ui/hud.ts:10215:function abilityEffectText(effects: AbilityEffect[]): string {
-src/ui/hud.ts:10265:function abilityAmountRange(min: number, max: number): string {
-src/ui/hud.ts:10273:function cap(s: string): string {
-src/ui/hud.ts:10277:function playerClassDisplayName(value: string): string {
-src/ui/hud.ts:10282:function raidMarkerDisplayName(index: number): string {
-src/ui/hud.ts:10286:function statusLabel(status: string | undefined): string {
-src/ui/hud.ts:10297:function dotTitle(online: boolean, status: string | undefined, zone: string | undefined): string {
-src/ui/hud.ts:10303:function rankLabel(rank: string): string {
+src/ui/hud.ts:10011:function describeAbilitySummary(known: ResolvedAbility, resourceType: ResourceType | null): string {
+src/ui/hud.ts:10026:function abilityDisplayName(def: AbilityDef): string {
+src/ui/hud.ts:10030:function abilityDisplayDescription(def: AbilityDef, damageText: string): string {
+src/ui/hud.ts:10034:function classDisplayName(cls: PlayerClass): string {
+src/ui/hud.ts:10038:function itemDisplayName(item: ItemDef): string {
+src/ui/hud.ts:10042:function itemDisplayNameFromSource(name: string): string {
+src/ui/hud.ts:10047:function itemStackDisplayName(item: string, stackSuffix?: string): string {
+src/ui/hud.ts:10054:function mobDisplayName(mobId: string): string {
+src/ui/hud.ts:10058:function npcDisplayName(npcId: string): string {
+src/ui/hud.ts:10062:function npcDisplayTitle(npcId: string): string {
+src/ui/hud.ts:10066:function npcGreeting(npcId: string, playerClass: PlayerClass, playerName: string): string {
+src/ui/hud.ts:10071:function questTitle(questId: string): string {
+src/ui/hud.ts:10075:function questNarrative(questId: string, field: 'text' | 'completion', playerName: string): string {
+src/ui/hud.ts:10079:function questObjectiveLabel(questId: string, objectiveIndex: number): string {
+src/ui/hud.ts:10083:function questTitleFromSource(name: string): string {
+src/ui/hud.ts:10088:function zoneDisplayName(zoneId: string): string {
+src/ui/hud.ts:10092:function zoneWelcome(zoneId: string): string {
+src/ui/hud.ts:10096:function zonePoiLabel(zoneId: string, poiIndex: number): string {
+src/ui/hud.ts:10100:function dungeonDisplayName(dungeonId: string): string {
+src/ui/hud.ts:10104:function dungeonText(dungeonId: string, field: 'enterText' | 'leaveText'): string {
+src/ui/hud.ts:10108:function dungeonDisplayNameFromSource(name: string): string {
+src/ui/hud.ts:10113:function entityDisplayName(entity: Entity): string {
+src/ui/hud.ts:10119:function abilityDisplayNameFromSource(name: string): string {
+src/ui/hud.ts:10131:function auraDisplayNameFromSource(name: string): string {
+src/ui/hud.ts:10137:function combatAbilityName(name: string | null): string {
+src/ui/hud.ts:10141:function resourceDisplayName(resourceType: ResourceType | null): string {
+src/ui/hud.ts:10145:function itemSlotName(slot: EquipSlot): string {
+src/ui/hud.ts:10149:function itemQualityLabel(quality: ItemDef['quality']): string {
+src/ui/hud.ts:10153:function itemKindLabel(kind: ItemDef['kind']): string {
+src/ui/hud.ts:10157:function itemStatName(stat: string): string {
+src/ui/hud.ts:10162:function itemNumber(value: number, fractionDigits = 0): string {
+src/ui/hud.ts:10166:function parseSimMoney(text: string): number | null {
+src/ui/hud.ts:10180:function formatAbilityNumber(value: number): string {
+src/ui/hud.ts:10184:function abilityRangeLine(def: AbilityDef): string | null {
+src/ui/hud.ts:10195:function abilityCastLine(known: ResolvedAbility): string {
+src/ui/hud.ts:10205:function abilityRequirementLines(def: AbilityDef): string[] {
+src/ui/hud.ts:10222:function abilityEffectText(effects: AbilityEffect[]): string {
+src/ui/hud.ts:10272:function abilityAmountRange(min: number, max: number): string {
+src/ui/hud.ts:10280:function cap(s: string): string {
+src/ui/hud.ts:10284:function playerClassDisplayName(value: string): string {
+src/ui/hud.ts:10289:function raidMarkerDisplayName(index: number): string {
+src/ui/hud.ts:10293:function statusLabel(status: string | undefined): string {
+src/ui/hud.ts:10304:function dotTitle(online: boolean, status: string | undefined, zone: string | undefined): string {
+src/ui/hud.ts:10310:function rankLabel(rank: string): string {
 src/ui/i18n.catalog/abilities.ts:6:const abilityStringsEn = {
 src/ui/i18n.catalog/abilities.ts:65:export const abilityStrings = {
 src/ui/i18n.catalog/abilities.ts:560:type AbilityEntityTranslation = { name: string; description: string };
@@ -5629,10 +5631,12 @@ src/ui/percentile_tier.ts:122:export function percentileTierBadgeDataUrl(tier: P
 src/ui/perf_graph_painter.ts:10:export interface FrameGraphPoint {
 src/ui/perf_graph_painter.ts:15:export interface FrameGraphGeometry {
 src/ui/perf_graph_painter.ts:25:export const MAX_VISIBLE_MS = 100;
-src/ui/perf_graph_painter.ts:30:export function frameGraphGeometry(
-src/ui/perf_graph_painter.ts:45:export interface PaintFrameGraphOpts {
-src/ui/perf_graph_painter.ts:56:export function paintFrameTimeGraph(ctx: CanvasRenderingContext2D, o: PaintFrameGraphOpts): void {
-src/ui/perf_graph_painter.ts:93:function withAlpha(hex: string, alpha: number): string {
+src/ui/perf_graph_painter.ts:27:export interface FrameGraphCanvasMetrics {
+src/ui/perf_graph_painter.ts:33:export function frameGraphCanvasMetrics(
+src/ui/perf_graph_painter.ts:47:export function frameGraphGeometry(
+src/ui/perf_graph_painter.ts:62:export interface PaintFrameGraphOpts {
+src/ui/perf_graph_painter.ts:73:export function paintFrameTimeGraph(ctx: CanvasRenderingContext2D, o: PaintFrameGraphOpts): void {
+src/ui/perf_graph_painter.ts:110:function withAlpha(hex: string, alpha: number): string {
 src/ui/perf_metrics_sampler.ts:13:export interface SamplerRenderer {
 src/ui/perf_metrics_sampler.ts:26:export interface SamplerMeter {
 src/ui/perf_metrics_sampler.ts:35:export interface SamplerOnline {

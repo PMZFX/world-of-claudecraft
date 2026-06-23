@@ -37,10 +37,13 @@ describe('mob combat profiles', () => {
     expect(NYTHRAXIS_ADD_COMBAT_PROFILE.immediateSwingOnEnterRange).toBe(true);
   });
 
-  it('only applies moving-target range grace when the profile allows it', () => {
-    expect(effectiveMobMeleeRange(DEFAULT_MOB_COMBAT_PROFILE, true, false))
+  it('only applies moving range grace when the mob moved and the profile allows it', () => {
+    expect(DEFAULT_MOB_COMBAT_PROFILE.movingRangeBonus).toBe(1);
+    expect(effectiveMobMeleeRange(DEFAULT_MOB_COMBAT_PROFILE, false))
+      .toBe(DEFAULT_MOB_COMBAT_PROFILE.meleeRange);
+    expect(effectiveMobMeleeRange(DEFAULT_MOB_COMBAT_PROFILE, true))
       .toBe(DEFAULT_MOB_COMBAT_PROFILE.meleeRange + DEFAULT_MOB_COMBAT_PROFILE.movingRangeBonus);
-    expect(effectiveMobMeleeRange(NYTHRAXIS_BOSS_COMBAT_PROFILE, true, true))
+    expect(effectiveMobMeleeRange(NYTHRAXIS_BOSS_COMBAT_PROFILE, true))
       .toBe(NYTHRAXIS_BOSS_COMBAT_PROFILE.meleeRange);
   });
 });

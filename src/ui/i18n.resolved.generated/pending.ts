@@ -9,17 +9,38 @@
 // Reproducibility is checked by tests/i18n_resolved_equivalence.test.ts.
 
 export const pending: Record<string, readonly string[]> = {
-  "es": [],
-  "es_ES": [],
-  "fr_FR": [],
-  "fr_CA": [],
+  "es": [
+    "hudChrome.options.autoFaceOnCast",
+    "hudChrome.options.autoFaceOnCastHelp"
+  ],
+  "es_ES": [
+    "hudChrome.options.autoFaceOnCast",
+    "hudChrome.options.autoFaceOnCastHelp"
+  ],
+  "fr_FR": [
+    "hudChrome.options.autoFaceOnCast",
+    "hudChrome.options.autoFaceOnCastHelp"
+  ],
+  "fr_CA": [
+    "hudChrome.options.autoFaceOnCast",
+    "hudChrome.options.autoFaceOnCastHelp"
+  ],
   "en_CA": [],
-  "it_IT": [],
-  "de_DE": [],
+  "it_IT": [
+    "hudChrome.options.autoFaceOnCast",
+    "hudChrome.options.autoFaceOnCastHelp"
+  ],
+  "de_DE": [
+    "hudChrome.options.autoFaceOnCast",
+    "hudChrome.options.autoFaceOnCastHelp"
+  ],
   "zh_CN": [],
   "zh_TW": [],
   "ko_KR": [],
   "ja_JP": [],
-  "pt_BR": [],
+  "pt_BR": [
+    "hudChrome.options.autoFaceOnCast",
+    "hudChrome.options.autoFaceOnCastHelp"
+  ],
   "ru_RU": []
 };

@@ -132,6 +132,8 @@ export const ko_KR: Partial<Record<TranslationKey, string>> = {
   "hudChrome.options.browserEffectsNote": "자동은 브라우저와 기기에 맞춰 무거운 CSS 효과(흐림, 글로우, 배경 모션)를 낮춥니다. 인터페이스가 느리게 느껴지면 수동으로 낮추세요.",
   "hudChrome.options.footstepSounds": "발소리",
   "hudChrome.options.clickFeedback": "클릭 표시",
+  "hudChrome.options.autoFaceOnCast": "시전 시 대상 자동 바라보기",
+  "hudChrome.options.autoFaceOnCastHelp": "대상 지정 기술을 시전하면 캐릭터가 대상을 향해 돌아서서 타격과 투사체가 정면에서 나가도록 합니다. 끄면 대상을 바라보지 않는 시전이 거부되는 기존 동작을 사용합니다.",
   "hudChrome.options.showWalletOnCharacterScreen": "캐릭터 화면에 지갑 표시",
   "hudChrome.options.showWalletOnPlayerCard": "플레이어 카드에 지갑 표시",
   "hudChrome.playerCard.showWalletBadge": "지갑 배지 표시",

@@ -253,6 +253,8 @@ export const zh_CN: EnTranslations = {
       "interfaceModeNote": "自动会根据你的设备选择桌面或触控操作。选择桌面可强制使用键盘和鼠标（适合带键盘的平板），选择触控则使用屏幕上的操作控件。",
       "footstepSounds": "脚步声",
       "clickFeedback": "点击标记",
+      "autoFaceOnCast": "施法时自动面向目标",
+      "autoFaceOnCastHelp": "施放目标技能时，角色会转向目标，让挥击和弹道从正面发出。关闭后将使用经典行为：未面向目标时施法会被拒绝。",
       "showWalletOnCharacterScreen": "在角色界面显示钱包",
       "showWalletOnPlayerCard": "在玩家卡片显示钱包",
       "uiScale": "界面缩放",

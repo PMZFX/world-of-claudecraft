@@ -17,7 +17,7 @@ export const DEFAULT_MOB_COMBAT_PROFILE: MobCombatProfile = {
   canLeash: true,
   swingWhilePursuing: false,
   immediateSwingOnEnterRange: false,
-  movingRangeBonus: 3,
+  movingRangeBonus: 1,
 };
 
 export const NYTHRAXIS_BOSS_COMBAT_PROFILE: MobCombatProfile = {
@@ -55,9 +55,7 @@ export function combatProfileForMob(templateId: string, scale: number): MobComba
 
 export function effectiveMobMeleeRange(
   profile: MobCombatProfile,
-  targetMoved: boolean,
   mobMoved: boolean,
 ): number {
-  if (!targetMoved && !mobMoved) return profile.meleeRange;
-  return profile.meleeRange + profile.movingRangeBonus;
+  return mobMoved ? profile.meleeRange + profile.movingRangeBonus : profile.meleeRange;
 }

@@ -1,6 +1,6 @@
 # Source Tree
 
-Generated at: 2026-06-23T18:11:54Z
+Generated at: 2026-06-23T19:19:21Z
 
 .claude/agents/cross-platform-sync.md
 .claude/agents/migration-safety.md
@@ -106,6 +106,7 @@ docs/code-map/change-notes/2026-06-23-fork-prep.md
 docs/code-map/change-notes/2026-06-23-initial-map.md
 docs/code-map/change-notes/2026-06-23-self-snapshot-fast-paths.md
 docs/code-map/change-notes/2026-06-23-server-performance-baseline.md
+docs/code-map/change-notes/2026-06-23-upstream-qol-imports.md
 docs/code-map/change-notes/2026-06-23-websocket-account-session-state.md
 docs/code-map/change-notes/2026-06-23-websocket-backpressure.md
 docs/code-map/change-notes/2026-06-23-workflow-prep.md
@@ -2018,6 +2019,7 @@ src/game/sfx.ts
 src/game/sfx_manifest.generated.ts
 src/game/voice.ts
 src/game/voice_manifest.generated.ts
+src/graphics_config.ts
 src/guide/CLAUDE.md
 src/guide/app.ts
 src/guide/chrome.ts

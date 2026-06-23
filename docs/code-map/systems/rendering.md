@@ -12,6 +12,8 @@ visuals, camera, nameplates, props, weather, sky, water, VFX, and picking.
 - `src/render/renderer.ts`: central `Renderer`.
 - `src/render/assets/loader.ts`: glTF, HDR, and texture loading.
 - `src/render/assets/preload.ts`: boot-time preload registry.
+- `src/render/gfx.ts` and `src/graphics_config.ts`: graphics presets, runtime
+  hints, and persisted graphics configuration version.
 - `src/render/characters/*`: character visuals, animation, portraits, preview.
 - `src/render/terrain.ts`, `water.ts`, `sky.ts`, `weather.ts`: world surfaces.
 - `src/render/props.ts`, `foliage.ts`, `dungeon.ts`, `quest_objects.ts`: world
@@ -50,6 +52,11 @@ IWorld entities and player state
 - Player card and screenshots
 - Performance overlay metrics
 
+Graphics preset persistence is versioned through `GFX_CONFIG_VERSION` in
+`src/graphics_config.ts`. `src/game/settings.ts` migrates stale browser settings
+by dropping an old `graphicsPreset` and writing the current version, while
+`src/render/gfx.ts` ignores stale stored presets for runtime hints.
+
 ## Change Risk
 
 High. Renderer changes can break boot, memory, frame rate, picking, asset
@@ -67,5 +74,7 @@ loading, or mobile GPU behavior.
 - Target and interact with entities.
 - Check browser console for missing assets or WebGL warnings.
 - For visual changes, capture desktop and mobile screenshots.
+- For graphics-settings migrations, test an old `localStorage.graphicsPreset`
+  with a stale `graphicsConfigVersion` and confirm current defaults resolve.
 
 Last verified: 2026-06-23

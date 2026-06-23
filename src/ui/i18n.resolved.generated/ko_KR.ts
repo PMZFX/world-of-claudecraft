@@ -253,6 +253,8 @@ export const ko_KR: EnTranslations = {
       "interfaceModeNote": "자동은 기기에 따라 데스크톱 또는 터치 조작을 선택합니다. 데스크톱을 선택하면 키보드와 마우스로 고정되며(키보드가 있는 태블릿 등에 유용), 터치를 선택하면 화면 조작이 됩니다.",
       "footstepSounds": "발소리",
       "clickFeedback": "클릭 표시",
+      "autoFaceOnCast": "시전 시 대상 자동 바라보기",
+      "autoFaceOnCastHelp": "대상 지정 기술을 시전하면 캐릭터가 대상을 향해 돌아서서 타격과 투사체가 정면에서 나가도록 합니다. 끄면 대상을 바라보지 않는 시전이 거부되는 기존 동작을 사용합니다.",
       "showWalletOnCharacterScreen": "캐릭터 화면에 지갑 표시",
       "showWalletOnPlayerCard": "플레이어 카드에 지갑 표시",
       "uiScale": "UI 배율",

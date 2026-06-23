@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import {
   configureMaskedDoubleSidedVegetationMaterial,
   forcedTierFromSearch, graphicsPresetLabel, isConstrainedBrowser, isWeakIntegratedGpu,
   shouldUseAutoGovernor, tierFromHints, GFX_BUDGETS, type GfxRuntimeHints,
-  GFX_BUCKET_BANDS, gfxInternalsForTest,
+  GFX_BUCKET_BANDS, GFX_CONFIG_VERSION, gfxInternalsForTest, storedGraphicsPreset,
 } from '../src/render/gfx';
 
 const desktop: GfxRuntimeHints = {
@@ -13,6 +13,18 @@ const desktop: GfxRuntimeHints = {
   coarsePointer: false,
   narrowViewport: false,
 };
+
+function installStorage(): void {
+  const map = new Map<string, string>();
+  (globalThis as any).localStorage = {
+    getItem: (k: string) => (map.has(k) ? map.get(k)! : null),
+    setItem: (k: string, v: string) => { map.set(k, v); },
+    removeItem: (k: string) => { map.delete(k); },
+    clear: () => map.clear(),
+  };
+}
+
+beforeEach(() => installStorage());
 
 describe('graphics tier resolution', () => {
   it('resolves initial renderer startup with no persisted preset to ultra graphics', () => {
@@ -54,6 +66,17 @@ describe('graphics tier resolution', () => {
     expect(tierFromHints({ ...desktop, graphicsPreset: 4 }, false)).toBe('ultra');
     expect(tierFromHints({ ...desktop, graphicsPreset: 5 }, false)).toBe('high');
     expect(tierFromHints({ ...desktop, search: '?gfx=low', graphicsPreset: 3 }, false)).toBe('low');
+  });
+
+  it('ignores a persisted graphics preset from a stale graphics config version', () => {
+    localStorage.setItem('woc_settings', JSON.stringify({ graphicsPreset: 1 }));
+    expect(storedGraphicsPreset()).toBeUndefined();
+
+    localStorage.setItem('woc_settings', JSON.stringify({
+      graphicsPreset: 1,
+      graphicsConfigVersion: GFX_CONFIG_VERSION,
+    }));
+    expect(storedGraphicsPreset()).toBe(1);
   });
 
   it('labels presets and runs the budget governor unless Ultra or URL-forced', () => {
