@@ -1,0 +1,7 @@
+# Dependency Graph
+
+No dependency graph generated: madge is not installed in this project.
+
+Suggested optional command if added later:
+
+npx madge src server headless --extensions ts,tsx,js,mjs --image docs/code-map/generated/dependency-graph.svg

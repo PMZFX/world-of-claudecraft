@@ -1,0 +1,34 @@
+# Recent Git Changes
+
+## Status
+ M .gitignore
+ M AGENTS.md
+?? docs/code-map/
+?? docs/design/TEMPLATE.md
+?? docs/development/
+?? docs/fork-notes.md
+?? docs/roadmap.md
+?? scripts/local-health-check.sh
+?? scripts/update-code-map.sh
+
+## Recent Commits
+81480dee Merge pull request #873 from levy-street/fix/native-attestation-runtime-config
+6cb43a1a fix(android): pass Play Integrity cloud project number
+4b62e5f5 fix(native): register iOS attestation plugin
+d97ff842 fix: include guide html in docker build
+5460ff85 Merge pull request #865 from levy-street/fix/v014-docker-wiki-scripts
+9174acf0 fix: include wiki build scripts in docker context
+45730bf4 Merge pull request #863 from levy-street/release/v0.14.0
+80d14370 Merge pull request #862 from levy-street/feature/guide-wiki
+b8ad171c fix(i18n): drop duplicate hudChrome.perf.groups.input from the v0.14.0 merge
+8969cf92 docs(guide): document the guide/wiki sync contract across CLAUDE.md
+1da22f7c Merge remote-tracking branch 'origin/release/v0.14.0' into feature/guide-wiki
+def29352 Merge pull request #860 from levy-street/fix/native-mobile-attestation
+3d4390ad feat(ui): make the homepage Wiki nav go straight to the guide at /wiki
+d5b4f5b1 feat(native): require mobile app attestation
+2869f155 Merge pull request #861 from madmatah/feature/add-meta-to-tracking-context
+bcf8ca97 feat(antibot): pass session metadata to the bot-detector seam
+cf24381b feat(guide): serve the curated guide as the site wiki at /wiki
+efd4368e Merge pull request #846 from DaPandamonium/fix/imbue-exclusive-slot
+9926f232 i18n(hud): translate perf-overlay Input/APM keys from release/v0.14.0 (pending=0)
+fd00b72c Merge pull request #847 from nicadeddu/fix/aura-image-icons

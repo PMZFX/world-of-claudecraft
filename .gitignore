@@ -36,6 +36,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
+docker-compose.override.yml
 
 # editor & OS noise
 .DS_Store

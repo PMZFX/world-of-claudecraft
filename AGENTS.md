@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Any non-Claude coding agent (Codex and similar) can treat this file as root project guidance for World of ClaudeCraft. **`CLAUDE.md` (root + per-directory) is the canonical source of truth** — kept current for Claude Code (Claude Opus 4.8); this file mirrors it for other agents, and when they disagree, `CLAUDE.md` wins. Keep this file concise and defer detailed, temporary, or model-specific guidance to the linked files.
+Any non-Claude coding agent (Codex and similar) can treat this file as root project guidance for World of ClaudeCraft. **`CLAUDE.md` (root + per-directory) is the canonical source of truth**. It is kept current for Claude Code (Claude Opus 4.8); this file mirrors it for other agents, and when they disagree, `CLAUDE.md` wins. Keep this file concise and defer detailed, temporary, or model-specific guidance to the linked files.
 
 ## Startup Checklist
 
@@ -19,6 +19,16 @@ Any non-Claude coding agent (Codex and similar) can treat this file as root proj
 - `src/game/`: input, keybinds, settings, audio, and mobile controls.
 - `tests/`: Vitest unit and integration tests.
 - `scripts/`: browser, integration, visual, and automation scripts.
+
+## Code Map Workflow
+
+- Before substantial code changes, read `docs/code-map/map-index.md`, the relevant subsystem doc under `docs/code-map/systems/`, and any affected feature trace under `docs/code-map/features/`.
+- For fork planning, read `docs/fork-notes.md` and `docs/roadmap.md`; for implementation readiness, use `docs/development/pr-checklist.md`, `docs/development/high-risk-change-checklist.md`, and `docs/development/branching-and-commits.md`.
+- For upstream sync work, read `docs/development/upstream-sync.md`; for local service diagnostics, use `scripts/local-health-check.sh`.
+- Trust source code over code-map docs when they conflict, then update the affected code-map docs in the same change.
+- Any code change that affects architecture, behavior, data flow, runtime entry points, persistence, or generated assets must update the relevant docs under `docs/code-map/`.
+- Do not manually edit `docs/code-map/generated/`. Refresh those files with `scripts/update-code-map.sh`.
+- For large changes, add a design note under `docs/design/` and a code-map change note under `docs/code-map/change-notes/`.
 
 ## Core Engineering Rules
 
