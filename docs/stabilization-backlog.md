@@ -25,11 +25,16 @@ roadmap decisions.
 
 | Item | Why It Matters | First Action | Status |
 |---|---|---|---|
-| `index.html` Meta Pixel/noscript parse warning | Vite reports invalid HTML around a `noscript` image in `head`, which can hide future HTML regressions. | Inspect the analytics block and move/reshape it in a standards-compliant way. | Backlog |
 | Cursor asset path warnings | Vite cannot resolve cursor PNG references at build time. | Trace CSS references for `./ui/cursors/*.png` and decide whether paths should use `public/`, imported URLs, or CSS rewrite. | Backlog |
 | Admin i18n dynamic import warnings | Locale modules are both statically and dynamically imported, defeating chunk splitting. | Inspect `src/admin/i18n.resolved.generated/index.ts` and `loaders.ts`; decide whether generator output should separate eager and lazy entry points. | Backlog |
 | Large client chunks | Large bundles slow iteration and can hurt player load time later. | Record current chunk sizes, then defer code splitting until after product direction is clearer. | Backlog |
 | Local CI parity script adoption | Contributors should not have to infer the CI sequence from YAML. | Use `scripts/ci-parity.sh` before merging stabilization branches. | In progress |
+
+## Completed
+
+| Item | Result | Verification |
+|---|---|---|
+| `index.html` Meta Pixel/noscript parse warning | Moved the Meta Pixel no-script image fallback from `head` to the start of `body`, which keeps the fallback behavior while making the document valid for Vite's HTML parser. | `npm run build` passed without the parse5 `disallowed-content-in-noscript-in-head` warning. |
 
 ## Accept For Now
 
@@ -49,11 +54,10 @@ roadmap decisions.
 ## Cleanup Branch Plan
 
 1. `dev-stabilization`: backlog, verification scripts, and repo workflow setup.
-2. `fix/html-analytics-noscript`: remove or correct the HTML parse warning.
-3. `fix/cursor-assets`: make cursor asset paths build-clean.
-4. `chore/admin-i18n-chunks`: reduce admin i18n warning noise if generator
+2. `fix/cursor-assets`: make cursor asset paths build-clean.
+3. `chore/admin-i18n-chunks`: reduce admin i18n warning noise if generator
    changes are low risk.
-5. `docs/fresh-clone-onboarding`: verify and tighten setup docs from a clean
+4. `docs/fresh-clone-onboarding`: verify and tighten setup docs from a clean
    clone.
 
 Last verified: 2026-06-23
