@@ -45,14 +45,16 @@ GameServer.selfWireJson()
 -> always serializes core self movement/resource/combat fields
 -> sends heavier self fields only when their JSON differs
 -> skips already-sent empty/null heavy fields before allocation/stringify
+-> snapshot frames are skipped before delta-state mutation when ws.bufferedAmount
+   is above WS_BACKPRESSURE_SKIP_BYTES
 ```
 
 ```text
 Admin status request
 -> server/admin.ts
 -> GameServer.adminStats()
--> tick, snapshot, command timing, wire message, wire byte, save, memory, and
-   entity counters
+-> tick, snapshot, command timing, backpressure, wire message, wire byte, save,
+   memory, and entity counters
 ```
 
 ## Dependencies
@@ -81,6 +83,9 @@ break auth, or expose moderation/security regressions.
 - Snapshot volume, wire volume, saves, and synchronous command-dispatch timing
   are visible through additive admin stats. Command timings are broad buckets
   and do not include async work that a command launches after returning.
+- Slow WebSocket clients skip snapshot frames above `WS_BACKPRESSURE_SKIP_BYTES`
+  and are disconnected above `WS_BACKPRESSURE_CRITICAL_BYTES`. This protects the
+  server queue but can make a slow client visually stale until its buffer drains.
 - `arenaInfoFor()` still runs from the self-snapshot path. Its ladder reads are
   cached by `Sim.arenaLadder()`, but the rest of arena self-state should be
   reviewed before scaling online arena/leaderboard traffic.
@@ -93,6 +98,7 @@ break auth, or expose moderation/security regressions.
 - Watch server logs for protocol errors.
 - Check admin stats for `snapshotMsAvg`, `commandTimings`, `messagesIn`,
   `messagesOut`, `wireBytesIn`, `wireBytesOut`, `characterSaveWrites`, and
-  `characterSaveSkips` when doing server performance work.
+  `characterSaveSkips`, plus `backpressureSkippedSnapshots` and
+  `backpressureDisconnects`, when doing server performance work.
 
 Last verified: 2026-06-23

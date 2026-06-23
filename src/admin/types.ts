@@ -6,6 +6,17 @@ export interface ServerStats {
   peakOnline: number;
   uptimeSeconds: number;
   tickMsAvg: number;
+  snapshotMsAvg: number;
+  snapshotRecipientsAvg: number;
+  messagesIn: number;
+  messagesOut: number;
+  wireBytesIn: number;
+  wireBytesOut: number;
+  characterSaveWrites: number;
+  characterSaveSkips: number;
+  commandTimings: Record<string, { count: number; totalMs: number; avgMs: number; maxMs: number }>;
+  backpressureSkippedSnapshots: number;
+  backpressureDisconnects: number;
   simEntities: number;
   rssBytes: number;
   heapUsedBytes: number;

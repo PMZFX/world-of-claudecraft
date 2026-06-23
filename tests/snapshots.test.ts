@@ -27,7 +27,7 @@ interface FakeClient {
 
 function fakeWs(): FakeClient {
   const sent: any[] = [];
-  return { sent, ws: { readyState: 1, send: (payload: string) => sent.push(JSON.parse(payload)) } };
+  return { sent, ws: { readyState: 1, bufferedAmount: 0, send: (payload: string) => sent.push(JSON.parse(payload)), close: vi.fn() } };
 }
 
 function lastSnap(sent: any[]): any {
@@ -113,6 +113,33 @@ describe('delta snapshots', () => {
     expect(snap.self.trade).toBeNull();
     expect(Array.isArray(snap.self.inv)).toBe(true);
     expect(Array.isArray(snap.ents)).toBe(true);
+  });
+
+  it('skips snapshots for backpressured sockets before mutating delta state', () => {
+    fc.ws.bufferedAmount = 1_000_000;
+
+    broadcast(server);
+
+    expect(lastSnap(fc.sent)).toBeNull();
+    expect(session.lastSent).toEqual({});
+    expect(session.sentEnts.size).toBe(0);
+    expect(server.adminStats().backpressureSkippedSnapshots).toBe(1);
+  });
+
+  it('disconnects critically backpressured sockets before queuing more output', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    fc.ws.bufferedAmount = 8_000_000;
+
+    try {
+      broadcast(server);
+
+      expect(fc.ws.close).toHaveBeenCalledWith(1013, 'backpressure');
+      expect(server.clients.has(session.pid)).toBe(false);
+      expect(server.adminStats().backpressureDisconnects).toBe(1);
+      expect(lastSnap(fc.sent)).toBeNull();
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('mirrors account-wide cosmetic unlocks from self snapshots', () => {

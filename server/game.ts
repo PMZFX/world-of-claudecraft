@@ -80,6 +80,11 @@ const ANTIBOT_ENFORCE = process.env.ANTIBOT_ENFORCE === '1';
 const STALE_INPUT_SECONDS = 0.75;
 // Exponential moving average weight for the per-tick duration stat.
 const TICK_EMA_ALPHA = 0.05;
+const WS_BACKPRESSURE_SKIP_BYTES = envNumberIn('WS_BACKPRESSURE_SKIP_BYTES', 0, 64 * 1024 * 1024, 1_000_000);
+const WS_BACKPRESSURE_CRITICAL_BYTES = Math.max(
+  WS_BACKPRESSURE_SKIP_BYTES + 1,
+  envNumberIn('WS_BACKPRESSURE_CRITICAL_BYTES', 1, 256 * 1024 * 1024, 8_000_000),
+);
 const JSON_NULL = 'null';
 const JSON_EMPTY_ARRAY = '[]';
 const JSON_EMPTY_OBJECT = '{}';
@@ -95,6 +100,12 @@ interface CommandTimingAccumulator {
   count: number;
   totalMs: number;
   maxMs: number;
+}
+
+function envNumberIn(name: string, min: number, max: number, fallback: number): number {
+  const n = Number(process.env[name] ?? fallback);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
 }
 
 // How often to re-broadcast online players' $WOC holder-tier flair. Each wallet
@@ -183,6 +194,8 @@ export interface AdminServerStats {
   characterSaveWrites: number;
   characterSaveSkips: number;
   commandTimings: Record<string, { count: number; totalMs: number; avgMs: number; maxMs: number }>;
+  backpressureSkippedSnapshots: number;
+  backpressureDisconnects: number;
   simEntities: number;
   rssBytes: number;
   heapUsedBytes: number;
@@ -420,6 +433,8 @@ export class GameServer {
   private characterSaveWrites = 0;
   private characterSaveSkips = 0;
   private readonly commandTimings = new Map<CommandTimingCategory, CommandTimingAccumulator>();
+  private backpressureSkippedSnapshots = 0;
+  private backpressureDisconnects = 0;
   private readonly ipSessionCounts = new Map<string, number>();
 
   constructor() {
@@ -989,6 +1004,8 @@ export class GameServer {
       characterSaveWrites: this.characterSaveWrites,
       characterSaveSkips: this.characterSaveSkips,
       commandTimings: this.commandTimingStats(),
+      backpressureSkippedSnapshots: this.backpressureSkippedSnapshots,
+      backpressureDisconnects: this.backpressureDisconnects,
       simEntities: this.sim.entities.size,
       rssBytes: mem.rss,
       heapUsedBytes: mem.heapUsed,
@@ -1732,6 +1749,7 @@ export class GameServer {
       const p = this.sim.entities.get(session.pid);
       const meta = this.sim.meta(session.pid);
       if (!p || !meta) continue;
+      if (this.shouldSkipSnapshotForBackpressure(session)) continue;
       const ents: string[] = [];
       const keep: number[] = [];
       const present = new Set<number>();
@@ -2303,9 +2321,33 @@ export class GameServer {
 
   private sendRaw(session: ClientSession, payload: string): void {
     if (session.ws.readyState === 1) {
+      if (this.disconnectIfCriticallyBackpressured(session)) return;
       this.messagesOut++;
       this.wireBytesOut += payload.length;
       session.ws.send(payload);
     }
+  }
+
+  private bufferedAmount(session: ClientSession): number {
+    const buffered = session.ws.bufferedAmount;
+    return Number.isFinite(buffered) && buffered > 0 ? buffered : 0;
+  }
+
+  private shouldSkipSnapshotForBackpressure(session: ClientSession): boolean {
+    if (session.ws.readyState !== 1) return true;
+    if (this.disconnectIfCriticallyBackpressured(session)) return true;
+    if (WS_BACKPRESSURE_SKIP_BYTES <= 0) return false;
+    if (this.bufferedAmount(session) < WS_BACKPRESSURE_SKIP_BYTES) return false;
+    this.backpressureSkippedSnapshots++;
+    return true;
+  }
+
+  private disconnectIfCriticallyBackpressured(session: ClientSession): boolean {
+    if (session.left || this.bufferedAmount(session) < WS_BACKPRESSURE_CRITICAL_BYTES) return false;
+    this.backpressureDisconnects++;
+    console.warn(`disconnecting ${session.name} for websocket backpressure (${this.bufferedAmount(session)} bytes queued)`);
+    try { session.ws.close(1013, 'backpressure'); } catch { /* connection already closing */ }
+    void this.leave(session, 'websocket backpressure');
+    return true;
   }
 }

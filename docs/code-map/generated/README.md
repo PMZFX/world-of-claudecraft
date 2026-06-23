@@ -1,6 +1,6 @@
 # Generated Code Map Artifacts
 
-Generated at: 2026-06-23T15:51:39Z
+Generated at: 2026-06-23T16:03:06Z
 Repository: world-of-claudecraft
 
 Do not edit files in this directory manually. Run scripts/update-code-map.sh.

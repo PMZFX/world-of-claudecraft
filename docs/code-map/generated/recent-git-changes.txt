@@ -1,6 +1,7 @@
 # Recent Git Changes
 
 ## Status
+ M .env.example
  M docs/code-map/generated/README.md
  M docs/code-map/generated/file-list.txt
  M docs/code-map/generated/recent-git-changes.txt
@@ -8,10 +9,12 @@
  M docs/code-map/systems/networking.md
  M docs/design/2026-06-23-server-performance-baseline.md
  M server/game.ts
- M tests/game_sessions.test.ts
-?? docs/code-map/change-notes/2026-06-23-command-timing-buckets.md
+ M src/admin/types.ts
+ M tests/snapshots.test.ts
+?? docs/code-map/change-notes/2026-06-23-websocket-backpressure.md
 
 ## Recent Commits
+89fb2de7 perf(server): add command timing buckets
 f320c3bf perf(server): cache arena ladders for snapshots
 6b4f1229 perf(server): skip unchanged empty self snapshot fields
 10b4b4aa perf(server): add baseline save and roster optimizations
@@ -31,4 +34,3 @@ d97ff842 fix: include guide html in docker build
 9174acf0 fix: include wiki build scripts in docker context
 45730bf4 Merge pull request #863 from levy-street/release/v0.14.0
 80d14370 Merge pull request #862 from levy-street/feature/guide-wiki
-b8ad171c fix(i18n): drop duplicate hudChrome.perf.groups.input from the v0.14.0 merge

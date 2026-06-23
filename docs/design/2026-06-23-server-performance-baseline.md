@@ -51,6 +51,11 @@ visibility, and a short list of high-value follow-up work.
   such as combat, inventory, quests, chat, social, arena, talents, market, and
   dungeon commands. The timing covers JSON parse plus synchronous dispatch; it
   does not include async work that a command starts after returning.
+- Added WebSocket outbound backpressure protection. `broadcastSnapshots()` skips
+  low-priority snapshot frames for clients over `WS_BACKPRESSURE_SKIP_BYTES`
+  before mutating their delta state, and `sendRaw()` closes critically queued
+  sockets at `WS_BACKPRESSURE_CRITICAL_BYTES`. Admin stats expose skipped
+  snapshot and disconnect counters.
 
 ## Ranked Follow-Up Work
 
@@ -63,9 +68,7 @@ visibility, and a short list of high-value follow-up work.
    cached, but per-player arena self-state still serializes from snapshots.
 4. Combine WebSocket auth account reads where possible. Current join performs
    several account lookups before the player reaches the world.
-5. Consider backpressure policy for slow WebSocket clients using
-   `ws.bufferedAmount` so one stuck client cannot build unbounded pending output.
-6. Split full character state into smaller persistence domains only if dirty
+5. Split full character state into smaller persistence domains only if dirty
    tracking and self-state versioning are not enough. This is higher risk
    because inventory, gear, quests, talents, stats, and position currently share
    one JSONB document.
@@ -75,7 +78,7 @@ visibility, and a short list of high-value follow-up work.
 - DB tests should cover the new roster query and realm-scoped indexes.
 - Admin stats should remain additive so existing admin clients continue to work.
 - Manual performance runs should compare admin `snapshotMsAvg`, command timing
-  buckets, wire byte counters, and online player count before and after
-  protocol/tick changes.
+  buckets, backpressure counters, wire byte counters, and online player count
+  before and after protocol/tick changes.
 
 Last verified: 2026-06-23

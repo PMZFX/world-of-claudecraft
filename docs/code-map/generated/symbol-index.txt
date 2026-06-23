@@ -2212,35 +2212,38 @@ server/game.ts:67:const RESTART_COUNTDOWN_STEPS = [
 server/game.ts:76:const ANTIBOT_ENFORCE = process.env.ANTIBOT_ENFORCE === '1';
 server/game.ts:80:const STALE_INPUT_SECONDS = 0.75;
 server/game.ts:82:const TICK_EMA_ALPHA = 0.05;
-server/game.ts:83:const JSON_NULL = 'null';
-server/game.ts:84:const JSON_EMPTY_ARRAY = '[]';
-server/game.ts:85:const JSON_EMPTY_OBJECT = '{}';
-server/game.ts:86:const COMMAND_TIMING_CATEGORIES = [
-server/game.ts:92:type CommandTimingCategory = typeof COMMAND_TIMING_CATEGORIES[number];
-server/game.ts:94:interface CommandTimingAccumulator {
-server/game.ts:104:const HOLDER_TIER_REFRESH_MS = 60_000;
-server/game.ts:106:export interface ClientSession {
-server/game.ts:160:interface SentEntityVersions {
-server/game.ts:172:export interface AdminServerStats {
-server/game.ts:191:export interface AdminLiveAura {
-server/game.ts:200:export interface AdminLivePlayer {
-server/game.ts:220:export interface RestartCountdownStatus {
-server/game.ts:227:interface WireAura {
-server/game.ts:235:interface WhoRosterRow {
-server/game.ts:243:type RememberedChat =
-server/game.ts:250:function identityFields(e: Entity): Record<string, unknown> {
-server/game.ts:266:function dynamicFields(e: Entity): Record<string, unknown> {
-server/game.ts:303:export function wireEntity(e: Entity): Record<string, unknown> {
-server/game.ts:310:function interestLimitSq(e: Entity, known: boolean): number {
-server/game.ts:317:function isStealthed(e: Entity): boolean {
-server/game.ts:326:function isUpdateDue(tick: number, e: Entity, d2: number, viewer: Entity, sentAtTick: number): boolean {
-server/game.ts:336:interface EntityWireCache {
-server/game.ts:346:function round2(v: number): number {
-server/game.ts:350:function logSocialErr(err: unknown): void {
-server/game.ts:355:function formatDuration(seconds: number): string {
-server/game.ts:369:function chatChannelHint(session: ClientSession, text: string): string {
-server/game.ts:380:function delay(ms: number): Promise<void> {
-server/game.ts:384:export class GameServer {
+server/game.ts:83:const WS_BACKPRESSURE_SKIP_BYTES = envNumberIn('WS_BACKPRESSURE_SKIP_BYTES', 0, 64 * 1024 * 1024, 1_000_000);
+server/game.ts:84:const WS_BACKPRESSURE_CRITICAL_BYTES = Math.max(
+server/game.ts:88:const JSON_NULL = 'null';
+server/game.ts:89:const JSON_EMPTY_ARRAY = '[]';
+server/game.ts:90:const JSON_EMPTY_OBJECT = '{}';
+server/game.ts:91:const COMMAND_TIMING_CATEGORIES = [
+server/game.ts:97:type CommandTimingCategory = typeof COMMAND_TIMING_CATEGORIES[number];
+server/game.ts:99:interface CommandTimingAccumulator {
+server/game.ts:105:function envNumberIn(name: string, min: number, max: number, fallback: number): number {
+server/game.ts:115:const HOLDER_TIER_REFRESH_MS = 60_000;
+server/game.ts:117:export interface ClientSession {
+server/game.ts:171:interface SentEntityVersions {
+server/game.ts:183:export interface AdminServerStats {
+server/game.ts:204:export interface AdminLiveAura {
+server/game.ts:213:export interface AdminLivePlayer {
+server/game.ts:233:export interface RestartCountdownStatus {
+server/game.ts:240:interface WireAura {
+server/game.ts:248:interface WhoRosterRow {
+server/game.ts:256:type RememberedChat =
+server/game.ts:263:function identityFields(e: Entity): Record<string, unknown> {
+server/game.ts:279:function dynamicFields(e: Entity): Record<string, unknown> {
+server/game.ts:316:export function wireEntity(e: Entity): Record<string, unknown> {
+server/game.ts:323:function interestLimitSq(e: Entity, known: boolean): number {
+server/game.ts:330:function isStealthed(e: Entity): boolean {
+server/game.ts:339:function isUpdateDue(tick: number, e: Entity, d2: number, viewer: Entity, sentAtTick: number): boolean {
+server/game.ts:349:interface EntityWireCache {
+server/game.ts:359:function round2(v: number): number {
+server/game.ts:363:function logSocialErr(err: unknown): void {
+server/game.ts:368:function formatDuration(seconds: number): string {
+server/game.ts:382:function chatChannelHint(session: ClientSession, text: string): string {
+server/game.ts:393:function delay(ms: number): Promise<void> {
+server/game.ts:397:export class GameServer {
 server/http_util.ts:4:export function json(res: http.ServerResponse, status: number, body: unknown): void {
 server/http_util.ts:15:export function isUniqueViolation(err: unknown): boolean {
 server/http_util.ts:20:export function readBody(req: http.IncomingMessage, maxBytes = 64 * 1024): Promise<any> {
@@ -2696,30 +2699,30 @@ src/admin/tables.ts:507:function reasonLabel(reason: string): string {
 src/admin/tables.ts:517:function statusBadge(status: string, suspendedUntil: string | null): string {
 src/admin/tables.ts:523:export function renderBugReportsTable(rows: BugReportRow[]): string {
 src/admin/types.ts:4:export interface ServerStats {
-src/admin/types.ts:14:export type UsageWindowKey = 'm1' | 'm5' | 'h1' | 'h24';
-src/admin/types.ts:16:export interface ProviderUsageWindow {
-src/admin/types.ts:22:export interface ProviderUsageMetric {
-src/admin/types.ts:28:export interface ProviderUsageCache {
-src/admin/types.ts:42:export interface ProviderUsageSnapshot {
-src/admin/types.ts:49:export interface Overview {
-src/admin/types.ts:60:export interface LivePlayer {
-src/admin/types.ts:87:export interface Activity {
-src/admin/types.ts:95:export interface AccountRow {
-src/admin/types.ts:108:export interface CharacterRow {
-src/admin/types.ts:121:export interface Paginated<T> {
-src/admin/types.ts:128:export interface AccountDetail {
-src/admin/types.ts:163:export interface ModerationQueueRow {
-src/admin/types.ts:178:export interface BugReportRow {
-src/admin/types.ts:194:export interface ReportDetail {
-src/admin/types.ts:217:export interface ChatViolationRow {
-src/admin/types.ts:228:export interface ChatModerationDetail {
-src/admin/types.ts:234:export interface ModerationAccountDetail {
-src/admin/types.ts:241:export interface BlockedIpRow {
-src/admin/types.ts:250:export interface BlockedIpsData {
-src/admin/types.ts:254:export interface FilterWord {
-src/admin/types.ts:261:export interface EscalationConfig {
-src/admin/types.ts:266:export interface ChatModeratedAccount {
-src/admin/types.ts:274:export interface ChatFilterData {
+src/admin/types.ts:25:export type UsageWindowKey = 'm1' | 'm5' | 'h1' | 'h24';
+src/admin/types.ts:27:export interface ProviderUsageWindow {
+src/admin/types.ts:33:export interface ProviderUsageMetric {
+src/admin/types.ts:39:export interface ProviderUsageCache {
+src/admin/types.ts:53:export interface ProviderUsageSnapshot {
+src/admin/types.ts:60:export interface Overview {
+src/admin/types.ts:71:export interface LivePlayer {
+src/admin/types.ts:98:export interface Activity {
+src/admin/types.ts:106:export interface AccountRow {
+src/admin/types.ts:119:export interface CharacterRow {
+src/admin/types.ts:132:export interface Paginated<T> {
+src/admin/types.ts:139:export interface AccountDetail {
+src/admin/types.ts:174:export interface ModerationQueueRow {
+src/admin/types.ts:189:export interface BugReportRow {
+src/admin/types.ts:205:export interface ReportDetail {
+src/admin/types.ts:228:export interface ChatViolationRow {
+src/admin/types.ts:239:export interface ChatModerationDetail {
+src/admin/types.ts:245:export interface ModerationAccountDetail {
+src/admin/types.ts:252:export interface BlockedIpRow {
+src/admin/types.ts:261:export interface BlockedIpsData {
+src/admin/types.ts:265:export interface FilterWord {
+src/admin/types.ts:272:export interface EscalationConfig {
+src/admin/types.ts:277:export interface ChatModeratedAccount {
+src/admin/types.ts:285:export interface ChatFilterData {
 src/game/audio.ts:3:const SFX_BASE_GAIN = 0.32; // master level at full volume
 src/game/audio.ts:5:export class GameAudio {
 src/game/audio.ts:237:export const audio = new GameAudio();
