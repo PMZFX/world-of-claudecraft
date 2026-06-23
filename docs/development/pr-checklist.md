@@ -31,6 +31,8 @@ Use this checklist for fork changes before opening or merging a PR.
 ## Verification
 
 - [ ] Ran the smallest relevant test/build command set.
+- [ ] Ran `scripts/ci-parity.sh` for changes that should pass the full GitHub
+      Actions PR gate.
 - [ ] Documented any skipped verification and why.
 - [ ] For UI changes, checked keyboard use and mobile layout where relevant.
 - [ ] For online changes, tested or reasoned through both client and server sides.

@@ -15,6 +15,7 @@ systems and verification.
 ## Now
 
 - Establish fork development process.
+- Complete stabilization cleanup before adding feature work.
 - Maintain the living code map.
 - Keep local setup reproducible.
 - Identify the first gameplay or platform changes.
@@ -25,6 +26,7 @@ Add candidate work here once selected.
 
 | Idea | Goal | Affected Systems | Design Note | Status |
 |---|---|---|---|---|
+| Stabilization cleanup | Reduce setup friction and known warning noise before feature work | Build, docs, repo workflow | `docs/stabilization-backlog.md` | In progress |
 | TBD | TBD | TBD | TBD | Backlog |
 
 ## Later
@@ -42,5 +44,6 @@ Add dated decisions that shape the fork.
 | Date | Decision | Reason |
 |---|---|---|
 | 2026-06-23 | Keep roadmap feature list empty until specific goals are chosen. | Avoid inventing fork direction before product decisions. |
+| 2026-06-23 | Run a stabilization phase before gameplay feature work. | The fork already surfaced setup, CI visibility, and build-warning issues during baseline prep. |
 
 Last verified: 2026-06-23
