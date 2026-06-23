@@ -79,8 +79,9 @@ break auth, or expose moderation/security regressions.
   there is no single schema file for every message type.
 - Snapshot volume and CPU are now visible through additive admin stats, but
   command-dispatch timing is not split by command category yet.
-- `arenaInfoFor()` still runs from the self-snapshot path and should be reviewed
-  before scaling online arena/leaderboard traffic.
+- `arenaInfoFor()` still runs from the self-snapshot path. Its ladder reads are
+  cached by `Sim.arenaLadder()`, but the rest of arena self-state should be
+  reviewed before scaling online arena/leaderboard traffic.
 
 ## Verification Steps
 

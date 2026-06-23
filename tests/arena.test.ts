@@ -330,6 +330,20 @@ describe('arena: forfeit + persistence', () => {
     expect(ladder1v1.map((r) => r.name)).toEqual(['High', 'Mid', 'Low']);
     expect(ladder2v2.map((r) => r.name)).toEqual(['Low', 'Mid', 'High']);
   });
+
+  it('caches online ladders until the online roster changes', () => {
+    const sim = makeWorld();
+    sim.addPlayer('warrior', 'Low');
+    sim.addPlayer('mage', 'High');
+
+    const first = sim.arenaLadder('1v1');
+    expect(sim.arenaLadder('1v1')).toBe(first);
+
+    sim.addPlayer('rogue', 'New');
+    const afterJoin = sim.arenaLadder('1v1');
+    expect(afterJoin).not.toBe(first);
+    expect(afterJoin.map((r) => r.name)).toContain('New');
+  });
 });
 
 function queue2v2(classes: PlayerClass[] = ['warrior', 'mage', 'rogue', 'priest']): { sim: Sim; pids: number[] } {

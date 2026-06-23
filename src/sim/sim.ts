@@ -799,6 +799,7 @@ export class Sim {
   arenaMatches = new Map<number, ArenaMatch>(); // pid -> shared match (both pids)
   private arenaBusySlots = new Set<number>();
   private nextArenaMatchId = 1;
+  private arenaLadderCache = new Map<ArenaFormat, import('../world_api').ArenaLadderEntry[]>();
   // per-player chat token bucket (anti-spam); refilled lazily by sim time
   private chatTokens = new Map<number, { tokens: number; at: number }>();
   // per-player set of opt-in global channels (world, lfg) joined via /join
@@ -1066,6 +1067,7 @@ export class Sim {
     }
     player.swingTimer = 0;
     if (opts?.state?.pet) this.restorePet(player, opts.state.pet);
+    this.invalidateArenaLadderCache();
     return player.id;
   }
 
@@ -1111,6 +1113,7 @@ export class Sim {
     }
     this.dropEntity(pid);
     this.players.delete(pid);
+    this.invalidateArenaLadderCache();
     this.chatTokens.delete(pid);
     this.channelSubs.delete(pid);
     if (this.primaryId === pid) this.primaryId = this.players.size > 0 ? [...this.players.keys()][0] : -1;
@@ -9301,6 +9304,7 @@ export class Sim {
       if (won === true) meta.arenaWins++;
       else if (won === false) meta.arenaLosses++;
     }
+    this.invalidateArenaLadderCache();
     return { before, after };
   }
 
@@ -10319,6 +10323,8 @@ export class Sim {
 
   // Live standings of rated players currently online, best first.
   arenaLadder(format: ArenaFormat = '1v1'): import('../world_api').ArenaLadderEntry[] {
+    const cached = this.arenaLadderCache.get(format);
+    if (cached) return cached;
     const rows: import('../world_api').ArenaLadderEntry[] = [];
     for (const meta of this.players.values()) {
       const e = this.entities.get(meta.entityId);
@@ -10327,7 +10333,13 @@ export class Sim {
       rows.push({ pid: meta.entityId, name: meta.name, cls: meta.cls, rating: standing.rating, wins: standing.wins, losses: standing.losses });
     }
     rows.sort((x, y) => y.rating - x.rating || y.wins - x.wins);
-    return rows.slice(0, ARENA_LADDER_SIZE);
+    const ladder = rows.slice(0, ARENA_LADDER_SIZE);
+    this.arenaLadderCache.set(format, ladder);
+    return ladder;
+  }
+
+  private invalidateArenaLadderCache(): void {
+    this.arenaLadderCache.clear();
   }
 
   arenaInfoFor(pid: number): import('../world_api').ArenaInfo | null {

@@ -7,10 +7,12 @@
  M docs/code-map/generated/source-tree.txt
  M docs/code-map/systems/networking.md
  M docs/design/2026-06-23-server-performance-baseline.md
- M server/game.ts
-?? docs/code-map/change-notes/2026-06-23-self-snapshot-fast-paths.md
+ M src/sim/sim.ts
+ M tests/arena.test.ts
+?? docs/code-map/change-notes/2026-06-23-arena-ladder-cache.md
 
 ## Recent Commits
+6b4f1229 perf(server): skip unchanged empty self snapshot fields
 10b4b4aa perf(server): add baseline save and roster optimizations
 786a7025 docs(fork): add identity baseline
 9a44defe docs(stabilization): record fresh clone verification
@@ -30,4 +32,3 @@ d97ff842 fix: include guide html in docker build
 80d14370 Merge pull request #862 from levy-street/feature/guide-wiki
 b8ad171c fix(i18n): drop duplicate hudChrome.perf.groups.input from the v0.14.0 merge
 8969cf92 docs(guide): document the guide/wiki sync contract across CLAUDE.md
-1da22f7c Merge remote-tracking branch 'origin/release/v0.14.0' into feature/guide-wiki

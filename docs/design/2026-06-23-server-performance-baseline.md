@@ -42,6 +42,10 @@ visibility, and a short list of high-value follow-up work.
   snapshots now avoid allocating and stringifying empty inventory/buyback,
   equipment, quest arrays, milestones, cooldowns, party/marker/trade/duel, and
   market absence.
+- Added `Sim.arenaLadder()` caching with invalidation on player join/leave and
+  arena result updates. `arenaInfoFor()` still calls it from snapshots, but the
+  live 1v1/2v2 ladders are now built once per invalidation instead of once per
+  player snapshot.
 
 ## Ranked Follow-Up Work
 
@@ -50,8 +54,8 @@ visibility, and a short list of high-value follow-up work.
 2. Version player self-state buckets in the sim so `selfWireJson()` does not
    repeatedly stringify stable inventory, gear, quests, stats, cooldowns,
    party, marks, trade, duel, arena, market, and talents every snapshot.
-3. Split or cache `arenaInfoFor()` output. It currently builds standings and
-   online ladders from `selfWireJson()`, even for players not queued or matched.
+3. Split or cache the rest of `arenaInfoFor()` output. Ladder construction is
+   cached, but per-player arena self-state still serializes from snapshots.
 4. Combine WebSocket auth account reads where possible. Current join performs
    several account lookups before the player reaches the world.
 5. Add lightweight timing around command dispatch categories. This will show

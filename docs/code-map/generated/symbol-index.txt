@@ -4960,7 +4960,7 @@ src/sim/sim.ts:751:function isShamanShock(abilityId: string): boolean {
 src/sim/sim.ts:755:function ignoresDamagePushback(abilityId: string): boolean {
 src/sim/sim.ts:759:function isPetClass(cls: PlayerClass): boolean {
 src/sim/sim.ts:763:export class Sim {
-src/sim/sim.ts:11778:export function formatMoney(copper: number): string {
+src/sim/sim.ts:11790:export function formatMoney(copper: number): string {
 src/sim/spatial.ts:8:const OFFSET = 32768;
 src/sim/spatial.ts:10:export class SpatialGrid {
 src/sim/tab_target.ts:15:export interface TabCandidate {
