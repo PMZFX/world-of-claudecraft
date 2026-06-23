@@ -6,7 +6,7 @@ OUT="$ROOT/docs/code-map/generated"
 mkdir -p "$OUT"
 
 ascii() {
-  perl -CS -pe 's/[^\x00-\x7F]/?/g'
+  perl -CS -pe 's/[^\x00-\x7F]/?/g; s/[ \t]+$//'
 }
 
 {

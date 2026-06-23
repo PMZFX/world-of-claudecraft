@@ -1,6 +1,6 @@
 # Source Tree
 
-Generated at: 2026-06-23T12:07:45Z
+Generated at: 2026-06-23T15:07:12Z
 
 .claude/agents/cross-platform-sync.md
 .claude/agents/migration-safety.md
@@ -139,6 +139,7 @@ docs/code-map/systems/save-load.md
 docs/code-map/systems/ui.md
 docs/code-map/systems/world-map.md
 docs/code-map/update-procedure.md
+docs/design/2026-06-23-fork-identity.md
 docs/design/TEMPLATE.md
 docs/design/graphics-plan.md
 docs/design/icon-system.md
@@ -149,6 +150,7 @@ docs/design/sound_effects.md
 docs/design/spell-ranks.md
 docs/design/ue5-overhaul-plan.md
 docs/development/branching-and-commits.md
+docs/development/ci-parity.md
 docs/development/high-risk-change-checklist.md
 docs/development/local-fork-setup.md
 docs/development/local-health-check.md
@@ -237,6 +239,7 @@ docs/screenshots/weather-marsh_rain.jpg
 docs/screenshots/weather-peaks_snow.jpg
 docs/screenshots/weather-vale_clear.jpg
 docs/security/malware-scan-catalog.md
+docs/stabilization-backlog.md
 docs/ui-architecture-hud-modularization/00-design-brief.md
 docs/ui-architecture-hud-modularization/README.md
 docs/ui-architecture-hud-modularization/brainstorm.md
@@ -1687,6 +1690,7 @@ scripts/chat_log_persistence.mjs
 scripts/chat_timestamps_visual.mjs
 scripts/chatbox_move_resize_shot.mjs
 scripts/check_directions.mjs
+scripts/ci-parity.sh
 scripts/class_sheets.mjs
 scripts/click_marker_shot.mjs
 scripts/clock_shot.mjs

@@ -6,9 +6,10 @@ This document tracks how the PMZFX fork should relate to upstream
 ## Current Fork Position
 
 - Upstream repository: `https://github.com/levy-street/world-of-claudecraft`
-- Fork repository: `https://github.com/PMZFX/world-of-claudecraft`
+- Fork repository: `git@github.com:PMZFX/world-of-claudecraft.git`
 - Default branch: `main`
-- Current development direction: not yet chosen.
+- Current development direction: fork baseline stabilization is complete;
+  product direction is not yet chosen.
 
 ## What We Preserve For Now
 
@@ -24,11 +25,13 @@ Add decisions here once the roadmap is defined.
 
 | Area | Decision | Status |
 |---|---|---|
-| Branding | TBD | Open |
+| Branding | Keep upstream runtime identity until a PMZFX public name/domain decision is made. | Open |
 | Gameplay systems | TBD | Open |
 | Economy or Web3 behavior | TBD | Open |
 | Deployment model | TBD | Open |
 | Community/admin tooling | TBD | Open |
+
+Identity planning lives in `docs/design/2026-06-23-fork-identity.md`.
 
 ## Upstream Sync Policy
 
@@ -54,7 +57,7 @@ Then:
 Recommended local setup:
 
 ```text
-origin   https://github.com/PMZFX/world-of-claudecraft.git
+origin   git@github.com:PMZFX/world-of-claudecraft.git
 upstream https://github.com/levy-street/world-of-claudecraft.git
 ```
 
@@ -66,12 +69,11 @@ git remote set-url --push upstream DISABLED
 
 ## Commit Baselines
 
-Recommended baseline sequence:
+Completed baseline sequence:
 
 1. Code map and development process.
-2. Roadmap and first design notes.
-3. First implementation branch.
-
-No baseline commit has been made by Codex unless explicitly requested.
+2. Stabilization cleanup and local CI parity tooling.
+3. Fresh-clone verification from `origin/main`.
+4. Fork identity design note.
 
 Last verified: 2026-06-23

@@ -1,17 +1,25 @@
 # Recent Git Changes
 
 ## Status
- M .gitignore
- M AGENTS.md
-?? docs/code-map/
-?? docs/design/TEMPLATE.md
-?? docs/development/
-?? docs/fork-notes.md
-?? docs/roadmap.md
-?? scripts/local-health-check.sh
-?? scripts/update-code-map.sh
+ M docs/code-map/generated/README.md
+ M docs/code-map/generated/file-list.txt
+ M docs/code-map/generated/recent-git-changes.txt
+ M docs/code-map/generated/source-tree.txt
+ M docs/code-map/generated/symbol-index.txt
+ M docs/code-map/generated/todo-fixme.txt
+ M docs/fork-notes.md
+ M docs/roadmap.md
+ M scripts/update-code-map.sh
+?? docs/design/2026-06-23-fork-identity.md
 
 ## Recent Commits
+9a44defe docs(stabilization): record fresh clone verification
+78fbf15c fix(build): keep admin i18n static
+eb9d8238 fix(build): resolve cursor asset paths
+7ee843d2 chore(privacy): remove inherited analytics
+40fb52d8 fix(html): move meta pixel noscript fallback
+1c8ccf89 docs(stabilization): add cleanup backlog
+e69305f0 docs(code-map): add fork development baseline
 81480dee Merge pull request #873 from levy-street/fix/native-attestation-runtime-config
 6cb43a1a fix(android): pass Play Integrity cloud project number
 4b62e5f5 fix(native): register iOS attestation plugin
@@ -25,10 +33,3 @@ b8ad171c fix(i18n): drop duplicate hudChrome.perf.groups.input from the v0.14.0 
 1da22f7c Merge remote-tracking branch 'origin/release/v0.14.0' into feature/guide-wiki
 def29352 Merge pull request #860 from levy-street/fix/native-mobile-attestation
 3d4390ad feat(ui): make the homepage Wiki nav go straight to the guide at /wiki
-d5b4f5b1 feat(native): require mobile app attestation
-2869f155 Merge pull request #861 from madmatah/feature/add-meta-to-tracking-context
-bcf8ca97 feat(antibot): pass session metadata to the bot-detector seam
-cf24381b feat(guide): serve the curated guide as the site wiki at /wiki
-efd4368e Merge pull request #846 from DaPandamonium/fix/imbue-exclusive-slot
-9926f232 i18n(hud): translate perf-overlay Input/APM keys from release/v0.14.0 (pending=0)
-fd00b72c Merge pull request #847 from nicadeddu/fix/aura-image-icons
