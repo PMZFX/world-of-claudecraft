@@ -1,6 +1,6 @@
 # Source Tree
 
-Generated at: 2026-06-23T15:31:49Z
+Generated at: 2026-06-23T15:40:41Z
 
 .claude/agents/cross-platform-sync.md
 .claude/agents/migration-safety.md
@@ -99,6 +99,7 @@ docs/code-map/asset-pipeline.md
 docs/code-map/build-and-run.md
 docs/code-map/change-notes/2026-06-23-fork-prep.md
 docs/code-map/change-notes/2026-06-23-initial-map.md
+docs/code-map/change-notes/2026-06-23-self-snapshot-fast-paths.md
 docs/code-map/change-notes/2026-06-23-server-performance-baseline.md
 docs/code-map/change-notes/2026-06-23-workflow-prep.md
 docs/code-map/code-owners/dead-or-unclear-code.md

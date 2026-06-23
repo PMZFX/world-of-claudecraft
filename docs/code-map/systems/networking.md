@@ -41,6 +41,13 @@ ClientWorld WebSocket command
 ```
 
 ```text
+GameServer.selfWireJson()
+-> always serializes core self movement/resource/combat fields
+-> sends heavier self fields only when their JSON differs
+-> skips already-sent empty/null heavy fields before allocation/stringify
+```
+
+```text
 Admin status request
 -> server/admin.ts
 -> GameServer.adminStats()
@@ -72,6 +79,8 @@ break auth, or expose moderation/security regressions.
   there is no single schema file for every message type.
 - Snapshot volume and CPU are now visible through additive admin stats, but
   command-dispatch timing is not split by command category yet.
+- `arenaInfoFor()` still runs from the self-snapshot path and should be reviewed
+  before scaling online arena/leaderboard traffic.
 
 ## Verification Steps
 

@@ -80,6 +80,9 @@ const ANTIBOT_ENFORCE = process.env.ANTIBOT_ENFORCE === '1';
 const STALE_INPUT_SECONDS = 0.75;
 // Exponential moving average weight for the per-tick duration stat.
 const TICK_EMA_ALPHA = 0.05;
+const JSON_NULL = 'null';
+const JSON_EMPTY_ARRAY = '[]';
+const JSON_EMPTY_OBJECT = '{}';
 
 // How often to re-broadcast online players' $WOC holder-tier flair. Each wallet
 // read is served from the woc_balance.ts cache (CACHE_TTL_MS), which is the real
@@ -1698,31 +1701,56 @@ export class GameServer {
     // an absent field as "unchanged" (a fresh session always gets them all)
     const sent = session.lastSent;
     let extra = '';
-    const maybe = (key: string, value: unknown): void => {
-      const s = JSON.stringify(value ?? null);
-      if (sent[key] !== s) {
-        sent[key] = s;
-        extra += `,"${key}":${s}`;
+    const alreadySent = (key: string, jsonValue: string): boolean => sent[key] === jsonValue;
+    const emitJson = (key: string, jsonValue: string): void => {
+      if (sent[key] !== jsonValue) {
+        sent[key] = jsonValue;
+        extra += `,"${key}":${jsonValue}`;
       }
     };
-    maybe('inv', meta.inventory);
-    maybe('buyback', meta.vendorBuyback);
-    maybe('equip', meta.equipment);
+    const maybe = (key: string, value: unknown): void => {
+      emitJson(key, JSON.stringify(value ?? null));
+    };
+    const maybeArray = (key: string, value: unknown[], size: number): void => {
+      if (size === 0 && alreadySent(key, JSON_EMPTY_ARRAY)) return;
+      maybe(key, value);
+    };
+    const emptyArrayAlreadySent = (key: string, size: number): boolean => size === 0 && alreadySent(key, JSON_EMPTY_ARRAY);
+    const maybeObject = (key: string, value: Record<string, unknown>): void => {
+      if (Object.keys(value).length === 0 && alreadySent(key, JSON_EMPTY_OBJECT)) return;
+      maybe(key, value);
+    };
+    const maybeNull = (key: string, value: unknown): void => {
+      if (value === null && alreadySent(key, JSON_NULL)) return;
+      maybe(key, value);
+    };
+    maybeArray('inv', meta.inventory, meta.inventory.length);
+    maybeArray('buyback', meta.vendorBuyback, meta.vendorBuyback.length);
+    maybeObject('equip', meta.equipment as Record<string, unknown>);
     maybe('cosmetics', session.accountCosmetics);
-    maybe('qlog', [...meta.questLog.values()]);
-    maybe('qdone', [...meta.questsDone]);
-    maybe('milestones', [...meta.unlockedMilestones]);
-    maybe('cds', Object.fromEntries([...p.cooldowns.entries()].map(([k, v]) => [k, round2(v)])));
+    if (!emptyArrayAlreadySent('qlog', meta.questLog.size)) {
+      maybe('qlog', [...meta.questLog.values()]);
+    }
+    if (!emptyArrayAlreadySent('qdone', meta.questsDone.size)) {
+      maybe('qdone', [...meta.questsDone]);
+    }
+    if (!emptyArrayAlreadySent('milestones', meta.unlockedMilestones.size)) {
+      maybe('milestones', [...meta.unlockedMilestones]);
+    }
+    maybeObject('cds', p.cooldowns.size === 0 ? {} : Object.fromEntries([...p.cooldowns.entries()].map(([k, v]) => [k, round2(v)])));
     maybe('stats', p.stats);
     maybe('weapon', p.weapon);
-    maybe('party', this.partyWire(session.pid));
-    maybe('marks', this.markersWire(session.pid));
-    maybe('trade', this.tradeWire(session.pid));
-    maybe('duel', this.duelWire(session.pid));
+    const party = this.sim.partyOf(session.pid);
+    maybeNull('party', party ? this.partyWire(session.pid) : null);
+    maybeNull('marks', party ? this.markersWire(session.pid) : null);
+    const trade = this.sim.tradeFor(session.pid);
+    maybeNull('trade', trade ? this.tradeWire(session.pid) : null);
+    const duel = this.sim.duelFor(session.pid);
+    maybeNull('duel', duel ? this.duelWire(session.pid) : null);
     maybe('arena', this.sim.arenaInfoFor(session.pid));
     // market info is null unless the player is standing at the Merchant, so it
     // only rides the wire for players actually browsing the World Market
-    maybe('market', this.sim.marketInfoFor(session.pid));
+    maybeNull('market', this.sim.marketInfoFor(session.pid));
     // talents/spec/loadouts ride the wire only when they change (PR-5: never
     // every snapshot). The client recomputes its known abilities from this.
     maybe('tal', { alloc: meta.talents, spec: meta.talentMods.spec, role: meta.talentMods.role, loadouts: meta.loadouts, activeLoadout: meta.activeLoadout });

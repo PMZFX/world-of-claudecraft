@@ -38,6 +38,10 @@ visibility, and a short list of high-value follow-up work.
 - Added conservative dirty-save avoidance: `GameServer.saveCharacter()` compares
   serialized character state against the last successfully persisted JSON and
   skips the DB write when unchanged.
+- Added `selfWireJson()` fast paths for already-sent empty/null fields. Repeated
+  snapshots now avoid allocating and stringifying empty inventory/buyback,
+  equipment, quest arrays, milestones, cooldowns, party/marker/trade/duel, and
+  market absence.
 
 ## Ranked Follow-Up Work
 
@@ -46,14 +50,16 @@ visibility, and a short list of high-value follow-up work.
 2. Version player self-state buckets in the sim so `selfWireJson()` does not
    repeatedly stringify stable inventory, gear, quests, stats, cooldowns,
    party, marks, trade, duel, arena, market, and talents every snapshot.
-3. Combine WebSocket auth account reads where possible. Current join performs
+3. Split or cache `arenaInfoFor()` output. It currently builds standings and
+   online ladders from `selfWireJson()`, even for players not queued or matched.
+4. Combine WebSocket auth account reads where possible. Current join performs
    several account lookups before the player reaches the world.
-4. Add lightweight timing around command dispatch categories. This will show
+5. Add lightweight timing around command dispatch categories. This will show
    whether action processing is dominated by chat/social DB work, sim commands,
    JSON parsing, or antibot checks.
-5. Consider backpressure policy for slow WebSocket clients using
+6. Consider backpressure policy for slow WebSocket clients using
    `ws.bufferedAmount` so one stuck client cannot build unbounded pending output.
-6. Split full character state into smaller persistence domains only if dirty
+7. Split full character state into smaller persistence domains only if dirty
    tracking and self-state versioning are not enough. This is higher risk
    because inventory, gear, quests, talents, stats, and position currently share
    one JSONB document.

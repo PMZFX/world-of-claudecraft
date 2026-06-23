@@ -2212,29 +2212,32 @@ server/game.ts:67:const RESTART_COUNTDOWN_STEPS = [
 server/game.ts:76:const ANTIBOT_ENFORCE = process.env.ANTIBOT_ENFORCE === '1';
 server/game.ts:80:const STALE_INPUT_SECONDS = 0.75;
 server/game.ts:82:const TICK_EMA_ALPHA = 0.05;
-server/game.ts:88:const HOLDER_TIER_REFRESH_MS = 60_000;
-server/game.ts:90:export interface ClientSession {
-server/game.ts:144:interface SentEntityVersions {
-server/game.ts:156:export interface AdminServerStats {
-server/game.ts:174:export interface AdminLiveAura {
-server/game.ts:183:export interface AdminLivePlayer {
-server/game.ts:203:export interface RestartCountdownStatus {
-server/game.ts:210:interface WireAura {
-server/game.ts:218:interface WhoRosterRow {
-server/game.ts:226:type RememberedChat =
-server/game.ts:233:function identityFields(e: Entity): Record<string, unknown> {
-server/game.ts:249:function dynamicFields(e: Entity): Record<string, unknown> {
-server/game.ts:286:export function wireEntity(e: Entity): Record<string, unknown> {
-server/game.ts:293:function interestLimitSq(e: Entity, known: boolean): number {
-server/game.ts:300:function isStealthed(e: Entity): boolean {
-server/game.ts:309:function isUpdateDue(tick: number, e: Entity, d2: number, viewer: Entity, sentAtTick: number): boolean {
-server/game.ts:319:interface EntityWireCache {
-server/game.ts:329:function round2(v: number): number {
-server/game.ts:333:function logSocialErr(err: unknown): void {
-server/game.ts:338:function formatDuration(seconds: number): string {
-server/game.ts:352:function chatChannelHint(session: ClientSession, text: string): string {
-server/game.ts:363:function delay(ms: number): Promise<void> {
-server/game.ts:367:export class GameServer {
+server/game.ts:83:const JSON_NULL = 'null';
+server/game.ts:84:const JSON_EMPTY_ARRAY = '[]';
+server/game.ts:85:const JSON_EMPTY_OBJECT = '{}';
+server/game.ts:91:const HOLDER_TIER_REFRESH_MS = 60_000;
+server/game.ts:93:export interface ClientSession {
+server/game.ts:147:interface SentEntityVersions {
+server/game.ts:159:export interface AdminServerStats {
+server/game.ts:177:export interface AdminLiveAura {
+server/game.ts:186:export interface AdminLivePlayer {
+server/game.ts:206:export interface RestartCountdownStatus {
+server/game.ts:213:interface WireAura {
+server/game.ts:221:interface WhoRosterRow {
+server/game.ts:229:type RememberedChat =
+server/game.ts:236:function identityFields(e: Entity): Record<string, unknown> {
+server/game.ts:252:function dynamicFields(e: Entity): Record<string, unknown> {
+server/game.ts:289:export function wireEntity(e: Entity): Record<string, unknown> {
+server/game.ts:296:function interestLimitSq(e: Entity, known: boolean): number {
+server/game.ts:303:function isStealthed(e: Entity): boolean {
+server/game.ts:312:function isUpdateDue(tick: number, e: Entity, d2: number, viewer: Entity, sentAtTick: number): boolean {
+server/game.ts:322:interface EntityWireCache {
+server/game.ts:332:function round2(v: number): number {
+server/game.ts:336:function logSocialErr(err: unknown): void {
+server/game.ts:341:function formatDuration(seconds: number): string {
+server/game.ts:355:function chatChannelHint(session: ClientSession, text: string): string {
+server/game.ts:366:function delay(ms: number): Promise<void> {
+server/game.ts:370:export class GameServer {
 server/http_util.ts:4:export function json(res: http.ServerResponse, status: number, body: unknown): void {
 server/http_util.ts:15:export function isUniqueViolation(err: unknown): boolean {
 server/http_util.ts:20:export function readBody(req: http.IncomingMessage, maxBytes = 64 * 1024): Promise<any> {
