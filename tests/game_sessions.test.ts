@@ -281,6 +281,27 @@ describe('GameServer sessions', () => {
     expect(server.adminStats().characterSaveWrites).toBe(0);
   });
 
+  it('skips autosave serialization for a clean loaded character', async () => {
+    vi.mocked(saveCharacterState).mockReset();
+    vi.mocked(saveCharacterState).mockResolvedValue(undefined);
+
+    const source = new GameServer();
+    const sourceSession = expectJoined(source.join(fakeWs(), 12, 122, 'Cleanauto', 'warrior', null));
+    const loadedState = source.sim.serializeCharacter(sourceSession.pid)!;
+
+    const server = new GameServer();
+    expectJoined(server.join(fakeWs(), 12, 123, 'Cleanauto', 'warrior', loadedState));
+    const serialize = vi.spyOn(server.sim, 'serializeCharacter');
+
+    await server.saveAll('autosave');
+
+    expect(serialize).not.toHaveBeenCalled();
+    expect(saveCharacterState).not.toHaveBeenCalled();
+    expect(server.adminStats().characterSaveCleanSkips).toBe(1);
+    expect(server.adminStats().characterSaveSkips).toBe(0);
+    expect(server.adminStats().characterSaveWrites).toBe(0);
+  });
+
   it('writes again after an unchanged loaded character mutates', async () => {
     vi.mocked(saveCharacterState).mockReset();
     vi.mocked(saveCharacterState).mockResolvedValue(undefined);
@@ -299,6 +320,23 @@ describe('GameServer sessions', () => {
     expect(vi.mocked(saveCharacterState).mock.calls[0][2].questsDone).toContain('q_wolves');
     expect(server.adminStats().characterSaveSkips).toBe(0);
     expect(server.adminStats().characterSaveWrites).toBe(1);
+  });
+
+  it('keeps a character dirty when an autosave write fails', async () => {
+    vi.mocked(saveCharacterState).mockReset();
+    vi.mocked(saveCharacterState)
+      .mockRejectedValueOnce(new Error('temporary database outage'))
+      .mockResolvedValueOnce(undefined);
+
+    const server = new GameServer();
+    const session = expectJoined(server.join(fakeWs(), 13, 132, 'Dirtyretry', 'warrior', null));
+
+    await expect(server.saveCharacter(session, { forceSerialize: false })).rejects.toThrow('temporary database outage');
+    await server.saveCharacter(session, { forceSerialize: false });
+
+    expect(saveCharacterState).toHaveBeenCalledTimes(2);
+    expect(server.adminStats().characterSaveWrites).toBe(1);
+    expect(server.adminStats().characterSaveCleanSkips).toBe(0);
   });
 
   it('closes the play session even when the open insert lands after the player has left', async () => {

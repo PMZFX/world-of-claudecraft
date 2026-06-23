@@ -4445,6 +4445,14 @@ export class Sim {
     return false;
   }
 
+  isRestingForPersistence(pid: number): boolean {
+    const p = this.entities.get(pid);
+    const meta = this.players.get(pid);
+    if (!p || !meta || p.level >= MAX_LEVEL) return false;
+    const cap = RESTED_CAP_LEVELS * xpForLevel(p.level);
+    return meta.restedXp < cap && this.isResting(p);
+  }
+
   // Accrue rested XP while resting in an inn. Vanilla: 5% of the level's
   // XP-to-level per 8 in-game hours, clamped to 1.5 levels. Deterministic —
   // paced off DT, never wall-clock. No accrual at the cap (no level bar).

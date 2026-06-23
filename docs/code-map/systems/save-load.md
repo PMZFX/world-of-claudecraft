@@ -41,7 +41,9 @@ Character select
 
 ```text
 GameServer session
--> Sim.serializeCharacter()
+-> autosave checks ClientSession.saveDirty
+-> clean autosave skips Sim.serializeCharacter()
+-> dirty, direct, logout, or shutdown save calls Sim.serializeCharacter()
 -> compare serialized state with ClientSession.lastSavedStateJson
 -> saveCharacterState()
 -> characters.state JSONB
@@ -70,9 +72,12 @@ accidental looseness.
 ## Known Unclear Areas
 
 - No migration folder is visible; migrations appear embedded in `ensureSchema()`.
-- Autosave still serializes every online character on its interval, but skips
-  the DB write when serialized state is identical to the last successful save.
-  Mutation-level dirty flags are not implemented yet.
+- Autosave uses server-owned dirty flags to skip serialization for clean loaded
+  sessions. Direct saves, logout saves, and shutdown saves still serialize
+  conservatively.
+- Dirty state is marked from WebSocket movement/commands, sim events, passive
+  regen/rest states, and account-cosmetic updates. Future mutation paths should
+  update the dirty markers in `server/game.ts`.
 
 ## Verification Steps
 
@@ -85,5 +90,7 @@ accidental looseness.
   display unless that endpoint intentionally needs full saved state.
 - Confirm unchanged loaded characters increment `characterSaveSkips` rather than
   issuing duplicate `UPDATE characters` writes.
+- Confirm clean loaded characters increment `characterSaveCleanSkips` during
+  autosave without calling `Sim.serializeCharacter()`.
 
 Last verified: 2026-06-23

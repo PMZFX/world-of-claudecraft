@@ -14,9 +14,13 @@ export interface ServerStats {
   wireBytesOut: number;
   characterSaveWrites: number;
   characterSaveSkips: number;
+  characterSaveCleanSkips: number;
+  characterSaveSerializeMsAvg: number;
   commandTimings: Record<string, { count: number; totalMs: number; avgMs: number; maxMs: number }>;
   backpressureSkippedSnapshots: number;
   backpressureDisconnects: number;
+  selfStableJsonBuilds: number;
+  selfStableJsonSkips: number;
   simEntities: number;
   rssBytes: number;
   heapUsedBytes: number;

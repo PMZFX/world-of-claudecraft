@@ -56,19 +56,24 @@ visibility, and a short list of high-value follow-up work.
   before mutating their delta state, and `sendRaw()` closes critically queued
   sockets at `WS_BACKPRESSURE_CRITICAL_BYTES`. Admin stats expose skipped
   snapshot and disconnect counters.
+- Added server-owned character dirty tracking for autosave. Clean loaded
+  sessions skip `Sim.serializeCharacter()` during autosave, while direct saves,
+  logout saves, and shutdown saves still serialize conservatively. Dirty state
+  is marked from valid movement, mutating commands, sim events, passive
+  regen/rest states, and live account-cosmetic updates.
+- Added stable self-field signatures for player snapshots. Stable buckets such
+  as inventory, buyback, equipment, cosmetics, quests, milestones, stats,
+  weapon, and talents skip JSON rebuilds while their signatures and dirty bits
+  are unchanged. Volatile buckets such as cooldowns, party, trade, duel, arena,
+  and market continue to be evaluated normally.
 
 ## Ranked Follow-Up Work
 
-1. Add mutation-level dirty flags so autosave can avoid serializing characters
-   whose persisted state cannot have changed since the last successful save.
-2. Version player self-state buckets in the sim so `selfWireJson()` does not
-   repeatedly stringify stable inventory, gear, quests, stats, cooldowns,
-   party, marks, trade, duel, arena, market, and talents every snapshot.
-3. Split or cache the rest of `arenaInfoFor()` output. Ladder construction is
+1. Split or cache the rest of `arenaInfoFor()` output. Ladder construction is
    cached, but per-player arena self-state still serializes from snapshots.
-4. Combine WebSocket auth account reads where possible. Current join performs
+2. Combine WebSocket auth account reads where possible. Current join performs
    several account lookups before the player reaches the world.
-5. Split full character state into smaller persistence domains only if dirty
+3. Split full character state into smaller persistence domains only if dirty
    tracking and self-state versioning are not enough. This is higher risk
    because inventory, gear, quests, talents, stats, and position currently share
    one JSONB document.
@@ -78,7 +83,9 @@ visibility, and a short list of high-value follow-up work.
 - DB tests should cover the new roster query and realm-scoped indexes.
 - Admin stats should remain additive so existing admin clients continue to work.
 - Manual performance runs should compare admin `snapshotMsAvg`, command timing
-  buckets, backpressure counters, wire byte counters, and online player count
-  before and after protocol/tick changes.
+  buckets, backpressure counters, `characterSaveCleanSkips`,
+  `characterSaveSerializeMsAvg`, `selfStableJsonBuilds`,
+  `selfStableJsonSkips`, wire byte counters, and online player count before and
+  after protocol/tick changes.
 
 Last verified: 2026-06-23

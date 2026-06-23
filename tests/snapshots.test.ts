@@ -186,9 +186,15 @@ describe('delta snapshots', () => {
 
   it('omits unchanged heavy fields from subsequent snapshots', () => {
     broadcast(server);
+    const afterFirst = server.adminStats();
+    expect(afterFirst.selfStableJsonBuilds).toBeGreaterThan(0);
+    expect(afterFirst.selfStableJsonSkips).toBe(0);
     fc.sent.length = 0;
     server.sim.tick();
     broadcast(server);
+    const afterSecond = server.adminStats();
+    expect(afterSecond.selfStableJsonBuilds).toBe(afterFirst.selfStableJsonBuilds);
+    expect(afterSecond.selfStableJsonSkips).toBeGreaterThan(0);
     const snap = lastSnap(fc.sent);
     for (const key of DELTA_KEYS) {
       expect(snap.self, `self.${key} resent although unchanged`).not.toHaveProperty(key);

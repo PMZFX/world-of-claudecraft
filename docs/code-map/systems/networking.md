@@ -45,6 +45,8 @@ GameServer.selfWireJson()
 -> always serializes core self movement/resource/combat fields
 -> sends heavier self fields only when their JSON differs
 -> skips already-sent empty/null heavy fields before allocation/stringify
+-> skips stable self-field JSON rebuilds while field signatures and dirty bits
+   are unchanged
 -> snapshot frames are skipped before delta-state mutation when ws.bufferedAmount
    is above WS_BACKPRESSURE_SKIP_BYTES
 ```
@@ -83,6 +85,9 @@ break auth, or expose moderation/security regressions.
 - Snapshot volume, wire volume, saves, and synchronous command-dispatch timing
   are visible through additive admin stats. Command timings are broad buckets
   and do not include async work that a command launches after returning.
+- Stable self-field JSON work is visible through `selfStableJsonBuilds` and
+  `selfStableJsonSkips`. Stable fields currently include inventory, buyback,
+  equipment, cosmetics, quests, milestones, stats, weapon, and talents.
 - Slow WebSocket clients skip snapshot frames above `WS_BACKPRESSURE_SKIP_BYTES`
   and are disconnected above `WS_BACKPRESSURE_CRITICAL_BYTES`. This protects the
   server queue but can make a slow client visually stale until its buffer drains.
@@ -99,6 +104,7 @@ break auth, or expose moderation/security regressions.
 - Check admin stats for `snapshotMsAvg`, `commandTimings`, `messagesIn`,
   `messagesOut`, `wireBytesIn`, `wireBytesOut`, `characterSaveWrites`, and
   `characterSaveSkips`, plus `backpressureSkippedSnapshots` and
-  `backpressureDisconnects`, when doing server performance work.
+  `backpressureDisconnects`, `selfStableJsonBuilds`, and
+  `selfStableJsonSkips`, when doing server performance work.
 
 Last verified: 2026-06-23

@@ -93,8 +93,17 @@ const COMMAND_TIMING_CATEGORIES = [
   'inventory', 'quest', 'chat', 'social', 'party', 'pet', 'trade', 'duel',
   'arena', 'talents', 'market', 'dev', 'dungeon', 'telemetry', 'other',
 ] as const;
+const SELF_WIRE_KEYS = [
+  'inv', 'buyback', 'equip', 'cosmetics', 'qlog', 'qdone', 'milestones', 'cds',
+  'stats', 'weapon', 'party', 'marks', 'trade', 'duel', 'arena', 'market', 'tal',
+] as const;
+const SELF_WIRE_STABLE_KEYS = new Set<SelfWireKey>([
+  'inv', 'buyback', 'equip', 'cosmetics', 'qlog', 'qdone', 'milestones',
+  'stats', 'weapon', 'tal',
+]);
 
 type CommandTimingCategory = typeof COMMAND_TIMING_CATEGORIES[number];
+type SelfWireKey = typeof SELF_WIRE_KEYS[number];
 
 interface CommandTimingAccumulator {
   count: number;
@@ -123,6 +132,7 @@ export interface ClientSession {
   name: string;
   lastSave: number;
   lastSavedStateJson: string | null;
+  saveDirty: boolean;
   alive: boolean;
   joinedAt: number;
   dbSessionId: number | null; // play_sessions row, set once the insert lands
@@ -152,6 +162,10 @@ export interface ClientSession {
   // serialized form of each delta self field as last sent to this client;
   // a field is omitted from a snapshot while its serialization is unchanged
   lastSent: Record<string, string>;
+  // stable self fields that are allowed to rebuild their JSON this snapshot;
+  // clean stable fields reuse lastSent without allocating/stringifying
+  selfDirty: Set<SelfWireKey>;
+  selfSigs: Record<string, string>;
   // wire versions of each entity this client knows about: known entities
   // get identity-less "lite" records, unchanged ones ride in the keep list
   sentEnts: Map<number, SentEntityVersions>;
@@ -193,9 +207,13 @@ export interface AdminServerStats {
   wireBytesOut: number;
   characterSaveWrites: number;
   characterSaveSkips: number;
+  characterSaveCleanSkips: number;
+  characterSaveSerializeMsAvg: number;
   commandTimings: Record<string, { count: number; totalMs: number; avgMs: number; maxMs: number }>;
   backpressureSkippedSnapshots: number;
   backpressureDisconnects: number;
+  selfStableJsonBuilds: number;
+  selfStableJsonSkips: number;
   simEntities: number;
   rssBytes: number;
   heapUsedBytes: number;
@@ -432,9 +450,13 @@ export class GameServer {
   private wireBytesOut = 0;
   private characterSaveWrites = 0;
   private characterSaveSkips = 0;
+  private characterSaveCleanSkips = 0;
+  private characterSaveSerializeMsAvg = 0;
   private readonly commandTimings = new Map<CommandTimingCategory, CommandTimingAccumulator>();
   private backpressureSkippedSnapshots = 0;
   private backpressureDisconnects = 0;
+  private selfStableJsonBuilds = 0;
+  private selfStableJsonSkips = 0;
   private readonly ipSessionCounts = new Map<string, number>();
 
   constructor() {
@@ -565,6 +587,8 @@ export class GameServer {
       while (acc >= DT) {
         this.clearStaleInputs();
         const events = this.sim.tick();
+        this.markDirtyFromEvents(events);
+        this.markDirtyFromPassiveState();
         this.routeEvents(events);
         this.runAntibotTick();
         acc -= DT;
@@ -678,6 +702,7 @@ export class GameServer {
     for (const live of this.clients.values()) {
       if (live.accountId !== accountId) continue;
       live.accountCosmetics = merged;
+      this.markSessionDirty(live, ['cosmetics', 'qlog', 'qdone']);
       this.applyAccountQuestLockouts(live.pid, merged);
       this.resyncQuests(live);
     }
@@ -692,6 +717,7 @@ export class GameServer {
     for (const live of this.clients.values()) {
       if (live.accountId !== accountId) continue;
       live.accountCosmetics = exact;
+      this.markSessionDirty(live, ['cosmetics', 'qlog', 'qdone', 'inv', 'equip', 'stats', 'weapon']);
       this.applyAccountQuestLockouts(live.pid, exact);
       this.resyncQuests(live);
     }
@@ -782,6 +808,7 @@ export class GameServer {
     const session: ClientSession = {
       ws, accountId, accountCosmetics, characterId, pid, name,
       lastSave: Date.now(), lastSavedStateJson: state ? JSON.stringify(state) : null,
+      saveDirty: state === null,
       alive: true, joinedAt: Date.now(), dbSessionId: null, left: false,
       chatTokens: CHAT_RATE_BURST, chatLastRefill: Date.now() / 1000, chatLastRateError: 0,
       chatRateViolations: 0, chatCooldownUntil: 0,
@@ -795,6 +822,8 @@ export class GameServer {
       lastInputSeq: 0,
       lastInputAt: this.sim.time,
       lastSent: {},
+      selfDirty: new Set(SELF_WIRE_KEYS),
+      selfSigs: {},
       sentEnts: new Map(),
       ip: sessionIp,
       isAdmin: meta.isAdmin ?? false,
@@ -882,7 +911,7 @@ export class GameServer {
   private async saveCharacterOnLeave(session: ClientSession): Promise<void> {
     for (let attempt = 1; attempt <= LEAVE_SAVE_MAX_ATTEMPTS; attempt++) {
       try {
-        await this.saveCharacter(session);
+        await this.saveCharacter(session, { forceSerialize: true });
         return;
       } catch (err) {
         if (attempt === LEAVE_SAVE_MAX_ATTEMPTS) {
@@ -899,10 +928,20 @@ export class GameServer {
     }
   }
 
-  async saveCharacter(session: ClientSession): Promise<void> {
+  async saveCharacter(session: ClientSession, opts: { forceSerialize?: boolean } = { forceSerialize: true }): Promise<void> {
     const previous = this.characterSaveQueues.get(session.characterId);
     const run = (previous ? previous.catch(() => {}) : Promise.resolve()).then(async () => {
+      if (!opts.forceSerialize && !session.saveDirty) {
+        this.characterSaveCleanSkips++;
+        session.lastSave = Date.now();
+        return;
+      }
+      const started = process.hrtime.bigint();
       const state = this.sim.serializeCharacter(session.pid);
+      const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
+      this.characterSaveSerializeMsAvg = this.characterSaveSerializeMsAvg === 0
+        ? elapsedMs
+        : this.characterSaveSerializeMsAvg + TICK_EMA_ALPHA * (elapsedMs - this.characterSaveSerializeMsAvg);
       const e = this.sim.entities.get(session.pid);
       if (state && e) {
         // Use the SERIALIZED level (not e.level): during a 2v2 Fiesta bout e.level
@@ -911,11 +950,13 @@ export class GameServer {
         const stateJson = JSON.stringify(state);
         if (session.lastSavedStateJson === stateJson) {
           this.characterSaveSkips++;
+          session.saveDirty = false;
           session.lastSave = Date.now();
           return;
         }
         await saveCharacterState(session.characterId, state.level, state, stateJson);
         session.lastSavedStateJson = stateJson;
+        session.saveDirty = false;
         this.characterSaveWrites++;
         session.lastSave = Date.now();
       }
@@ -952,7 +993,8 @@ export class GameServer {
       for (;;) {
         const session = sessions[next++];
         if (!session) return;
-        await this.saveCharacter(session).catch((err) => console.error(`${reason} failed for ${session.name}:`, err));
+        await this.saveCharacter(session, { forceSerialize: reason === 'shutdown' })
+          .catch((err) => console.error(`${reason} failed for ${session.name}:`, err));
       }
     };
     await Promise.all(Array.from({ length: Math.min(SAVE_CONCURRENCY, sessions.length) }, worker));
@@ -1003,9 +1045,13 @@ export class GameServer {
       wireBytesOut: this.wireBytesOut,
       characterSaveWrites: this.characterSaveWrites,
       characterSaveSkips: this.characterSaveSkips,
+      characterSaveCleanSkips: this.characterSaveCleanSkips,
+      characterSaveSerializeMsAvg: Math.round(this.characterSaveSerializeMsAvg * 1000) / 1000,
       commandTimings: this.commandTimingStats(),
       backpressureSkippedSnapshots: this.backpressureSkippedSnapshots,
       backpressureDisconnects: this.backpressureDisconnects,
+      selfStableJsonBuilds: this.selfStableJsonBuilds,
+      selfStableJsonSkips: this.selfStableJsonSkips,
       simEntities: this.sim.entities.size,
       rssBytes: mem.rss,
       heapUsedBytes: mem.heapUsed,
@@ -1402,6 +1448,147 @@ export class GameServer {
     return out;
   }
 
+  private markSessionDirty(session: ClientSession, keys: readonly SelfWireKey[] = []): void {
+    session.saveDirty = true;
+    for (const key of keys) session.selfDirty.add(key);
+  }
+
+  private markSelfDirty(session: ClientSession, keys: readonly SelfWireKey[]): void {
+    for (const key of keys) session.selfDirty.add(key);
+  }
+
+  private sessionByPid(pid: number | undefined): ClientSession | null {
+    return typeof pid === 'number' ? this.clients.get(pid) ?? null : null;
+  }
+
+  private markSessionDirtyByPid(pid: number | undefined, keys: readonly SelfWireKey[] = []): void {
+    const session = this.sessionByPid(pid);
+    if (session) this.markSessionDirty(session, keys);
+  }
+
+  private dirtyKeysForCommand(cmd: string): readonly SelfWireKey[] {
+    switch (this.commandTimingCategory(cmd)) {
+      case 'combat':
+        return ['cds', 'stats', 'weapon', 'milestones'];
+      case 'inventory':
+        return ['inv', 'buyback', 'equip', 'stats', 'weapon'];
+      case 'quest':
+        return ['qlog', 'qdone', 'milestones', 'inv', 'equip', 'stats', 'weapon'];
+      case 'interaction':
+        return ['inv', 'buyback', 'equip', 'cosmetics', 'qlog', 'qdone', 'milestones', 'stats', 'weapon'];
+      case 'pet':
+        return ['inv', 'stats'];
+      case 'trade':
+        return ['inv', 'trade'];
+      case 'arena':
+        return ['arena', 'stats', 'weapon'];
+      case 'talents':
+        return ['tal', 'stats', 'weapon', 'cds'];
+      case 'market':
+        return ['inv', 'buyback', 'market'];
+      case 'dev':
+        return ['inv', 'buyback', 'equip', 'qlog', 'qdone', 'milestones', 'stats', 'weapon', 'tal'];
+      case 'dungeon':
+        return [];
+      default:
+        return [];
+    }
+  }
+
+  private commandMayPersist(cmd: string): boolean {
+    switch (this.commandTimingCategory(cmd)) {
+      case 'combat':
+      case 'interaction':
+      case 'inventory':
+      case 'quest':
+      case 'pet':
+      case 'trade':
+      case 'arena':
+      case 'talents':
+      case 'market':
+      case 'dev':
+      case 'dungeon':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  private markDirtyFromEvents(events: readonly SimEvent[]): void {
+    for (const ev of events) {
+      const keys = this.dirtyKeysForEvent(ev);
+      this.markSessionDirtyByPid(ev.pid, keys);
+      if ('sourceId' in ev) this.markSessionDirtyByPid(ev.sourceId, keys);
+      if ('targetId' in ev) this.markSessionDirtyByPid(ev.targetId, keys);
+      if ('entityId' in ev) this.markSessionDirtyByPid(ev.entityId, keys);
+      if ('killerId' in ev) this.markSessionDirtyByPid(ev.killerId, keys);
+      if ('fromPid' in ev) this.markSessionDirtyByPid(ev.fromPid, keys);
+    }
+  }
+
+  private dirtyKeysForEvent(ev: SimEvent): readonly SelfWireKey[] {
+    switch (ev.type) {
+      case 'xp':
+      case 'levelup':
+      case 'virtualLevelUp':
+      case 'milestoneUnlocked':
+      case 'learnAbility':
+        return ['milestones', 'stats', 'weapon', 'tal'];
+      case 'loot':
+      case 'vendor':
+      case 'tradeDone':
+        return ['inv', 'buyback', 'equip', 'qlog', 'qdone', 'stats', 'weapon'];
+      case 'questAccepted':
+      case 'questProgress':
+      case 'questReady':
+      case 'questDone':
+        return ['qlog', 'qdone', 'milestones', 'inv', 'equip', 'stats', 'weapon'];
+      case 'aura':
+        return ['stats', 'weapon'];
+      case 'arenaQueued':
+      case 'arenaUnqueued':
+      case 'arenaFound':
+      case 'arenaStart':
+      case 'arenaEnd':
+      case 'fiestaScore':
+      case 'fiestaWave':
+      case 'fiestaDown':
+      case 'augmentOffer':
+      case 'augmentChosen':
+      case 'fiestaPowerup':
+        return ['arena', 'stats', 'weapon'];
+      case 'damage':
+      case 'heal':
+      case 'heal2':
+      case 'death':
+      case 'playerDeath':
+      case 'respawn':
+        return ['stats', 'weapon'];
+      case 'skinEvent':
+        return ['inv', 'cosmetics'];
+      default:
+        return [];
+    }
+  }
+
+  private markDirtyFromPassiveState(): void {
+    for (const session of this.clients.values()) {
+      const e = this.sim.entities.get(session.pid);
+      if (!e) continue;
+      if (
+        e.inCombat ||
+        e.eating !== null ||
+        e.drinking !== null ||
+        e.hp < e.maxHp ||
+        (e.resourceType === 'mana' && e.resource < e.maxResource) ||
+        this.sim.isRestingForPersistence(session.pid)
+      ) {
+        this.markSessionDirty(session);
+        if (e.cooldowns.size > 0 || session.lastSent.cds !== undefined) this.markSelfDirty(session, ['cds']);
+      }
+    }
+  }
+
   private dispatchMessage(session: ClientSession, msg: any, raw: string, receivedAtMs: number): void {
     // JSON.parse returns null / numbers / strings / arrays for valid JSON that
     // isn't an object — `null` in particular threw on `msg.t`. Drop anything
@@ -1425,6 +1612,7 @@ export class GameServer {
       if (frame.facing !== null && !e.dead) {
         e.facing = frame.facing;
       }
+      this.markSessionDirty(session);
       this.botDetector.observeInput(session.botTrackingContext, frame, receivedAtMs);
       return;
     }
@@ -1433,6 +1621,9 @@ export class GameServer {
       return;
     }
     this.botDetector.observeCommand(session.botTrackingContext, String(msg.cmd ?? ''), receivedAtMs, msg);
+    if (typeof msg.cmd === 'string' && this.commandMayPersist(msg.cmd)) {
+      this.markSessionDirty(session, this.dirtyKeysForCommand(msg.cmd));
+    }
     switch (msg.cmd) {
       case 'castSlot': sim.castAbilityBySlot(msg.slot | 0, pid); break;
       case 'cast': if (typeof msg.ability === 'string') sim.castAbility(msg.ability, pid); break;
@@ -1893,46 +2084,99 @@ export class GameServer {
     // form differs from what this session last received; the client treats
     // an absent field as "unchanged" (a fresh session always gets them all)
     const sent = session.lastSent;
+    const selfDirty = session.selfDirty;
+    const selfSigs = session.selfSigs;
     let extra = '';
+    const shouldBuildStable = (key: SelfWireKey, sig?: string): boolean => {
+      if (!SELF_WIRE_STABLE_KEYS.has(key)) return true;
+      if (sent[key] === undefined || selfDirty.has(key) || (sig !== undefined && selfSigs[key] !== sig)) {
+        this.selfStableJsonBuilds++;
+        return true;
+      }
+      this.selfStableJsonSkips++;
+      return false;
+    };
     const alreadySent = (key: string, jsonValue: string): boolean => sent[key] === jsonValue;
-    const emitJson = (key: string, jsonValue: string): void => {
+    const emitJson = (key: SelfWireKey, jsonValue: string, sig?: string): void => {
       if (sent[key] !== jsonValue) {
         sent[key] = jsonValue;
         extra += `,"${key}":${jsonValue}`;
       }
+      if (sig !== undefined) selfSigs[key] = sig;
+      selfDirty.delete(key);
     };
-    const maybe = (key: string, value: unknown): void => {
-      emitJson(key, JSON.stringify(value ?? null));
+    const itemSig = (items: readonly { itemId: string; count: number }[]): string => (
+      items.length === 0 ? '' : items.map((slot) => `${slot.itemId}:${slot.count}`).join('|')
+    );
+    const recordSig = (record: Record<string, unknown>): string => (
+      Object.keys(record).sort().map((key) => `${key}:${String(record[key])}`).join('|')
+    );
+    const setSig = (set: ReadonlySet<string>): string => (set.size === 0 ? '' : [...set].sort().join('|'));
+    const questLogSig = (): string => (
+      meta.questLog.size === 0
+        ? ''
+        : [...meta.questLog.values()]
+          .map((q) => `${q.questId}:${q.state}:${q.counts.join(',')}`)
+          .sort()
+          .join('|')
+    );
+    const talentSig = (): string => [
+      meta.talents.spec ?? '',
+      recordSig(meta.talents.ranks),
+      recordSig(meta.talents.choices),
+      meta.talentMods.spec ?? '',
+      meta.talentMods.role,
+      meta.activeLoadout,
+      meta.loadouts.map((l) => `${l.name}:${l.bar.join(',')}:${l.alloc.spec ?? ''}:${recordSig(l.alloc.ranks)}:${recordSig(l.alloc.choices)}`).join('|'),
+    ].join('#');
+    const maybeBuilt = (key: SelfWireKey, value: unknown, sig?: string): void => {
+      emitJson(key, JSON.stringify(value ?? null), sig);
     };
-    const maybeArray = (key: string, value: unknown[], size: number): void => {
-      if (size === 0 && alreadySent(key, JSON_EMPTY_ARRAY)) return;
-      maybe(key, value);
+    const maybe = (key: SelfWireKey, value: unknown, sig?: string): void => {
+      if (!shouldBuildStable(key, sig)) return;
+      maybeBuilt(key, value, sig);
     };
-    const emptyArrayAlreadySent = (key: string, size: number): boolean => size === 0 && alreadySent(key, JSON_EMPTY_ARRAY);
-    const maybeObject = (key: string, value: Record<string, unknown>): void => {
-      if (Object.keys(value).length === 0 && alreadySent(key, JSON_EMPTY_OBJECT)) return;
-      maybe(key, value);
+    const maybeArray = (key: SelfWireKey, value: unknown[], size: number, sig?: string): void => {
+      if (!shouldBuildStable(key, sig)) return;
+      if (size === 0 && alreadySent(key, JSON_EMPTY_ARRAY)) {
+        if (sig !== undefined) selfSigs[key] = sig;
+        selfDirty.delete(key);
+        return;
+      }
+      maybeBuilt(key, value, sig);
     };
-    const maybeNull = (key: string, value: unknown): void => {
+    const maybeGeneratedArray = (key: SelfWireKey, size: number, value: () => unknown[], sig?: string): void => {
+      if (!shouldBuildStable(key, sig)) return;
+      if (size === 0 && alreadySent(key, JSON_EMPTY_ARRAY)) {
+        if (sig !== undefined) selfSigs[key] = sig;
+        selfDirty.delete(key);
+        return;
+      }
+      maybeBuilt(key, value(), sig);
+    };
+    const maybeObject = (key: SelfWireKey, value: Record<string, unknown>, sig?: string): void => {
+      if (!shouldBuildStable(key, sig)) return;
+      if (Object.keys(value).length === 0 && alreadySent(key, JSON_EMPTY_OBJECT)) {
+        if (sig !== undefined) selfSigs[key] = sig;
+        selfDirty.delete(key);
+        return;
+      }
+      maybeBuilt(key, value, sig);
+    };
+    const maybeNull = (key: SelfWireKey, value: unknown): void => {
       if (value === null && alreadySent(key, JSON_NULL)) return;
       maybe(key, value);
     };
-    maybeArray('inv', meta.inventory, meta.inventory.length);
-    maybeArray('buyback', meta.vendorBuyback, meta.vendorBuyback.length);
-    maybeObject('equip', meta.equipment as Record<string, unknown>);
-    maybe('cosmetics', session.accountCosmetics);
-    if (!emptyArrayAlreadySent('qlog', meta.questLog.size)) {
-      maybe('qlog', [...meta.questLog.values()]);
-    }
-    if (!emptyArrayAlreadySent('qdone', meta.questsDone.size)) {
-      maybe('qdone', [...meta.questsDone]);
-    }
-    if (!emptyArrayAlreadySent('milestones', meta.unlockedMilestones.size)) {
-      maybe('milestones', [...meta.unlockedMilestones]);
-    }
+    maybeArray('inv', meta.inventory, meta.inventory.length, itemSig(meta.inventory));
+    maybeArray('buyback', meta.vendorBuyback, meta.vendorBuyback.length, itemSig(meta.vendorBuyback));
+    maybeObject('equip', meta.equipment as Record<string, unknown>, recordSig(meta.equipment as Record<string, unknown>));
+    maybe('cosmetics', session.accountCosmetics, `${session.accountCosmetics.completedQuestIds.join(',')}#${session.accountCosmetics.mechChromaIds.join(',')}`);
+    maybeGeneratedArray('qlog', meta.questLog.size, () => [...meta.questLog.values()], questLogSig());
+    maybeGeneratedArray('qdone', meta.questsDone.size, () => [...meta.questsDone], setSig(meta.questsDone));
+    maybeGeneratedArray('milestones', meta.unlockedMilestones.size, () => [...meta.unlockedMilestones], setSig(meta.unlockedMilestones));
     maybeObject('cds', p.cooldowns.size === 0 ? {} : Object.fromEntries([...p.cooldowns.entries()].map(([k, v]) => [k, round2(v)])));
-    maybe('stats', p.stats);
-    maybe('weapon', p.weapon);
+    maybe('stats', p.stats, recordSig(p.stats as unknown as Record<string, unknown>));
+    maybe('weapon', p.weapon, recordSig(p.weapon as unknown as Record<string, unknown>));
     const party = this.sim.partyOf(session.pid);
     maybeNull('party', party ? this.partyWire(session.pid) : null);
     maybeNull('marks', party ? this.markersWire(session.pid) : null);
@@ -1946,7 +2190,7 @@ export class GameServer {
     maybeNull('market', this.sim.marketInfoFor(session.pid));
     // talents/spec/loadouts ride the wire only when they change (PR-5: never
     // every snapshot). The client recomputes its known abilities from this.
-    maybe('tal', { alloc: meta.talents, spec: meta.talentMods.spec, role: meta.talentMods.role, loadouts: meta.loadouts, activeLoadout: meta.activeLoadout });
+    maybe('tal', { alloc: meta.talents, spec: meta.talentMods.spec, role: meta.talentMods.role, loadouts: meta.loadouts, activeLoadout: meta.activeLoadout }, talentSig());
     return extra === '' ? json : json.slice(0, -1) + extra + '}';
   }
 
@@ -2313,6 +2557,7 @@ export class GameServer {
   private resyncQuests(session: ClientSession): void {
     delete session.lastSent.qlog;
     delete session.lastSent.qdone;
+    this.markSelfDirty(session, ['qlog', 'qdone']);
   }
 
   private send(session: ClientSession, obj: unknown): void {
