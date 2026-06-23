@@ -135,6 +135,7 @@ docs/code-map/systems/save-load.md
 docs/code-map/systems/ui.md
 docs/code-map/systems/world-map.md
 docs/code-map/update-procedure.md
+docs/design/2026-06-23-fork-identity.md
 docs/design/TEMPLATE.md
 docs/design/graphics-plan.md
 docs/design/icon-system.md

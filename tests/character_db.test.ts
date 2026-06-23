@@ -14,7 +14,7 @@ vi.mock('pg', () => ({
 
 import {
   createAccount, createCharacterCapped, deleteCharacter, grantAccountMechChroma, loadAccountCosmetics,
-  markAccountQuestComplete, openPlaySession, renameCharacter, revokeAccountMechChroma, touchLogin,
+  listCharacterSummaries, markAccountQuestComplete, openPlaySession, renameCharacter, revokeAccountMechChroma, touchLogin,
 } from '../server/db';
 import { REALM } from '../server/realm';
 
@@ -48,6 +48,22 @@ describe('deleteCharacter', () => {
 
     dbMock.query.mockResolvedValueOnce({ rowCount: 1 } as any);
     expect(await deleteCharacter(7, 42)).toBe(true);
+  });
+});
+
+describe('listCharacterSummaries', () => {
+  it('reads roster data without loading full character state blobs', async () => {
+    dbMock.query.mockResolvedValueOnce({
+      rows: [{ id: 42, account_id: 7, name: 'Captest', class: 'mage', level: 12, skin: '3', is_gm: false, force_rename: false }],
+    } as any);
+
+    const rows = await listCharacterSummaries(7);
+
+    const [sql, params] = dbMock.query.mock.calls[0];
+    expect(sql).not.toMatch(/SELECT[^;]*,\s*state\s*[, ]/i);
+    expect(sql).toMatch(/state->'skin'/);
+    expect(params).toEqual([7, REALM]);
+    expect(rows[0]).toMatchObject({ id: 42, skin: 3 });
   });
 });
 

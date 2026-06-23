@@ -52,13 +52,13 @@ git -C "$ROOT" ls-files | ascii > "$OUT/file-list.txt"
       rg -n "^(export )?(abstract )?(class|interface|type|enum|function|const|let|var) [A-Za-z0-9_]+" \
         src server headless scripts \
         -g '*.ts' -g '*.tsx' -g '*.js' -g '*.mjs'
-    ) | ascii || true
+    ) | sort -t ':' -k1,1 -k2,2n -k3,3 | ascii || true
   else
     (
       cd "$ROOT"
       grep -RInE "^(export )?(abstract )?(class|interface|type|enum|function|const|let|var) [A-Za-z0-9_]+" \
         src server headless scripts
-    ) | ascii || true
+    ) | sort -t ':' -k1,1 -k2,2n -k3,3 | ascii || true
   fi
 } > "$OUT/symbol-index.txt"
 
@@ -71,13 +71,13 @@ git -C "$ROOT" ls-files | ascii > "$OUT/file-list.txt"
       rg -n "TODO|FIXME|HACK|XXX" \
         src server headless scripts tests docs \
         -g '!docs/code-map/generated/**'
-    ) | ascii || true
+    ) | sort -t ':' -k1,1 -k2,2n -k3,3 | ascii || true
   else
     (
       cd "$ROOT"
       grep -RInE "TODO|FIXME|HACK|XXX" \
         src server headless scripts tests docs
-    ) | ascii || true
+    ) | sort -t ':' -k1,1 -k2,2n -k3,3 | ascii || true
   fi
 } > "$OUT/todo-fixme.txt"
 

@@ -24,6 +24,7 @@ WebSocket APIs.
 - `handleApi(req, res)`
 - `authenticateWebSocket(ws, raw, req)`
 - `GameServer.handleMessage(session, raw)`
+- `GameServer.adminStats()`
 
 ## Data Flow
 
@@ -37,6 +38,13 @@ ClientWorld WebSocket command
 -> Sim mutation/tick state
 -> GameServer snapshot/event broadcast
 -> ClientWorld mirror
+```
+
+```text
+Admin status request
+-> server/admin.ts
+-> GameServer.adminStats()
+-> tick, snapshot, wire message, wire byte, save, memory, and entity counters
 ```
 
 ## Dependencies
@@ -62,6 +70,8 @@ break auth, or expose moderation/security regressions.
 
 - The wire protocol is implemented directly in `ClientWorld` and `GameServer`;
   there is no single schema file for every message type.
+- Snapshot volume and CPU are now visible through additive admin stats, but
+  command-dispatch timing is not split by command category yet.
 
 ## Verification Steps
 
@@ -69,5 +79,8 @@ break auth, or expose moderation/security regressions.
 - Open two browser sessions and confirm presence and movement.
 - Exercise chat and at least one interact/loot/combat command.
 - Watch server logs for protocol errors.
+- Check admin stats for `snapshotMsAvg`, `messagesIn`, `messagesOut`,
+  `wireBytesIn`, `wireBytesOut`, `characterSaveWrites`, and
+  `characterSaveSkips` when doing server performance work.
 
 Last verified: 2026-06-23

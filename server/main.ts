@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import { WebSocketServer, WebSocket } from 'ws';
 import {
   ensureSchema, pool, createAccount, findAccount, getAccountsCount, touchLogin, saveToken, accountForToken,
-  listCharacters, getCharacter, createCharacterCapped, deleteCharacter, closeOrphanSessions,
+  listCharacterSummaries, getCharacter, createCharacterCapped, deleteCharacter, closeOrphanSessions,
   pruneChatLogs, pruneClientPerfReports, searchCharacters, characterCountsByRealm, moderationStatusForAccount, renameCharacter,
   findCharacterReportTargetByName, topArenaRatings, topLifetimeXp, chatMuteStatusForAccount, loadAccountCosmetics,
   referralCountForAccount, primarySlugForAccount, lifetimeXpStanding, isAdminAccount,
@@ -448,12 +448,12 @@ async function handleApi(req: http.IncomingMessage, res: http.ServerResponse): P
       const accountId = await bearerActiveAccount(req, res);
       if (accountId === null) return;
       if (req.method === 'GET') {
-        const chars = await listCharacters(accountId);
+        const chars = await listCharacterSummaries(accountId);
         return json(res, 200, {
           realm: REALM,
           characters: chars.map((c) => ({
             id: c.id, name: c.name, class: c.class, level: c.level,
-            skin: c.state?.skin ?? 0,
+            skin: c.skin,
             online: [...game.clients.values()].some((s) => s.characterId === c.id),
             forceRename: c.force_rename,
           })),

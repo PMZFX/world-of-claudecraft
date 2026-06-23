@@ -27,7 +27,22 @@ export const DATABASE_URL =
     throw new Error('DATABASE_URL is required. For local dev, copy .env.example to .env and run through docker compose.');
   })();
 
-export const pool = new Pool({ connectionString: DATABASE_URL, max: 10 });
+function intEnv(name: string, fallback: number, min: number, max: number): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < min || value > max) return fallback;
+  return value;
+}
+
+export const PG_POOL_MAX = intEnv('PG_POOL_MAX', 10, 1, 100);
+export const PG_CONNECTION_TIMEOUT_MS = intEnv('PG_CONNECTION_TIMEOUT_MS', 5000, 100, 60000);
+
+export const pool = new Pool({
+  connectionString: DATABASE_URL,
+  max: PG_POOL_MAX,
+  connectionTimeoutMillis: PG_CONNECTION_TIMEOUT_MS,
+});
 
 const REALM_SQL_DEFAULT = REALM.replace(/'/g, "''");
 const LIFETIME_XP_EXPR = "((state->>'lifetimeXp')::bigint)";
@@ -60,6 +75,7 @@ CREATE TABLE IF NOT EXISTS characters (
 );
 CREATE INDEX IF NOT EXISTS characters_account ON characters(account_id);
 ALTER TABLE characters ADD COLUMN IF NOT EXISTS realm TEXT NOT NULL DEFAULT '${REALM_SQL_DEFAULT}';
+CREATE INDEX IF NOT EXISTS characters_account_realm_id ON characters(account_id, realm, id);
 -- Max-Level XP Overflow leaderboard: indexed lifetime-XP sort key. The first
 -- index serves the realm-scoped in-game panel; the second serves the global
 -- (cross-realm) home-page board.
@@ -824,6 +840,17 @@ export interface CharacterRow {
   force_rename: boolean;
 }
 
+export interface CharacterSummaryRow {
+  id: number;
+  account_id: number;
+  name: string;
+  class: PlayerClass;
+  level: number;
+  skin: number;
+  is_gm: boolean;
+  force_rename: boolean;
+}
+
 // Character reads/writes are scoped to this process's realm: an account may
 // hold characters on several realms (each served by its own process), but a
 // process only ever lists, loads, or creates characters on its own realm.
@@ -833,6 +860,19 @@ export async function listCharacters(accountId: number): Promise<CharacterRow[]>
     [accountId, REALM],
   );
   return res.rows;
+}
+
+export async function listCharacterSummaries(accountId: number): Promise<CharacterSummaryRow[]> {
+  const res = await pool.query(
+    `SELECT id, account_id, name, class, level,
+            CASE WHEN jsonb_typeof(state->'skin') = 'number' THEN (state->>'skin')::int ELSE 0 END AS skin,
+            is_gm, force_rename
+     FROM characters
+     WHERE account_id = $1 AND realm = $2
+     ORDER BY id`,
+    [accountId, REALM],
+  );
+  return res.rows.map((row) => ({ ...row, skin: Number(row.skin ?? 0) }));
 }
 
 export async function getCharacter(accountId: number, characterId: number): Promise<CharacterRow | null> {
@@ -950,10 +990,15 @@ export async function renameCharacter(accountId: number, characterId: number, na
   return res.rows[0] ?? null;
 }
 
-export async function saveCharacterState(characterId: number, level: number, state: CharacterState): Promise<void> {
+export async function saveCharacterState(
+  characterId: number,
+  level: number,
+  state: CharacterState,
+  stateJson = JSON.stringify(state),
+): Promise<void> {
   await pool.query(
     'UPDATE characters SET level = $2, state = $3, updated_at = now() WHERE id = $1',
-    [characterId, level, JSON.stringify(state)],
+    [characterId, level, stateJson],
   );
 }
 

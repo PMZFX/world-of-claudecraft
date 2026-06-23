@@ -95,6 +95,7 @@ export interface ClientSession {
   pid: number; // player entity id in the sim
   name: string;
   lastSave: number;
+  lastSavedStateJson: string | null;
   alive: boolean;
   joinedAt: number;
   dbSessionId: number | null; // play_sessions row, set once the insert lands
@@ -157,6 +158,14 @@ export interface AdminServerStats {
   peakOnline: number;
   uptimeSeconds: number;
   tickMsAvg: number;
+  snapshotMsAvg: number;
+  snapshotRecipientsAvg: number;
+  messagesIn: number;
+  messagesOut: number;
+  wireBytesIn: number;
+  wireBytesOut: number;
+  characterSaveWrites: number;
+  characterSaveSkips: number;
   simEntities: number;
   rssBytes: number;
   heapUsedBytes: number;
@@ -385,6 +394,14 @@ export class GameServer {
   private readonly startedAt = Date.now();
   private peakOnline = 0;
   private tickMsAvg = 0;
+  private snapshotMsAvg = 0;
+  private snapshotRecipientsAvg = 0;
+  private messagesIn = 0;
+  private messagesOut = 0;
+  private wireBytesIn = 0;
+  private wireBytesOut = 0;
+  private characterSaveWrites = 0;
+  private characterSaveSkips = 0;
   private readonly ipSessionCounts = new Map<string, number>();
 
   constructor() {
@@ -731,7 +748,8 @@ export class GameServer {
     const botTrackingContext = this.botDetector.createTrackingContext({ accountId, characterId, name, ip: sessionIp }, meta);
     const session: ClientSession = {
       ws, accountId, accountCosmetics, characterId, pid, name,
-      lastSave: Date.now(), alive: true, joinedAt: Date.now(), dbSessionId: null, left: false,
+      lastSave: Date.now(), lastSavedStateJson: state ? JSON.stringify(state) : null,
+      alive: true, joinedAt: Date.now(), dbSessionId: null, left: false,
       chatTokens: CHAT_RATE_BURST, chatLastRefill: Date.now() / 1000, chatLastRateError: 0,
       chatRateViolations: 0, chatCooldownUntil: 0,
       chatMutedUntil: meta.mutedUntil ? new Date(meta.mutedUntil).getTime() : null,
@@ -857,7 +875,15 @@ export class GameServer {
         // Use the SERIALIZED level (not e.level): during a 2v2 Fiesta bout e.level
         // is temporarily 20, but serializeCharacter reports the real level — so the
         // character-list/leaderboard `level` column never reflects the temp state.
-        await saveCharacterState(session.characterId, state.level, state);
+        const stateJson = JSON.stringify(state);
+        if (session.lastSavedStateJson === stateJson) {
+          this.characterSaveSkips++;
+          session.lastSave = Date.now();
+          return;
+        }
+        await saveCharacterState(session.characterId, state.level, state, stateJson);
+        session.lastSavedStateJson = stateJson;
+        this.characterSaveWrites++;
         session.lastSave = Date.now();
       }
     });
@@ -936,6 +962,14 @@ export class GameServer {
       peakOnline: this.peakOnline,
       uptimeSeconds: Math.round((Date.now() - this.startedAt) / 1000),
       tickMsAvg: Math.round(this.tickMsAvg * 100) / 100,
+      snapshotMsAvg: Math.round(this.snapshotMsAvg * 100) / 100,
+      snapshotRecipientsAvg: Math.round(this.snapshotRecipientsAvg * 100) / 100,
+      messagesIn: this.messagesIn,
+      messagesOut: this.messagesOut,
+      wireBytesIn: this.wireBytesIn,
+      wireBytesOut: this.wireBytesOut,
+      characterSaveWrites: this.characterSaveWrites,
+      characterSaveSkips: this.characterSaveSkips,
       simEntities: this.sim.entities.size,
       rssBytes: mem.rss,
       heapUsedBytes: mem.heapUsed,
@@ -1156,6 +1190,8 @@ export class GameServer {
 
   handleMessage(session: ClientSession, raw: string): void {
     const receivedAtMs = Date.now();
+    this.messagesIn++;
+    this.wireBytesIn += raw.length;
     let msg: any;
     try {
       msg = JSON.parse(raw);
@@ -1510,6 +1546,8 @@ export class GameServer {
 
   private broadcastSnapshots(): void {
     if (this.clients.size === 0) return;
+    const started = process.hrtime.bigint();
+    let recipients = 0;
     const tick = this.sim.tickCount;
     const head = `{"t":"snap","tick":${tick},"time":${round2(this.sim.time)}`;
     for (const session of this.clients.values()) {
@@ -1564,7 +1602,15 @@ export class GameServer {
       }
       const keepJson = keep.length > 0 ? `,"keep":[${keep.join(',')}]` : '';
       this.sendRaw(session, `${head},"self":${this.selfWireJson(session, p, meta)},"ents":[${ents.join(',')}]${keepJson}}`);
+      recipients++;
     }
+    const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
+    this.snapshotMsAvg = this.snapshotMsAvg === 0
+      ? elapsedMs
+      : this.snapshotMsAvg + TICK_EMA_ALPHA * (elapsedMs - this.snapshotMsAvg);
+    this.snapshotRecipientsAvg = this.snapshotRecipientsAvg === 0
+      ? recipients
+      : this.snapshotRecipientsAvg + TICK_EMA_ALPHA * (recipients - this.snapshotRecipientsAvg);
     // >= rather than a modulo check: catch-up broadcasts can skip ticks
     if (tick - this.lastWireSweepTick >= WIRE_CACHE_SWEEP_TICKS) {
       this.lastWireSweepTick = tick;
@@ -2054,6 +2100,8 @@ export class GameServer {
 
   private sendRaw(session: ClientSession, payload: string): void {
     if (session.ws.readyState === 1) {
+      this.messagesOut++;
+      this.wireBytesOut += payload.length;
       session.ws.send(payload);
     }
   }

@@ -629,7 +629,8 @@ describe('autosaves', () => {
     await shutdown;
 
     const savedCharacterIds = vi.mocked(saveCharacterState).mock.calls.map((call) => call[0]);
-    expect(savedCharacterIds.sort((a, b) => a - b)).toEqual([1, 1, 2, 2]);
+    expect(savedCharacterIds.sort((a, b) => a - b)).toEqual([1, 2]);
+    expect(server.adminStats().characterSaveSkips).toBe(2);
   });
 });
 

@@ -1,18 +1,27 @@
 # Recent Git Changes
 
 ## Status
+ M .env.example
  M docs/code-map/generated/README.md
  M docs/code-map/generated/file-list.txt
  M docs/code-map/generated/recent-git-changes.txt
  M docs/code-map/generated/source-tree.txt
  M docs/code-map/generated/symbol-index.txt
  M docs/code-map/generated/todo-fixme.txt
- M docs/fork-notes.md
- M docs/roadmap.md
+ M docs/code-map/systems/networking.md
+ M docs/code-map/systems/save-load.md
  M scripts/update-code-map.sh
-?? docs/design/2026-06-23-fork-identity.md
+ M server/db.ts
+ M server/game.ts
+ M server/main.ts
+ M tests/character_db.test.ts
+ M tests/game_sessions.test.ts
+ M tests/snapshots.test.ts
+?? docs/code-map/change-notes/2026-06-23-server-performance-baseline.md
+?? docs/design/2026-06-23-server-performance-baseline.md
 
 ## Recent Commits
+786a7025 docs(fork): add identity baseline
 9a44defe docs(stabilization): record fresh clone verification
 78fbf15c fix(build): keep admin i18n static
 eb9d8238 fix(build): resolve cursor asset paths
@@ -32,4 +41,3 @@ b8ad171c fix(i18n): drop duplicate hudChrome.perf.groups.input from the v0.14.0 
 8969cf92 docs(guide): document the guide/wiki sync contract across CLAUDE.md
 1da22f7c Merge remote-tracking branch 'origin/release/v0.14.0' into feature/guide-wiki
 def29352 Merge pull request #860 from levy-street/fix/native-mobile-attestation
-3d4390ad feat(ui): make the homepage Wiki nav go straight to the guide at /wiki

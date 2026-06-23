@@ -19,7 +19,8 @@ chat logs, moderation data, social data, wallet links, and play sessions.
 
 - `ensureSchema()`
 - `createAccount()`, `saveToken()`, `accountForToken()`
-- `createCharacterCapped()`, `getCharacter()`, `saveCharacterState()`
+- `createCharacterCapped()`, `listCharacterSummaries()`, `getCharacter()`,
+  `saveCharacterState()`
 - `GameServer.saveAll(reason)`
 - `Sim.serializeCharacter(pid)`
 
@@ -33,8 +34,15 @@ REST account/character request
 ```
 
 ```text
+Character select
+-> listCharacterSummaries()
+-> roster fields plus skin JSONB expression
+```
+
+```text
 GameServer session
 -> Sim.serializeCharacter()
+-> compare serialized state with ClientSession.lastSavedStateJson
 -> saveCharacterState()
 -> characters.state JSONB
 ```
@@ -62,6 +70,9 @@ accidental looseness.
 ## Known Unclear Areas
 
 - No migration folder is visible; migrations appear embedded in `ensureSchema()`.
+- Autosave still serializes every online character on its interval, but skips
+  the DB write when serialized state is identical to the last successful save.
+  Mutation-level dirty flags are not implemented yet.
 
 ## Verification Steps
 
@@ -70,5 +81,9 @@ accidental looseness.
 - Change inventory/quest/position if relevant.
 - Restart server and confirm state loads.
 - Run DB-related tests when changing `server/db.ts`.
+- Confirm `/api/characters` does not load full `characters.state` for roster
+  display unless that endpoint intentionally needs full saved state.
+- Confirm unchanged loaded characters increment `characterSaveSkips` rather than
+  issuing duplicate `UPDATE characters` writes.
 
 Last verified: 2026-06-23

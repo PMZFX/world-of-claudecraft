@@ -240,6 +240,44 @@ describe('GameServer sessions', () => {
     expect(vi.mocked(saveCharacterState).mock.calls[1][2].questsDone).toContain('q_wolves');
   });
 
+  it('skips the database write when serialized character state is unchanged', async () => {
+    vi.mocked(saveCharacterState).mockReset();
+    vi.mocked(saveCharacterState).mockResolvedValue(undefined);
+
+    const source = new GameServer();
+    const sourceSession = expectJoined(source.join(fakeWs(), 12, 120, 'Cleanload', 'warrior', null));
+    const loadedState = source.sim.serializeCharacter(sourceSession.pid)!;
+
+    const server = new GameServer();
+    const session = expectJoined(server.join(fakeWs(), 12, 121, 'Cleanload', 'warrior', loadedState));
+
+    await server.saveCharacter(session);
+
+    expect(saveCharacterState).not.toHaveBeenCalled();
+    expect(server.adminStats().characterSaveSkips).toBe(1);
+    expect(server.adminStats().characterSaveWrites).toBe(0);
+  });
+
+  it('writes again after an unchanged loaded character mutates', async () => {
+    vi.mocked(saveCharacterState).mockReset();
+    vi.mocked(saveCharacterState).mockResolvedValue(undefined);
+
+    const source = new GameServer();
+    const sourceSession = expectJoined(source.join(fakeWs(), 13, 130, 'Dirtyload', 'warrior', null));
+    const loadedState = source.sim.serializeCharacter(sourceSession.pid)!;
+
+    const server = new GameServer();
+    const session = expectJoined(server.join(fakeWs(), 13, 131, 'Dirtyload', 'warrior', loadedState));
+    server.sim.meta(session.pid)!.questsDone.add('q_wolves');
+
+    await server.saveCharacter(session);
+
+    expect(saveCharacterState).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(saveCharacterState).mock.calls[0][2].questsDone).toContain('q_wolves');
+    expect(server.adminStats().characterSaveSkips).toBe(0);
+    expect(server.adminStats().characterSaveWrites).toBe(1);
+  });
+
   it('closes the play session even when the open insert lands after the player has left', async () => {
     openPlaySession.mockReset();
     closePlaySession.mockReset();
