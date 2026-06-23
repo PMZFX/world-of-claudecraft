@@ -1,5 +1,4 @@
 import { translations, pending, en_XA } from './i18n.resolved.generated';
-import { LOCALE_LOADERS } from './i18n.resolved.generated/loaders';
 
 // The admin dashboard's own i18n layer (overlay + registry + release-gate
 // model). Operators are users, so ALL rendered admin text routes through t().
@@ -58,35 +57,15 @@ export function setAdminLanguage(lang: string): void { if (SUPPORTED.includes(la
 //
 // Admin keeps EVERY locale static (locked decision: the admin bundle is ~38 KB gzip and
 // operators are not the mobile target), so DICT already carries every locale and this
-// resolves instantly - the load body below is unreachable while admin stays static. The
-// async surface is mirrored structurally so the admin bootstrap awaits the same shape as
-// the game client; admin never performs the static->lazy flip.
-const adminInflight = new Map<string, Promise<void>>();
+// resolves instantly. The async surface is mirrored structurally so the admin bootstrap
+// awaits the same shape as the game client; admin never performs the static->lazy flip.
 
 export function isAdminLocaleResident(lang: string): boolean {
   return lang === "en" || DICT[lang] !== undefined;
 }
 
 export async function ensureAdminLocaleLoaded(lang: string): Promise<void> {
-  if (isAdminLocaleResident(lang)) return; // always true while admin stays static
-  const existing = adminInflight.get(lang);
-  if (existing) return existing; // coalesce onto the in-flight import
-  const loader = (LOCALE_LOADERS as Record<string, (() => Promise<Record<string, unknown>>) | undefined>)[lang];
-  if (!loader) return;
-  const task = loader()
-    .then((mod) => {
-      // Shape-tolerant read mirroring src/ui/i18n.ts (default OR named export).
-      DICT[lang] = ((mod as { default?: Record<string, string> }).default
-        ?? (mod as Record<string, Record<string, string>>)[lang]) as Record<string, string>;
-      adminInflight.delete(lang);
-    })
-    .catch((err) => {
-      adminInflight.delete(lang); // clear so a retry can start a fresh import
-      if (!isReleaseBuild()) console.warn(`admin i18n: failed to load locale "${lang}"`, err);
-      throw err;
-    });
-  adminInflight.set(lang, task);
-  return task;
+  void lang;
 }
 
 // --- release detection + the t() miss / pending policy (mirrors src/ui/i18n.ts) ---

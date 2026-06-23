@@ -79,8 +79,7 @@ that maps this machine's instance to:
 
 ## Verification Notes
 
-`npm run build` completed on 2026-06-23. Vite emitted existing warnings about
-ineffective dynamic admin locale imports and chunk size. The build still
-succeeded.
+`npm run build` completed on 2026-06-23. Vite emitted the existing chunk-size
+warning. The build still succeeded.
 
 Last verified: 2026-06-23
