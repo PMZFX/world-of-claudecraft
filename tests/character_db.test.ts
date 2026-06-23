@@ -14,7 +14,8 @@ vi.mock('pg', () => ({
 
 import {
   createAccount, createCharacterCapped, deleteCharacter, grantAccountMechChroma, loadAccountCosmetics,
-  listCharacterSummaries, markAccountQuestComplete, openPlaySession, renameCharacter, revokeAccountMechChroma, touchLogin,
+  listCharacterSummaries, loadAccountSessionState, markAccountQuestComplete, openPlaySession, renameCharacter,
+  revokeAccountMechChroma, touchLogin,
 } from '../server/db';
 import { REALM } from '../server/realm';
 
@@ -133,6 +134,51 @@ describe('account and session request metadata', () => {
 });
 
 describe('account cosmetics', () => {
+  it('loads websocket session account state with one account query', async () => {
+    const mutedUntil = new Date(Date.now() + 60_000).toISOString();
+    dbMock.query.mockResolvedValueOnce({
+      rows: [{
+        banned_at: null,
+        suspended_until: null,
+        moderation_reason: null,
+        chat_muted_until: mutedUntil,
+        chat_mute_reason: 'spam',
+        chat_strikes: 2,
+        deactivated_at: null,
+        is_admin: true,
+        cosmetics: {
+          completedQuestIds: ['q_aldrics_fallen_star', 'q_aldrics_fallen_star'],
+          mechChromaIds: ['onyx_gold', 7],
+        },
+      }],
+    } as any);
+
+    await expect(loadAccountSessionState(7)).resolves.toEqual({
+      moderation: {
+        locked: false,
+        banned: false,
+        suspendedUntil: null,
+        reason: '',
+        message: '',
+        chatMutedUntil: mutedUntil,
+        chatStrikes: 2,
+      },
+      chatMute: { mutedUntil, reason: 'spam' },
+      isAdmin: true,
+      cosmetics: {
+        completedQuestIds: ['q_aldrics_fallen_star'],
+        mechChromaIds: ['onyx_gold'],
+      },
+    });
+
+    expect(dbMock.query).toHaveBeenCalledTimes(1);
+    const [sql, params] = dbMock.query.mock.calls[0];
+    expect(sql).toMatch(/chat_mute_reason/);
+    expect(sql).toMatch(/is_admin/);
+    expect(sql).toMatch(/cosmetics/);
+    expect(params).toEqual([7]);
+  });
+
   it('loads normalized account cosmetic unlocks', async () => {
     dbMock.query.mockResolvedValueOnce({
       rows: [{

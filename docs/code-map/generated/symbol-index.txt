@@ -2170,18 +2170,21 @@ server/db.ts:359:export interface AccountModerationStatus {
 server/db.ts:372:export interface AccountChatMuteStatus {
 server/db.ts:377:export interface RequestMetadata {
 server/db.ts:382:export interface AccountCosmetics {
-server/db.ts:387:function uniqueStrings(value: unknown): string[] {
-server/db.ts:399:export function normalizeAccountCosmetics(value: unknown): AccountCosmetics {
-server/db.ts:442:function cleanMetadataText(value: string | null | undefined, max: number): string | null {
-server/db.ts:492:export interface AccountInfoRow {
-server/db.ts:555:export interface WalletLinkRow {
-server/db.ts:636:export interface PlayerCardRow {
-server/db.ts:832:export interface CharacterRow {
-server/db.ts:843:export interface CharacterSummaryRow {
-server/db.ts:957:export interface CharacterSearchRow {
-server/db.ts:1016:export interface ArenaLeaderRow {
-server/db.ts:1062:export interface LifetimeXpLeaderRow {
-server/db.ts:1111:export interface ClientPerfReportInsert {
+server/db.ts:387:export interface AccountSessionState {
+server/db.ts:394:function uniqueStrings(value: unknown): string[] {
+server/db.ts:406:export function normalizeAccountCosmetics(value: unknown): AccountCosmetics {
+server/db.ts:419:function moderationStatusFromAccountRow(row: any | undefined): AccountModerationStatus {
+server/db.ts:470:function chatMuteStatusFromAccountRow(row: any | undefined): AccountChatMuteStatus {
+server/db.ts:525:function cleanMetadataText(value: string | null | undefined, max: number): string | null {
+server/db.ts:575:export interface AccountInfoRow {
+server/db.ts:638:export interface WalletLinkRow {
+server/db.ts:719:export interface PlayerCardRow {
+server/db.ts:861:export interface CharacterRow {
+server/db.ts:872:export interface CharacterSummaryRow {
+server/db.ts:986:export interface CharacterSearchRow {
+server/db.ts:1045:export interface ArenaLeaderRow {
+server/db.ts:1091:export interface LifetimeXpLeaderRow {
+server/db.ts:1140:export interface ClientPerfReportInsert {
 server/game.ts:30:const WORLD_SEED = 20061;
 server/game.ts:31:const ALDRIC_METEOR_QUEST_ID = 'q_aldrics_fallen_star';
 server/game.ts:35:const INTEREST_RADIUS = 90;

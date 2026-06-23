@@ -10,9 +10,9 @@ visibility, and a short list of high-value follow-up work.
 
 - Startup: `server/main.ts` calls `ensureSchema()`, loads the world market, warms
   leaderboard/release caches, then starts `GameServer`.
-- WebSocket join: `authenticateWebSocket()` validates token/moderation state,
-  loads the full character row with `getCharacter()`, loads mute/admin/cosmetic
-  account state, then calls `GameServer.join()`.
+- WebSocket join: `authenticateWebSocket()` validates token, loads bundled
+  account session state with `loadAccountSessionState()`, loads the full
+  character row with `getCharacter()`, then calls `GameServer.join()`.
 - Character roster: `/api/characters` now uses `listCharacterSummaries()` so
   character select does not load full JSONB state just to show id/name/class/
   level/skin/rename/online status.
@@ -71,12 +71,13 @@ visibility, and a short list of high-value follow-up work.
   Fiesta details, and ladder references repeatedly within the same tick while
   preserving same-tick invalidation for queue, match, result, and augment
   changes.
+- Added `loadAccountSessionState()` for WebSocket joins. The join handshake now
+  loads moderation state, chat mute metadata, admin status, and account
+  cosmetics from one account query instead of separate account reads.
 
 ## Ranked Follow-Up Work
 
-1. Combine WebSocket auth account reads where possible. Current join performs
-   several account lookups before the player reaches the world.
-2. Split full character state into smaller persistence domains only if dirty
+1. Split full character state into smaller persistence domains only if dirty
    tracking and self-state versioning are not enough. This is higher risk
    because inventory, gear, quests, talents, stats, and position currently share
    one JSONB document.

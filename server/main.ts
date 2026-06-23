@@ -6,7 +6,7 @@ import {
   ensureSchema, pool, createAccount, findAccount, getAccountsCount, touchLogin, saveToken, accountForToken,
   listCharacterSummaries, getCharacter, createCharacterCapped, deleteCharacter, closeOrphanSessions,
   pruneChatLogs, pruneClientPerfReports, searchCharacters, characterCountsByRealm, moderationStatusForAccount, renameCharacter,
-  findCharacterReportTargetByName, topArenaRatings, topLifetimeXp, chatMuteStatusForAccount, loadAccountCosmetics,
+  findCharacterReportTargetByName, topArenaRatings, topLifetimeXp, loadAccountSessionState,
   referralCountForAccount, primarySlugForAccount, lifetimeXpStanding, isAdminAccount,
   accountById, characterCountForAccount, updatePasswordHash, revokeTokensExcept, setAccountEmail, setAccountDeactivated,
 } from './db';
@@ -899,7 +899,8 @@ async function main(): Promise<void> {
       ws.close();
       return;
     }
-    const status = await moderationStatusForAccount(accountId);
+    const accountState = await loadAccountSessionState(accountId);
+    const { moderation: status, chatMute, isAdmin, cosmetics: accountCosmetics } = accountState;
     if (status.locked) {
       ws.send(JSON.stringify({ t: 'error', error: status.message }));
       ws.close();
@@ -916,17 +917,14 @@ async function main(): Promise<void> {
       ws.close();
       return;
     }
-    const chatMute = await chatMuteStatusForAccount(accountId);
     // Hard per-IP WS connection limit. The soft threshold (composite score evidence)
     // is handled inside game.join(); this guard blocks egregious bot farms before
     // they consume a session slot.
     const ip = requestMetadata(req).ip;
-    const isAdmin = await isAdminAccount(accountId);
     if (isConnectionRefused({ blocked: game.isIpBlocked(ip), isAdmin, ipSessions: game.countIpSessions(ip), hardLimit: MAX_WS_PER_IP_HARD })) {
       ws.close(1008, 'Too many connections from your network');
       return;
     }
-    const accountCosmetics = await loadAccountCosmetics(accountId);
     const result = game.join(
       ws,
       accountId,

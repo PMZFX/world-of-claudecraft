@@ -41,6 +41,14 @@ ClientWorld WebSocket command
 ```
 
 ```text
+WebSocket auth message
+-> accountForToken()
+-> loadAccountSessionState()
+-> getCharacter()
+-> GameServer.join()
+```
+
+```text
 GameServer.selfWireJson()
 -> always serializes core self movement/resource/combat fields
 -> sends heavier self fields only when their JSON differs
@@ -88,6 +96,9 @@ break auth, or expose moderation/security regressions.
 - Stable self-field JSON work is visible through `selfStableJsonBuilds` and
   `selfStableJsonSkips`. Stable fields currently include inventory, buyback,
   equipment, cosmetics, quests, milestones, stats, weapon, and talents.
+- WebSocket joins use `loadAccountSessionState()` so moderation state, chat mute
+  metadata, admin status, and account cosmetics are loaded from one account
+  query before session creation.
 - Arena self-state uses `Sim.arenaInfoFor()` caching keyed by sim tick and
   arena-state version. Queue/match/result/augment changes invalidate within the
   same tick; normal tick changes refresh naturally.

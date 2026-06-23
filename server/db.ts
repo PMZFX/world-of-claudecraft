@@ -384,6 +384,13 @@ export interface AccountCosmetics {
   mechChromaIds: string[];
 }
 
+export interface AccountSessionState {
+  moderation: AccountModerationStatus;
+  chatMute: AccountChatMuteStatus;
+  isAdmin: boolean;
+  cosmetics: AccountCosmetics;
+}
+
 function uniqueStrings(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const out: string[] = [];
@@ -407,6 +414,82 @@ export function normalizeAccountCosmetics(value: unknown): AccountCosmetics {
 export async function loadAccountCosmetics(accountId: number): Promise<AccountCosmetics> {
   const res = await pool.query('SELECT cosmetics FROM accounts WHERE id = $1', [accountId]);
   return normalizeAccountCosmetics(res.rows[0]?.cosmetics);
+}
+
+function moderationStatusFromAccountRow(row: any | undefined): AccountModerationStatus {
+  if (!row) {
+    return { locked: false, banned: false, suspendedUntil: null, reason: '', message: '', chatMutedUntil: null, chatStrikes: 0 };
+  }
+  const mutedUntilDate = row.chat_muted_until ? new Date(row.chat_muted_until) : null;
+  const chatMutedUntil = mutedUntilDate && mutedUntilDate.getTime() > Date.now()
+    ? mutedUntilDate.toISOString()
+    : null;
+  const chatStrikes = Number(row.chat_strikes ?? 0);
+  // Admin-imposed states (ban, then active suspension) outrank a self-imposed
+  // deactivation: a banned+deactivated account must still surface the ban reason
+  // and label, not be relabelled "deactivated". All branches resolve to locked.
+  if (row.banned_at) {
+    return {
+      locked: true,
+      banned: true,
+      suspendedUntil: null,
+      reason: row.moderation_reason ?? '',
+      message: 'This account has been banned.',
+      chatMutedUntil,
+      chatStrikes,
+    };
+  }
+  const suspendedUntil = row.suspended_until ? new Date(row.suspended_until) : null;
+  if (suspendedUntil && suspendedUntil.getTime() > Date.now()) {
+    return {
+      locked: true,
+      banned: false,
+      suspendedUntil: suspendedUntil.toISOString(),
+      reason: row.moderation_reason ?? '',
+      message: `This account is suspended until ${suspendedUntil.toUTCString()}.`,
+      chatMutedUntil,
+      chatStrikes,
+    };
+  }
+  // A self-deactivated account is locked out of login + WS auth (same gate as
+  // banned/suspended) until an admin reactivates it.
+  if (row.deactivated_at) {
+    return {
+      locked: true,
+      banned: false,
+      suspendedUntil: null,
+      reason: '',
+      message: 'This account has been deactivated.',
+      chatMutedUntil,
+      chatStrikes,
+    };
+  }
+  return { locked: false, banned: false, suspendedUntil: null, reason: '', message: '', chatMutedUntil, chatStrikes };
+}
+
+function chatMuteStatusFromAccountRow(row: any | undefined): AccountChatMuteStatus {
+  const mutedUntil = row?.chat_muted_until ? new Date(row.chat_muted_until) : null;
+  if (!mutedUntil || mutedUntil.getTime() <= Date.now()) return { mutedUntil: null, reason: '' };
+  return {
+    mutedUntil: mutedUntil.toISOString(),
+    reason: row.chat_mute_reason ?? '',
+  };
+}
+
+export async function loadAccountSessionState(accountId: number): Promise<AccountSessionState> {
+  const res = await pool.query(
+    `SELECT banned_at, suspended_until, moderation_reason, chat_muted_until,
+            chat_mute_reason, chat_strikes, deactivated_at, is_admin, cosmetics
+     FROM accounts WHERE id = $1`,
+    [accountId],
+  );
+  const row = res.rows[0];
+  return {
+    moderation: moderationStatusFromAccountRow(row),
+    chatMute: chatMuteStatusFromAccountRow(row),
+    isAdmin: row?.is_admin === true,
+    cosmetics: normalizeAccountCosmetics(row?.cosmetics),
+  };
 }
 
 async function saveAccountCosmetics(accountId: number, cosmetics: AccountCosmetics): Promise<AccountCosmetics> {
@@ -763,55 +846,7 @@ export async function moderationStatusForAccount(accountId: number): Promise<Acc
      FROM accounts WHERE id = $1`,
     [accountId],
   );
-  const row = res.rows[0];
-  if (!row) {
-    return { locked: false, banned: false, suspendedUntil: null, reason: '', message: '', chatMutedUntil: null, chatStrikes: 0 };
-  }
-  const mutedUntilDate = row.chat_muted_until ? new Date(row.chat_muted_until) : null;
-  const chatMutedUntil = mutedUntilDate && mutedUntilDate.getTime() > Date.now()
-    ? mutedUntilDate.toISOString()
-    : null;
-  const chatStrikes = Number(row.chat_strikes ?? 0);
-  // Admin-imposed states (ban, then active suspension) outrank a self-imposed
-  // deactivation: a banned+deactivated account must still surface the ban reason
-  // and label, not be relabelled "deactivated". All branches resolve to locked.
-  if (row.banned_at) {
-    return {
-      locked: true,
-      banned: true,
-      suspendedUntil: null,
-      reason: row.moderation_reason ?? '',
-      message: 'This account has been banned.',
-      chatMutedUntil,
-      chatStrikes,
-    };
-  }
-  const suspendedUntil = row.suspended_until ? new Date(row.suspended_until) : null;
-  if (suspendedUntil && suspendedUntil.getTime() > Date.now()) {
-    return {
-      locked: true,
-      banned: false,
-      suspendedUntil: suspendedUntil.toISOString(),
-      reason: row.moderation_reason ?? '',
-      message: `This account is suspended until ${suspendedUntil.toUTCString()}.`,
-      chatMutedUntil,
-      chatStrikes,
-    };
-  }
-  // A self-deactivated account is locked out of login + WS auth (same gate as
-  // banned/suspended) until an admin reactivates it.
-  if (row.deactivated_at) {
-    return {
-      locked: true,
-      banned: false,
-      suspendedUntil: null,
-      reason: '',
-      message: 'This account has been deactivated.',
-      chatMutedUntil,
-      chatStrikes,
-    };
-  }
-  return { locked: false, banned: false, suspendedUntil: null, reason: '', message: '', chatMutedUntil, chatStrikes };
+  return moderationStatusFromAccountRow(res.rows[0]);
 }
 
 export async function chatMuteStatusForAccount(accountId: number): Promise<AccountChatMuteStatus> {
@@ -820,13 +855,7 @@ export async function chatMuteStatusForAccount(accountId: number): Promise<Accou
      FROM accounts WHERE id = $1`,
     [accountId],
   );
-  const row = res.rows[0];
-  const mutedUntil = row?.chat_muted_until ? new Date(row.chat_muted_until) : null;
-  if (!mutedUntil || mutedUntil.getTime() <= Date.now()) return { mutedUntil: null, reason: '' };
-  return {
-    mutedUntil: mutedUntil.toISOString(),
-    reason: row.chat_mute_reason ?? '',
-  };
+  return chatMuteStatusFromAccountRow(res.rows[0]);
 }
 
 export interface CharacterRow {
